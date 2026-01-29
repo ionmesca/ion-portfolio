@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist_Mono } from "next/font/google";
 import { ThemeProvider } from "./providers/theme-provider";
+import { ConvexClientProvider } from "./providers/convex-client-provider";
 import "./globals.css";
 
 const geistMono = Geist_Mono({
@@ -24,7 +25,9 @@ export default function RootLayout({
         className={`${geistMono.variable} font-sans antialiased bg-background text-foreground`}
       >
         <ThemeProvider>
-          {children}
+          <ConvexClientProvider>
+            {children}
+          </ConvexClientProvider>
         </ThemeProvider>
       </body>
     </html>
