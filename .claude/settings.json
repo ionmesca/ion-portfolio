@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(**)",
+      "Write(app/**)",
+      "Write(components/**)",
+      "Write(content/**)",
+      "Write(convex/**)",
+      "Write(lib/**)",
+      "Write(public/**)",
+      "Bash(bun:*)",
+      "Bash(bunx:*)",
+      "Bash(git:*)"
+    ],
+    "deny": [
+      "Write(.env*)",
+      "Bash(rm -rf:*)"
+    ]
+  }
+}
