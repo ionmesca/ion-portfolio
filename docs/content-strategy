@@ -1,0 +1,1236 @@
+# Portfolio Content Strategy Plan
+
+> First-principles analysis of who visits your portfolio, when, and what they need to see.
+
+---
+
+## The Fundamental Insight
+
+**Traditional portfolio thinking**: "Show my best work beautifully."
+
+**First-principles portfolio thinking**: "Remove risk fast for each decision-maker at each stage."
+
+Your portfolio isn't a museum. It's a risk-reduction machine. Each stage of the hiring funnel has someone asking: "Should I stake my reputation on recommending this person?"
+
+**The risks they're evaluating**:
+- **Capability risk**: Can you do this work?
+- **Execution risk**: Will you actually ship?
+- **Fit risk**: Do you think like us?
+- **Trust risk**: Can I stake my reputation on you?
+
+Every element of your portfolio should reduce one of these risks—instantly.
+
+---
+
+## Part 1: The Hiring Funnel Mapped
+
+Based on your target company research, here's who touches your portfolio and when:
+
+### Stage 1: Discovery (30 seconds)
+**Who**: Recruiters (Anthropic, OpenAI, Block, Ramp) or Technical team (xAI has no recruiters)
+**When**: First click from LinkedIn/application/referral
+**Their question**: "Is this person worth 10 more minutes?"
+**Time budget**: 30 seconds
+
+> [!warning] xAI Exception
+> xAI has no recruiters—technical team reviews everything from Stage 1. This means:
+> - Technical depth must be discoverable within 1-2 clicks, not buried
+> - The hero must satisfy BOTH recruiter-style scanning AND technical curiosity
+> - Your GitHub link and code evidence should be visible on the home page, not just /lab
+>
+> **Design for xAI's path as a constraint that improves the whole portfolio.**
+
+**What they scan for**:
+- Years of experience (does title/intro signal seniority?)
+- Domain relevance (AI? Fintech? Technical?)
+- Portfolio exists and loads fast
+- Social proof (companies worked with)
+- **For xAI**: Technical credibility signals visible immediately (GitHub link, "ships code" chip)
+
+**What they DON'T do**: Read case studies. Look at details. Scroll much (unless xAI—they might dig faster).
+
+---
+
+### Stage 2: Recruiter Deep-Dive (5-10 minutes)
+**Who**: Internal recruiter or sourcer preparing to pass you forward
+**When**: Before forwarding to design lead
+**Their question**: "Can I confidently pitch this person to the hiring manager?"
+**Time budget**: 5-10 minutes
+
+**What they need**:
+- Quick summary of 2-3 projects (not full case studies)
+- Clear role/contribution on each project
+- Signals of seniority (led team, owned product area, etc.)
+- Enough to write an internal summary
+
+**What they DON'T do**: Deep-dive into process. Care about code. Read long narratives.
+
+---
+
+### Stage 3: Design Lead Review (15-30 minutes)
+**Who**: Head of Design, Design Manager, Principal Designer
+**When**: Deciding whether to bring you to portfolio presentation
+**Their question**: "Can this person think? Do they have taste? Will they raise the bar?"
+**Time budget**: 15-30 minutes
+
+**What they evaluate**:
+- Design judgment (can they make hard calls?)
+- Process clarity (do they know WHY they did things?)
+- Visual craft (is the work beautiful?)
+- Systems thinking (do they see the bigger picture?)
+- Self-awareness (do they acknowledge constraints/tradeoffs?)
+
+**Critical insight**: They're also evaluating if you can PRESENT. Your portfolio's structure foreshadows your portfolio presentation.
+
+---
+
+### Stage 4: Portfolio Presentation (30-60 minutes)
+**Who**: 3-5 person panel (design leads, PM, eng, sometimes leadership)
+**When**: The formal portfolio review round
+**Their question**: "How does this person think through problems?"
+**Time budget**: 30-60 minutes (you control the pace)
+
+Company specifics from your research:
+- **Anthropic**: 25 min presentation + 15-20 min Q&A
+- **Block**: 45-60 min with 5-person panel, want PROCESS not outputs
+- **Ramp**: 2 case studies, 30 min presentation + 30 min Q&A
+- **xAI**: 45 min portfolio review, no recruiters means technical eye from start
+
+**What differentiates**:
+- Going deeper than surface level
+- Handling tough questions gracefully
+- Showing collaboration (how you worked with eng/PM)
+- Demonstrating iteration (what you tried that didn't work)
+
+---
+
+### Stage 5: Technical Validation (varies)
+**Who**: Engineering leads, technical interviewers
+**When**: Technical rounds or async review
+**Their question**: "Can this person actually ship? Or are they all pixels?"
+**Time budget**: Targeted inspection
+
+**What they look for**:
+- GitHub profile (Anthropic explicitly mentions this)
+- Code samples, prototypes
+- Technical vocabulary in case studies
+- Evidence of implementation knowledge
+
+**Critical for you**: Anthropic's Claude Code role wants "CLI/terminal design experience" and "HTML/CSS/JS prototyping." This is explicit in their job descriptions.
+
+---
+
+### Stage 6: Post-Interview Reference (varies)
+**Who**: Panel members after interviews, hiring committee
+**When**: During debrief, decision-making
+**Their question**: "What was that thing they mentioned about X?"
+**Time budget**: Quick lookups
+
+**What matters**: Your case studies need enough depth that someone can re-find specific details you discussed.
+
+---
+
+## Part 2: Target-Specific Signals
+
+Use what you know from research to tune the story for each target:
+
+### xAI
+**Culture**: First-principles, proof-of-work, intensity, no BS
+**What to signal**:
+- Exceptional work right away, minimal fluff
+- Tight logic, truth-seeking tone
+- Evidence you can sustain intensity
+- Technical depth visible immediately
+
+**Positioning for xAI**: "First-principles product designer. I build AI systems that hold up under truth, finance, and real users."
+
+### Anthropic
+**Culture**: AI safety + reasoning + prototyping + code
+**What to signal**:
+- Claude Code usage prominently (you're applying to Claude Code role)
+- AI agent work and prompt engineering
+- Decision-making clarity
+- Understanding of LLM capabilities/limitations
+- GitHub profile, code samples
+
+**Positioning for Anthropic**: "Designer who ships production code with Claude. Built AI agents. Understands the territory from the inside."
+
+### OpenAI
+**Culture**: Fast shipping, DERP pods, systems thinking
+**What to signal**:
+- Cross-functional pod-style work
+- Speed and velocity
+- Product thinking at scale
+- Systems architecture
+
+### Block
+**Culture**: Fintech + mobile + measurable impact
+**What to signal**:
+- Fintech mastery (IFRS 2, vesting, compliance) — **this is your primary differentiator here, not AI**
+- Mobile-first patterns
+- Business metrics and outcomes
+- Bitcoin/financial infrastructure thinking
+- Leadership experience (they hire Principal level)
+
+> [!note] Block Priority
+> Block cares more about fintech depth + leadership than AI fluency. Don't over-index on Claude Code for Block—lead with "10+ years fintech systems, built design team, IFRS 2 expertise." AI is a bonus, not the headline.
+
+### Ramp
+**Culture**: PEDD (Product, Engineering, Design, Data), velocity, hybrid UX/UI
+**What to signal**:
+- Design-engineering fluency
+- Data-informed decisions
+- Shipped outcomes with metrics
+- Business thinking in design challenge
+- Fintech domain knowledge (expense management adjacent to your equity expertise)
+
+> [!note] Ramp Priority
+> Ramp's PEDD model values data as an equal partner. Your fintech expertise + ability to speak to metrics matters more than "I built an AI agent." Lead with "shipped products, data-informed decisions, enterprise scale."
+
+---
+
+## Part 3: Content Strategy by Audience
+
+### The Hero (Stage 1 Gate)
+
+**Current PRD says**: "30-second test: Visitor immediately understands 'design engineer who ships with AI'"
+
+**First-principles upgrade**: The hero shouldn't TELL them you're a design engineer who ships with AI. It should SHOW it.
+
+**Non-generic approach**:
+
+Instead of:
+> "Hi, I'm Ion. I'm a design engineer who builds with AI."
+
+Consider:
+> A hero that IS the evidence—but with zero reliability risk.
+
+> [!warning] Reliability First
+> **Do NOT make the hero depend on live API calls.** A failed Claude API call or slow response at Stage 1 is worse than no demo. Recruiters on mobile are especially sensitive to load time. Any "live proof" element must:
+> - Load instantly (cached/pre-rendered)
+> - Degrade gracefully if API fails
+> - Work fully offline if needed
+>
+> **Better approach**: Static hero with a CTA to the live agent page. The hero SHOWS the outcome (screenshot, animation), the /agent page PROVES you can build it.
+
+**Specific elements for your hero**:
+1. **Title line**: Direct, no fluff. "Lead Product Designer. Building with AI."
+2. **Proof chips visible immediately** (not buried):
+   - "10+ years" (experience signal)
+   - Domain tags: "AI Products · Fintech Systems · Design Leadership" (NOT company names—avoids "you haven't worked there" bias)
+   - "Ships production code" (technical signal)
+3. **Visual hook**: A polished static visual (shipped product screenshot, system diagram) that loads instantly. NOT a live component.
+4. **Social proof strip**: Ledgy logo + Sequoia badge + "4 founders vouching" or similar
+
+> [!note] Balance AI vs. Fintech
+> The hero must serve ALL targets. Over-indexing on "AI" risks being bucketed as "AI side project designer" for Block/Ramp, who care more about fintech depth and leadership. Lead with **"Principal Designer"** or **"Design Leader"**, mention AI as ONE of your domains, not THE identity.
+
+**Anti-patterns to avoid**:
+- Long paragraphs about yourself
+- "I'm passionate about..."
+- Photo taking up hero space
+- Vague positioning statements
+- Live API dependencies in hero
+- Target company names as list (triggers "you haven't worked there" bias)
+
+---
+
+### Work Section (Stages 2-4)
+
+**Current implementation**: Bottom floating dock + hero-first navigation. No sidebar.
+
+**First-principles upgrade**: Results-first case studies with scrollytelling.
+
+**The insight**: Showing outcomes first creates curiosity ("How did they achieve that?") rather than requiring commitment to read ("Let me tell you about a problem..."). This mirrors landing page logic: lead with value, then explain.
+
+---
+
+#### Work Index (`/work`)
+
+```
+/work index
+├── Quick cards with: Title, 1-line outcome, key visual, impact metric, tags
+├── Filterable by: Domain (AI, Fintech, Enterprise) and Type (Product, System, Prototype)
+└── Sort by: Featured (default), Recent
+```
+
+Each card shows the RESULT, not the problem. Recruiters get talking points instantly.
+
+---
+
+#### Case Study Structure (`/work/[slug]`)
+
+**Results-First Hero + 6-Section Scrollytelling**
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│ RESULTS-FIRST HERO (above the fold) — THE HOOK                  │
+│ ─────────────────────────────────────────────────────────────── │
+│ [Beautiful visual: shipped product, key UI, chart, or outcome]  │
+│                                                                 │
+│ PROJECT TITLE                                                   │
+│ One-line outcome statement ("AI agent that transformed X")      │
+│                                                                 │
+│ ┌──────────┐ ┌──────────┐ ┌──────────┐                         │
+│ │ +40%     │ │ -35%     │ │ 10K      │  ← 3 Impact metrics     │
+│ │ adoption │ │ time     │ │ users    │     (prominent, visual) │
+│ └──────────┘ └──────────┘ └──────────┘                         │
+│                                                                 │
+│ Role: Lead Designer · Timeline: 6 months · Stack: React, Claude │
+│                                                                 │
+│ [Read the story ↓]                                              │
+└─────────────────────────────────────────────────────────────────┘
+
+SCROLLYTELLING SECTIONS (the story of how you got there)
+├── 01 Problem    — Concise framing + user pain or business context
+├── 02 Constraints — Tech, timeline, data, or compliance limits
+├── 03 Approach   — Key decisions, tradeoffs, experiments
+├── 04 System     — Architecture, flows, data model (+ collapsible deep-dives)
+├── 05 Use Cases  — Interactive cards with filters (persona, platform)
+└── 06 Results    — Expanded metrics, testimonials, learnings
+```
+
+---
+
+#### Layout System: Sticky Rail + Scrollable Content
+
+**Desktop (≥1024px)**:
+- **Left sticky rail** ("Project Dossier"): Section number, title, 1-2 line summary. Also contains: project metadata, links (live/repo), outcome metrics, mini progress list.
+- **Right scrollable column**: The actual story content with rich media, diagrams, interactive elements.
+
+**Mobile**:
+- Horizontal pill bar for section navigation (swipeable)
+- Or: sections stack vertically with section headers acting as anchors
+- Hero with metrics always visible first
+
+**Scroll sync**:
+- IntersectionObserver highlights active section on rail
+- Updates left rail content as you scroll
+- Triggers micro-animations on section entry
+
+---
+
+#### Section Data Model
+
+```typescript
+type CaseStudy = {
+  // HERO (always visible above fold)
+  hero: {
+    title: string;
+    tagline: string;           // "AI agent that transformed X"
+    visual: MediaAsset;        // Key image, chart, or video
+    metrics: Metric[];         // 3 impact numbers (prominent)
+    role: string;
+    timeline: string;
+    stack: string[];
+    links: { live?: string; repo?: string };
+  };
+  
+  // SCROLLYTELLING SECTIONS (6 sections)
+  sections: [
+    { id: "01", title: "Problem",     type: "narrative" },
+    { id: "02", title: "Constraints", type: "narrative" },
+    { id: "03", title: "Approach",    type: "narrative" },
+    { id: "04", title: "System",      type: "technical", hasCollapsibles: true },
+    { id: "05", title: "Use Cases",   type: "interactive", filterable: true },
+    { id: "06", title: "Results",     type: "metrics" }
+  ];
+};
+```
+
+---
+
+#### Section 04 "System" — Technical Depth with Collapsibles
+
+This section hosts **Layer 3 (Technical)** content. The architecture diagram is visible by default; deep-dives are collapsed:
+
+```
+04 SYSTEM
+├── System diagram (visible)
+├── Key flows (visible)
+└── [Collapsible deep-dives]:
+    ├── ▶ Architecture decisions [click to expand]
+    ├── ▶ Code samples [click to expand]
+    ├── ▶ Claude prompts used [click to expand]
+    └── ▶ Data model [click to expand]
+```
+
+Designers scroll past. Engineers click in. Both paths are supported.
+
+---
+
+#### Section 05 "Use Cases" — Interactive Cards
+
+This section benefits most from the sticky rail + interaction pattern:
+
+```
+05 USE CASES
+├── Filter pills: "Admin" | "Customer" | "Ops" | "Web" | "Mobile"
+├── Card grid (3-4 cards visible)
+│   └── Each card: Quick summary + [Expand]
+│       └── Expanded: Flow diagram, annotated screenshots, outcome chips
+└── Outcome chips: "-35% handle time", "+20% conversion"
+```
+
+Clicking a use-case expands inline to show scenario → solution → outcome.
+
+---
+
+#### Mobile Section Navigation
+
+Based on fin.ai pattern — horizontal scrollable pills:
+
+```
+[IMPACT] [01 Problem] [02 Constraints] [03 Approach] [04 System] ...
+                        ← swipe →
+```
+
+Or: The hero with metrics IS the first view, then numbered sections scroll vertically below.
+
+---
+
+> [!warning] No Tabs — Scrollytelling Instead
+> **Tabs hide content and break mobile UX.** They contradict progressive disclosure.
+>
+> **The scrollytelling approach**:
+> - Single scrollable page with sticky navigation rail
+> - IntersectionObserver for scroll-synced highlighting
+> - Technical content collapsed by default (Section 04)
+> - All content discoverable by scrolling
+>
+> This serves xAI's "technical first" reviewers who want depth within 1-2 clicks, AND design leads who want to skim-scan.
+
+---
+
+### Lab Section (Stage 5 Gate)
+
+**Current PRD**: `/lab` for interactive experiments
+
+**First-principles upgrade**: This is your TECHNICAL PROOF section. Not optional—but must avoid "gimmick" perception.
+
+> [!warning] Demo Quality Bar
+> Without strict framing, AI demos read as novelty ("cool but shallow"). Design leaders evaluating taste will penalize gimmicky demos. Every lab demo must pass this test:
+>
+> **Is this demo worth a design lead's time?**
+> - [ ] Does it solve a real problem (not a toy)?
+> - [ ] Does it show design thinking (not just code)?
+> - [ ] Does it work reliably (no broken demos)?
+> - [ ] Does it load fast (< 3 seconds)?
+> - [ ] Would I show this in a portfolio presentation?
+>
+> If any answer is "no"—don't ship it. One polished demo > three half-baked ones.
+
+**Why this matters specifically for you**:
+- Anthropic Claude Code role: "HTML/CSS/JS prototyping" required
+- All AI labs value builders over polishers
+- Your differentiation is "designer who codes"
+- BUT: Gimmicks hurt more than they help
+
+**What to include (quality over quantity)**:
+1. **Live interactive demos**: Components you've built, not just videos
+2. **Source links**: GitHub repos, actual code
+3. **Clear context**: What problem does this solve? Why did you build it?
+4. **Speed markers**: "Built in X hours" (shows velocity, not toy status)
+
+**Specific lab experiments to build**:
+- An interactive component from one of your case studies (stakeholder dashboard widget?)—real utility, not demo-for-demo's sake
+- A "how this portfolio was built" technical breakdown—valuable for Anthropic Claude Code role
+- A Claude Code workflow visualization—but only if it genuinely shows insight, not just "look I used Claude"
+
+---
+
+### The Agent Page (Differentiator—With Caution)
+
+**Current PRD**: `/agent` with AI chat interface
+
+**First-principles upgrade**: This CAN be a differentiator, but only if it's genuinely useful—not gimmicky.
+
+> [!warning] Gimmick Risk Assessment
+> An AI chat that just says "I'm Ion's portfolio assistant!" is worse than no agent. Design leaders will see through novelty.
+>
+> **The test**: Would a recruiter or design lead actually USE this to learn about you faster than reading the page?
+>
+> If the answer is "maybe" or "no"—deprioritize the agent page. It's not required. It's only valuable if genuinely better than navigation.
+
+**Why it COULD work**: Most designers don't have this. You can build it. It demonstrates:
+1. You can actually build with AI (not just design for it)
+2. You understand the Claude API
+3. You're comfortable with AI-native workflows
+
+**How to make it not gimmicky (or skip it)**:
+- **Option A (useful agent)**: Train it on your actual case studies, make it genuinely faster than clicking around. "Which of Ion's projects involved compliance constraints?" should return a useful answer in 2 seconds.
+- **Option B (proof of concept)**: Show the agent exists but don't push it as primary navigation. It's proof you can build, not a replacement for good UX.
+- **Option C (skip for v1)**: Focus on case studies and lab. Add agent later if you have time. A missing agent is neutral; a bad agent is negative.
+
+**If you keep it, show the work**:
+- "View system prompt" option for technical visitors
+- "View source" link to GitHub
+- Clear framing: "This is a technical demo, not a novelty"
+
+---
+
+## Part 3: Content Prioritization
+
+Based on your target companies and their explicit requirements:
+
+### Must-Have Content (Before Outreach)
+
+| Content | Why | Target Company Signal |
+|---------|-----|----------------------|
+| 1 AI product case study | All targets building AI products | All mention AI/LLM understanding |
+| 1 technical/coding showcase | Anthropic explicitly requires prototyping | "HTML/CSS/JS prototyping" in JD |
+| GitHub profile linked | Anthropic explicitly mentions | "GitHub profile or personal projects" |
+| Process documentation | All portfolio reviews evaluate this | Block: "must show process, not outputs" |
+| Enterprise scale evidence | Most roles are senior/principal | "8+ years consistently required" |
+
+### High-Value Additions (Phase 2)
+
+| Content | Why | Target Company Signal |
+|---------|-----|----------------------|
+| Claude Code workflow story | Perfect for Anthropic Claude Code role | "CLI/terminal design experience" |
+| Fintech depth case study | Differentiator, shows domain expertise | Matches Ramp, Block fintech focus |
+| Collaboration evidence | All companies evaluate cross-functional | Block: "how you collaborate with PM/Eng" |
+| Speed/velocity proof | AI lab culture values shipping | OpenAI: "fast shipping" culture |
+
+### Strategic Content (Phase 3)
+
+| Content | Why | Target Company Signal |
+|---------|-----|----------------------|
+| Interactive lab demos | Technical validation gate | Live proof > screenshots |
+| AI agent trained on your work | Novel differentiator | Shows you build, not just design |
+| "Built with AI" meta-story | Your unique positioning | The portfolio IS the proof |
+
+---
+
+## Part 4: Case Study Selection & Framing
+
+From your existing work, here's what to prioritize and how to frame it:
+
+### Case Study 1: Deferred Compensation System (Ledgy)
+**Why it works**:
+- Complex domain (shows systems thinking)
+- Enterprise scale (credibility)
+- Can speak to fintech depth (differentiator)
+
+**Frame for AI labs as**: "Designing for complex domains requires the same rigorous thinking as designing AI products. Constraints aren't creative blocks—they're the design itself."
+
+**Technical angle**: Document the constraints (legal, tax, compliance) and how they shaped the design. This shows you can handle AI's constraints too.
+
+---
+
+### Case Study 2: AI Agent Work (Ripple, DC Knowledge Base)
+**Why it works**:
+- Directly relevant to AI lab work
+- You built it, not just designed it
+- Shows AI-native workflow
+
+**Frame as**: "I don't just design AI products. I build them. Here's an agent I created that [specific outcome]."
+
+**Technical angle**: Show the architecture, the prompts, the iteration process. Include actual Claude conversations if possible.
+
+---
+
+### Case Study 3: Claude Code Workflow (Meta Case Study)
+**Why it works**:
+- Perfect for Anthropic Claude Code role
+- Unique—almost no designers have this story
+- The portfolio itself is proof
+
+**Frame as**: "How I became a designer who ships production code." Not a case study about a product, but about a practice.
+
+**Technical angle**: Real PRs you've merged. Before/after code. The prompts that got you there.
+
+---
+
+### Case Study 4: Stakeholder Dashboards (Ledgy)
+**Why it works**:
+- Beautiful craft (visual proof of taste)
+- Complex data visualization
+- Stakeholder-facing (shows executive-level thinking)
+
+**Frame as**: "Enterprise design isn't about making things pretty. It's about making complexity actionable."
+
+**Technical angle**: The component architecture, design system integration, performance considerations.
+
+---
+
+## Part 5: Hero & UX Flow Recommendations
+
+### Navigation Architecture
+
+**Current implementation**:
+- **Bottom floating dock**: 6 icon items (Home, Work, Lab, Stack, Writing, Agent)
+- **Header**: Avatar (top-left) + Social links (top-right, including GitHub)
+- **No sidebar**: Clean, spacious content area
+
+### Navigation Philosophy: Hero-First Discovery
+
+**The insight**: In the first 30 seconds, visitors navigate through CONTENT, not through nav bars. The dock is for returning visitors and deep navigation; new visitors discover through hero content.
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│ [Avatar]                              [GitHub · LinkedIn · X]   │
+│                                                                 │
+│                                                                 │
+│                    ION MESCA                                    │
+│                    Lead Product Designer                        │
+│                                                                 │
+│        Building AI products at Ledgy. Ships code with Claude.   │
+│        10+ years · AI Products · Fintech Systems                │
+│                                                                 │
+│                                                                 │
+│        FEATURED WORK (the primary discovery surface)            │
+│        ┌─────────────┐ ┌─────────────┐ ┌─────────────┐         │
+│        │ [Project 1] │ │ [Project 2] │ │ [Project 3] │         │
+│        │ +40% metric │ │ -35% time   │ │ 10K users   │         │
+│        └─────────────┘ └─────────────┘ └─────────────┘         │
+│                                                                 │
+│        Quick Links: Lab Experiments · Chat with Agent           │
+│                                                                 │
+│                                                                 │
+│         ─────────────────────────────────────────────           │
+│         [Home] [Work] [Lab] [Stack] [Writing] [Agent]           │
+│                    (bottom floating dock)                       │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**Why hero-first works**:
+1. **Recruiters scan content, not nav bars** — Featured work cards with metrics give instant talking points
+2. **GitHub visible on every page** — Satisfies xAI's "technical signals immediately" requirement
+3. **Bottom dock is mobile-native** — Matches iOS/Android tab bar patterns, thumb-friendly
+4. **Navigation gets out of the way** — Content area feels spacious, not cramped
+
+### The 30-Second Hero
+
+**Key elements** (in order of visual priority):
+1. **Name + title immediately** — No mystery, no scrolling required
+2. **Proof chips** — "10+ years" · "AI Products" · "Fintech Systems" · "Ships code"
+3. **Featured work grid** — 2-3 project cards with outcome metrics visible
+4. **Quick links** — Lab Experiments, Chat with Agent (secondary CTAs)
+
+**Anti-patterns to avoid**:
+- Nav bar as primary discovery (dock is for deep navigation, not first impression)
+- Photo taking up hero space
+- "I'm passionate about..." (show, don't tell)
+- Live API dependencies (hero must load instantly)
+
+### Mobile Consideration
+
+Most recruiter first-looks happen on mobile. Your hero MUST work on mobile:
+- **Thumb-friendly**: Featured work cards have large tap targets
+- **Bottom dock**: Natural mobile pattern, no hamburger menu
+- **GitHub in header**: Always visible, satisfies technical reviewers on first scroll
+- **Featured work above fold**: Metrics visible without scrolling on mobile
+
+### GitHub Visibility
+
+> [!note] Technical Credibility Solved
+> GitHub is now visible in the header on EVERY page (top-right social links). This satisfies:
+> - Anthropic: "GitHub profile or personal projects" requirement
+> - xAI: "Technical depth discoverable within 1-2 clicks"
+>
+> No need for a separate "GitHub link prominently on home page" — it's always there.
+
+---
+
+## Part 6: Differentiation Strategy
+
+### What Makes You Non-Generic
+
+| Typical Designer | You |
+|-----------------|-----|
+| "I design AI products" | "I build AI agents that ship to production" |
+| "I prototype in Figma" | "I ship PRs with Claude Code" |
+| "I understand fintech" | "I designed IFRS 2-compliant systems" |
+| "I'm a leader" | "I built a design team from 0 at a Sequoia company" |
+
+### How to Signal This Without Being Arrogant
+
+**Don't**: "I'm one of the few designers who can code."
+**Do**: Show code. Link to GitHub. Have interactive demos. Let the work speak.
+
+**Don't**: "I deeply understand AI."
+**Do**: Have an AI agent on your portfolio. Show Claude Code workflows. Use AI terminology correctly in case studies.
+
+**Don't**: "I've worked on complex financial products."
+**Do**: Show the regulatory constraints, the edge cases, the systems diagrams. Let complexity be evident.
+
+---
+
+## Part 7: Implementation Priorities
+
+### What to Do First (Before Any Outreach)
+
+1. **Hero section** with positioning that answers Stage 1 questions
+2. **One polished case study** (recommend: DC system or AI agent work)
+3. **GitHub profile link** prominently placed
+4. **Lab page** with at least one interactive demo
+5. **Agent page** functional (even if basic)
+
+### What Can Wait
+
+- Multiple case studies (one great one beats four okay ones)
+- Perfect animations
+- Canvas feature
+- Exhaustive stack page
+
+### What to Skip
+
+- Long bio/about section
+- Blog posts (unless specifically relevant)
+- Testimonials (unless from recognizable names)
+- "Let's work together" generic CTA
+
+---
+
+## Summary: The Three Questions Your Portfolio Must Answer
+
+### For Recruiters (30 seconds)
+**Question**: "Is this person senior enough and relevant enough?"
+**Answer via**: Hero positioning, years of experience visible, company logos, "AI" in first sentence
+
+### For Design Leads (15 minutes)
+**Question**: "Can this person think? Do they have taste?"
+**Answer via**: One deep case study with clear process, beautiful craft visible, evidence of hard decisions
+
+### For Technical Reviewers (varies)
+**Question**: "Can this person actually ship?"
+**Answer via**: GitHub link, lab experiments, code samples in case studies, Claude Code workflow story
+
+---
+
+## Files to Modify/Create
+
+### Code Changes Required
+
+1. **Remove tabs from route config**:
+   - File: `lib/route-config.ts`
+   - Remove `tabs` array from `/work/[slug]` config
+   - Case studies now use scrollytelling, not tabs
+
+2. **Case study page structure**:
+   - File: `app/work/[slug]/page.tsx`
+   - Implement results-first hero + 6-section scrollytelling
+   - Add sticky left rail (desktop) / horizontal pills (mobile)
+   - Add IntersectionObserver for scroll sync
+
+3. **Home page hero**:
+   - File: `app/page.tsx`
+   - Implement featured work grid with outcome metrics
+   - Hero-first navigation (work cards are primary discovery)
+
+### Content Files to Create
+
+4. Case study content (MDX or Convex):
+   - `content/work/ripple-agent.mdx` (or similar)
+   - Structure: hero metadata + 6 sections
+
+5. Update `docs/portfolio-prd.md` to align with this strategy
+
+---
+
+## Decisions Made
+
+Based on your input:
+
+1. **First case study**: AI Agent Work (Ripple, DC Knowledge Base) - directly relevant to AI labs
+2. **Claude Code transparency**: Show everything, but with progressive disclosure layers
+3. **Lab content available**: Portfolio components, Ledgy prototypes, AI agent demos + willing to build new
+
+---
+
+## Part 8: Progressive Disclosure Framework
+
+Your concern about content overload is spot-on. The solution: **layers that reveal depth on demand**.
+
+### The Problem with "Showing Everything"
+
+You have rich content (Claude Code workflows, agent architecture, prompts, code). Dumping it all creates two failure modes:
+1. **Recruiter overwhelm**: They bounce because it looks like a dev portfolio
+2. **Designer dismissal**: They assume you're an engineer playing designer
+
+### The Solution: Three Layers Mapped to Scrollytelling
+
+The progressive disclosure layers now map directly to the results-first scrollytelling structure:
+
+| Layer | What it answers | Where it lives |
+|-------|-----------------|----------------|
+| **Layer 1 (Surface)** | "What is this? Should I care?" | Results-first hero (above fold) |
+| **Layer 2 (Process)** | "How do they think?" | Sections 01-03, 05-06 (scroll into) |
+| **Layer 3 (Technical)** | "Can they actually build?" | Collapsibles inside Section 04 "System" |
+
+---
+
+### Layer 1 — Surface (30 seconds)
+
+**Location**: Results-first hero, always visible above the fold.
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│ LAYER 1: RESULTS-FIRST HERO                                     │
+│ ─────────────────────────────────────────────────────────────── │
+│ [Beautiful visual: shipped product, chart, or key outcome]      │
+│                                                                 │
+│ PROJECT TITLE                                                   │
+│ AI agent that [specific outcome] for [user type]                │
+│                                                                 │
+│ ┌──────────┐ ┌──────────┐ ┌──────────┐                         │
+│ │ +40%     │ │ -35%     │ │ 10K      │  ← Impact metrics       │
+│ │ adoption │ │ time     │ │ users    │                         │
+│ └──────────┘ └──────────┘ └──────────┘                         │
+│                                                                 │
+│ Role: Lead Designer · Timeline: 6 months · Stack: React, Claude │
+│                                                                 │
+│ [Read the story ↓]                                              │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**Why results-first**: Recruiters get talking points instantly. Design leads see outcome + craft before committing to read. Creates curiosity ("How did they achieve that?").
+
+---
+
+### Layer 2 — Process (5-15 minutes)
+
+**Location**: Sections 01, 02, 03, 05, 06 of the scrollytelling structure.
+
+```
+LAYER 2: THE STORY (scroll into from hero)
+├── 01 Problem      — Context, user pain, business stakes
+├── 02 Constraints  — What made this hard (tech, timeline, compliance)
+├── 03 Approach     — Key decisions, tradeoffs, experiments
+├── 05 Use Cases    — Interactive cards showing scenarios → outcomes
+└── 06 Results      — Expanded metrics, testimonials, learnings
+```
+
+Design leads dig into this. They're evaluating:
+- Design judgment (can they make hard calls?)
+- Process clarity (do they know WHY?)
+- Collaboration (how did they work with eng/PM?)
+- Self-awareness (do they acknowledge constraints?)
+
+---
+
+### Layer 3 — Technical (on demand)
+
+**Location**: Collapsible sections INSIDE Section 04 "System".
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│ 04 SYSTEM (Layer 3 lives here)                                  │
+│ ─────────────────────────────────────────────────────────────── │
+│ [System diagram: visible by default]                            │
+│ [Key flows: visible by default]                                 │
+│                                                                 │
+│ ▶ Architecture Decisions [click to expand]                      │
+│   └─ Deep reasoning, alternative approaches considered          │
+│                                                                 │
+│ ▶ Claude Code Workflow [click to expand]                        │
+│   └─ Actual prompts, iteration examples, PR links               │
+│                                                                 │
+│ ▶ Code Samples [click to expand]                                │
+│   └─ Key snippets with annotations                              │
+│                                                                 │
+│ ▶ Data Model [click to expand]                                  │
+│   └─ Schema, relationships, constraints                         │
+│                                                                 │
+│ ▶ GitHub Repository [external link]                             │
+│ ▶ Try It Live [link to lab demo]                                │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**Why collapsibles inside Section 04**:
+- **Designers scroll past** — They see the diagram, get the gist, continue to Use Cases
+- **Engineers click in** — Technical depth is discoverable within 1-2 clicks (xAI requirement)
+- **Not a separate tab** — Content is discoverable by scrolling, not hidden behind tabs
+
+---
+
+### Implementation: Scroll Sync + Collapsibles
+
+**Scroll sync** (IntersectionObserver):
+- Highlights active section on sticky left rail
+- Updates rail content (number, title, summary)
+- Triggers micro-animations on section entry
+
+**Collapsibles** (Section 04 only):
+- Collapsed by default
+- Clearly labeled as technical ("Architecture", "Code", "Prompts")
+- Designers skip naturally
+- Engineers seek them out
+
+**Motion + accessibility**:
+- Staggered reveals on section entry
+- `prefers-reduced-motion` support
+- Keyboard-navigable anchors
+- `scroll-margin-top` to avoid header overlap
+
+---
+
+## Part 9: AI Agent Case Study Structure
+
+Specific guidance for your first case study, using the results-first scrollytelling format:
+
+### Project: Ripple Agent (or combine with DC Knowledge Base)
+
+---
+
+#### Results-First Hero (Above Fold)
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│ [Visual: Agent interface or feedback-to-insight transformation] │
+│                                                                 │
+│ RIPPLE: AI FEEDBACK AUTOMATION                                  │
+│ AI agent that transforms scattered customer feedback            │
+│ into structured product intelligence.                           │
+│                                                                 │
+│ ┌──────────┐ ┌──────────┐ ┌──────────┐                         │
+│ │ [X]      │ │ [Y] hrs  │ │ [Z]%     │                         │
+│ │ items/mo │ │ saved    │ │ faster   │                         │
+│ └──────────┘ └──────────┘ └──────────┘                         │
+│                                                                 │
+│ Role: Design + Implementation · Stack: Claude API, n8n          │
+│                                                                 │
+│ [Read the story ↓]                                              │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+#### 01 Problem
+
+- What was the workflow before? (Manual, scattered, painful)
+- What was the user/business pain?
+- Why did you decide to build an agent vs. traditional tool?
+
+---
+
+#### 02 Constraints
+
+- Technical: API limits, latency requirements, data privacy
+- Timeline: How fast did this need to ship?
+- Scope: What couldn't you do in v1?
+
+---
+
+#### 03 Approach
+
+- How did you prototype it?
+- What did the design process look like for an AI product?
+- How did you think about edge cases, failures, user trust?
+- Key decisions (3-4 cards):
+  1. Why agent architecture vs. simpler automation
+  2. How you designed the prompt structure
+  3. How you handled uncertainty/errors
+  4. How you made it feel trustworthy to users
+
+---
+
+#### 04 System (with Layer 3 collapsibles)
+
+**Visible by default**:
+- System diagram showing feedback → processing → output flow
+- Key components and their roles
+
+**Collapsible deep-dives**:
+- ▶ Agent Architecture → Detailed data flows, error handling
+- ▶ Prompt Engineering → Actual prompts with annotations
+- ▶ n8n Workflow → Screenshots or live link
+- ▶ Iteration Log → How it evolved (v1 → v2 → v3)
+
+---
+
+#### 05 Use Cases (Interactive)
+
+Filter pills: `Product Team` | `Customer Success` | `Leadership`
+
+| Use Case | Scenario | Outcome |
+|----------|----------|---------|
+| Weekly Digest | Product team needs synthesized feedback | 2 hrs → 10 min |
+| Urgent Escalation | CS flags critical issue pattern | Detected in minutes |
+| Board Reporting | Leadership needs trend summary | Auto-generated |
+
+Each card expands to show: scenario → how agent handles → outcome with metrics.
+
+---
+
+#### 06 Results
+
+- **Quantitative**: Time saved, accuracy rates, usage adoption
+- **Qualitative**: Team feedback, workflow changes, trust building
+- **Learnings**: What you'd do differently, what surprised you
+- **Try It**: Link to demo or video
+
+---
+
+## Part 10: Lab Strategy
+
+You have rich assets. Here's how to prioritize:
+
+### Lab Experiments - Priority Order
+
+**Must Have (Before Outreach)**
+1. **One AI agent demo** - Live version of Ripple or similar, even simplified
+2. **Portfolio "how it's built"** - Meta-demo showing Claude Code workflow
+
+**Nice to Have (Phase 2)**
+3. **Ledgy component** - Stakeholder dashboard widget, interactive
+4. **New showcase piece** - Something built specifically to demonstrate skill
+
+### Lab Page Structure
+
+```
+/lab
+
+EXPERIMENTS
+
+Interactive demos of things I've built.
+Each one ships real code, not just mockups.
+
+┌──────────────────────┐ ┌──────────────────────┐
+│ AI FEEDBACK AGENT    │ │ HOW THIS SITE        │
+│ [Live demo]          │ │ WAS BUILT            │
+│ Try the agent that   │ │ [Live demo]          │
+│ processes feedback   │ │ Claude Code workflow │
+│ • Claude API         │ │ from prompt to PR    │
+│ • n8n               │ │ • Next.js 15         │
+└──────────────────────┘ │ • Claude Code        │
+                        └──────────────────────┘
+```
+
+### The "How This Site Was Built" Demo
+
+This is your secret weapon for Anthropic. It's meta but powerful:
+- Show actual prompts you used to build the portfolio
+- Show the code they generated
+- Show your iteration process
+- Make it interactive (visitors can see different prompts)
+
+This answers "can this person work with Claude Code?" without you having to claim it.
+
+---
+
+## Part 11: Final Checklist
+
+### Before Any Outreach
+
+- [ ] Home page hero with featured work grid (results visible)
+- [ ] One case study (AI Agent Work) with scrollytelling structure:
+  - [ ] Results-first hero with 3 impact metrics
+  - [ ] 6 sections (Problem → Constraints → Approach → System → Use Cases → Results)
+  - [ ] Sticky left rail (desktop) / horizontal pills (mobile)
+  - [ ] Layer 3 collapsibles inside Section 04
+- [ ] Lab page with at least 1 demo
+- [ ] Agent page functional
+- [ ] GitHub visible in header (already done ✓)
+- [ ] Mobile-responsive: hero + scrollytelling + bottom dock
+
+### Technical Implementation
+
+- [ ] Remove tabs from `lib/route-config.ts`
+- [ ] Implement IntersectionObserver scroll sync
+- [ ] Build collapsible components for Section 04
+- [ ] Build interactive Use Cases cards with filters
+
+### Before Portfolio Presentation
+
+- [ ] Second case study (DC or Stakeholder Dashboards)
+- [ ] Practice 25-minute presentation version
+- [ ] Prepare for technical questions
+- [ ] Know your metrics cold
+
+### Content Production Order
+
+1. **Week 1**: Home hero + AI Agent case study hero + sections 01-03
+2. **Week 2**: AI Agent sections 04-06 (with collapsibles) + first lab demo
+3. **Week 3**: Agent page trained on your content
+4. **Week 4**: Second case study (lighter treatment)
+5. **Ongoing**: Add lab experiments as you build
+
+---
+
+## Summary
+
+**Your portfolio strategy in one line:**
+
+> Show outcome immediately, reveal process on demand, prove technical depth for those who seek it.
+
+**The unique advantage you're building:**
+
+Most designer portfolios are galleries. Yours will be proof. The AI agent demo proves you build. The Claude Code story proves you ship code. The portfolio itself—running on AI—proves you're not just talking about the future, you're already there.
+
+---
+
+## Part 12: Trust Artifacts Layer
+
+Beyond case studies, you need "proof objects" that reduce trust risk:
+
+### Evidence Ledger
+A compact, scannable list of concrete proofs:
+- PR links (merged code)
+- Agent demo links (live systems)
+- Decision log snapshots
+- Metrics with dates
+
+Can live as a sidebar section or dedicated page. Think of it as your "receipts."
+
+### Decision Log Pattern
+For each case study, include a compact decision log:
+
+```
+DECISION LOG: [Project Name]
+
+┌─────────────┬──────────────────┬─────────────┬───────────────┐
+│ Inputs      │ Options          │ Choice      │ Impact        │
+├─────────────┼──────────────────┼─────────────┼───────────────┤
+│ User research│ A: Full rebuild │ B: Iterative│ 40% faster    │
+│ showed X    │ B: Iterative     │             │ delivery      │
+├─────────────┼──────────────────┼─────────────┼───────────────┤
+│ Compliance  │ A: Custom UI     │ A: Custom   │ Zero audit    │
+│ required Y  │ B: Standard comp │             │ issues        │
+└─────────────┴──────────────────┴─────────────┴───────────────┘
+```
+
+This is GOLD for design challenge rounds—shows how you think under constraints in 5 lines.
+
+### Proof-of-Work PDF (AI-Generated to Avoid Staleness)
+A single page recruiters can forward internally:
+- Your photo + name + title
+- 3 proof points (10+ years, AI agents, ships code)
+- 3 project thumbnails with 1-line outcomes
+- QR code to portfolio
+- Contact info
+
+**Why this matters**: Recruiters copy-paste to Slack. Give them something formatted to forward.
+
+> [!warning] Staleness Risk
+> Static PDFs and evidence ledgers go stale quickly. Stale evidence (outdated metrics, old project lists) undermines trust instead of building it.
+>
+> **Solution: AI-Generated PDF**
+> Build a simple tool (or use the Agent) that:
+> 1. Pulls your current case study data (titles, outcomes, metrics)
+> 2. Generates a fresh PDF on demand
+> 3. Timestamps it ("Generated January 2026")
+>
+> This could be:
+> - A `/generate-pdf` button on your portfolio that hits an API
+> - Part of your Agent: "Generate my proof-of-work PDF"
+> - A simple script you run when needed
+>
+> **Bonus**: This IS the hero project territory—a useful AI tool that solves a real problem (keeping portfolio collateral fresh).
+
+### Redacted Depth (With Safe Reveal Mechanism)
+For sensitive Ledgy work:
+- Show what you can publicly (anonymized, high-level)
+- Add "Full version available on request" with clear path
+
+> [!note] Safe Reveal Mechanism
+> "Full version on request" fails when recruiters actually ask and you have no system. Options:
+>
+> 1. **Private deck link**: Password-protected PDF or Notion page with full details. Share password in interviews.
+> 2. **NDA-gated reveal**: "Happy to share full details under mutual NDA during interview process."
+> 3. **Live walkthrough**: "I walk through the full version in portfolio presentations."
+>
+> **Recommendation**: Create a private case study deck (PDF or Notion) for each sensitive project. Share link + password after recruiter screen or in portfolio presentation. This is a common pattern—interviewers expect it.
+
+- Creates curiosity + respects NDA
+- Gives you something concrete to offer when asked
+
+---
+
+## Part 13: UX Direction Vocabulary
+
+Three distinct feels to consider for your portfolio's personality:
+
+### Direction A: Lab + Ledger
+- Precise, scientific, but warm
+- Ledger-like grids with lab notes aesthetic
+- Feels like a briefing room
+- **Best for**: xAI (first-principles), technical reviewers
+
+### Direction B: Operator Console
+- Crisp monochrome, fast-scan blocks
+- Evidence-first, minimal decoration
+- Feels like a control panel
+- **Best for**: Speed-oriented cultures (OpenAI, Ramp)
+
+### Direction C: Field Notes
+- Narrative, textured, artifact-driven
+- Feel of a working notebook with proofs embedded
+- More personal, shows thinking process
+- **Best for**: Anthropic (reasoning), Block (stories)
+
+**Recommendation**: Start with Operator Console as base, add Lab + Ledger elements for technical sections, Field Notes personality in case study narratives.
+
+---
+
+## Part 14: Hero Project Placeholder
+
+> [!note] TO BRAINSTORM
+> You mentioned wanting to work hard on a hero project—potentially an AI app idea that's relevant to Ledgy AND AI labs. This section is a placeholder for that conversation.
+
+### What makes a strong hero project:
+1. **Relevance to targets**: Shows AI product thinking
+2. **Demonstrates your edge**: Designer who builds, not just designs
+3. **Shipping evidence**: Actually deployed, not just a concept
+4. **Domain connection**: Ties to fintech/equity expertise if possible
+
+### Potential directions to explore:
+- AI tool for equity/compensation decisions
+- Agent that helps with financial planning/reporting
+- Claude-powered tool for complex domain navigation
+- Something that solves a problem you've experienced at Ledgy
+- **Portfolio PDF generator** — The AI-generated proof-of-work PDF solves a real problem (staleness) and demonstrates AI fluency. Could be the hero project itself.
+
+### Criteria for the hero project:
+- [ ] Can build in reasonable time
+- [ ] Demonstrates AI fluency (not just a wrapper)
+- [ ] Has real utility (not a toy demo)
+- [ ] Connects to your narrative
+- [ ] Can be shown live in portfolio
+- [ ] Serves BOTH AI labs AND fintech targets (doesn't over-index on one)
+
+**Next step**: Brainstorm this with Claude in a separate conversation, then update this section with the chosen project and plan.
+
+---
+
+## Part 15: Critical Issues Addressed
+
+Summary of risks identified and how this plan addresses them:
+
+| Issue | Risk Level | Resolution |
+|-------|-----------|------------|
+| Hero live API dependency | Critical | Static hero with CTA to agent page; no live API calls on load |
+| AI over-indexing | Critical | Domain tags instead of "AI designer"; Block/Ramp sections emphasize fintech + leadership |
+| xAI technical-first path | High | GitHub visible in header on EVERY page; Layer 3 collapsibles within 1-2 clicks |
+| Tabs hide content | High | **Replaced with scrollytelling** — 6-section structure with sticky rail + scroll sync |
+| Problem-first case studies | High | **Replaced with results-first hero** — Outcomes above fold, story below |
+| Sidebar navigation | Medium | **Replaced with bottom dock** — Hero-first discovery, dock for deep navigation |
+| Lab/Agent gimmick risk | High | Explicit quality bar; "Option C: skip for v1" acknowledged |
+| Company names as posturing | Medium | Use domain tags ("AI Products · Fintech Systems") not company names |
+| NDA mechanism missing | Medium | Private deck + password system documented |
+| Evidence staleness | Medium | AI-generated PDF solution; potential hero project |
+
+### Key Architecture Decisions (January 2026)
+
+| Decision | Rationale |
+|----------|-----------|
+| **Bottom floating dock** | Mobile-native, gets out of the way, hero-first discovery |
+| **No sidebar** | Clean content area, spacious feel, dock handles navigation |
+| **Results-first hero** | Creates curiosity ("How did they achieve that?"), gives recruiters instant talking points |
+| **6-section scrollytelling** | Problem → Constraints → Approach → System → Use Cases → Results |
+| **Layer 3 inside Section 04** | Technical depth collapsible within System section, not a separate tab |
+| **GitHub in header** | Visible on every page, satisfies xAI technical-first requirement |
+
+---
+
+## Part 16: What This Plan Does NOT Cover
+
+Out of scope for this strategy document (handle separately):
+- Actual content writing for case studies
+- Technical implementation of portfolio site
+- Interview preparation and presentation practice
+- Network activation and outreach timing
+- Specific metrics/numbers for case studies (need to gather from Ledgy)
+
+These are execution concerns, not strategy concerns.

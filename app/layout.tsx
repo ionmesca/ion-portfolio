@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist_Mono } from "next/font/google";
 import { ThemeProvider } from "./providers/theme-provider";
 import { ConvexClientProvider } from "./providers/convex-client-provider";
+import { AppShell } from "@/components/layout/app-shell";
 import "./globals.css";
 
 const geistMono = Geist_Mono({
@@ -26,7 +27,7 @@ export default function RootLayout({
       >
         <ThemeProvider>
           <ConvexClientProvider>
-            {children}
+            <AppShell>{children}</AppShell>
           </ConvexClientProvider>
         </ThemeProvider>
       </body>
