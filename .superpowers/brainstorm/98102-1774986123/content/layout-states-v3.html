@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Layout States v3</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#000; color:#fff; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; }
+
+  /* Top nav bar — outside the card */
+  .navbar { display:flex; align-items:center; justify-content:space-between; padding:16px 32px; border-bottom:1px solid #111; }
+  .nav-left { display:flex; align-items:center; gap:24px; }
+  .nav-name { font-size:14px; font-weight:600; color:#fff; }
+  .nav-tabs { display:flex; gap:4px; }
+  .nav-tab { padding:6px 14px; font-size:13px; color:#555; cursor:pointer; border-radius:6px; transition:all 0.15s; }
+  .nav-tab:hover { color:#888; }
+  .nav-tab.active { color:#fff; font-weight:500; }
+  .nav-right { display:flex; align-items:center; }
+  .avatar { width:32px; height:32px; border-radius:50%; background:linear-gradient(135deg, #333, #222); border:1px solid #222; }
+
+  /* Main content area */
+  .main { display:flex; height:calc(100vh - 57px); }
+
+  /* Left panel — project list */
+  .panel-left { border-right:1px solid #151515; display:flex; flex-direction:column; overflow-y:auto; }
+  .list { padding:8px; }
+  .list-item { display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:8px; cursor:pointer; transition:background 0.15s; }
+  .list-item:hover { background:rgba(255,255,255,0.04); }
+  .list-item.selected { background:rgba(255,255,255,0.07); }
+  .list-icon { width:28px; height:28px; border-radius:7px; flex-shrink:0; }
+  .list-title { font-size:13px; font-weight:500; color:#fff; }
+  .list-sub { font-size:11px; color:#444; margin-top:1px; }
+  .list-arrow { color:#333; font-size:12px; margin-left:auto; }
+
+  /* Detail panel */
+  .detail { padding:24px; display:flex; flex-direction:column; gap:16px; overflow-y:auto; border-right:1px solid #151515; }
+  .detail-header { display:flex; align-items:center; justify-content:space-between; }
+  .detail-title-row { display:flex; align-items:center; gap:10px; }
+  .detail-icon { width:32px; height:32px; border-radius:8px; }
+  .detail-name { font-size:16px; font-weight:600; }
+  .esc-badge { font-size:11px; color:#444; padding:4px 8px; border:1px solid #1a1a1a; border-radius:4px; }
+  .detail-desc { font-size:13px; color:#777; line-height:1.65; }
+  .stats { display:flex; gap:12px; }
+  .stat { flex:1; padding:14px; border-radius:10px; background:rgba(255,255,255,0.025); }
+  .stat-value { font-size:20px; font-weight:600; color:#ff9f6a; }
+  .stat-label { font-size:11px; color:#444; margin-top:3px; }
+  .meta-label { font-size:10px; text-transform:uppercase; letter-spacing:0.8px; color:#333; }
+  .meta-value { font-size:13px; color:#888; margin-top:4px; }
+  .tags { display:flex; gap:6px; flex-wrap:wrap; margin-top:4px; }
+  .tag { font-size:11px; padding:3px 8px; border-radius:4px; background:rgba(255,255,255,0.04); color:#555; }
+
+  /* Media gallery — vertical scroll */
+  .gallery { flex:1; overflow-y:auto; padding:20px; display:flex; flex-direction:column; gap:16px; }
+  .gallery-item { border-radius:12px; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:11px; color:#333; }
+
+  /* Hero / empty state */
+  .hero { flex:1; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:6px; }
+  .hero-name { font-size:36px; font-weight:300; color:rgba(255,255,255,0.08); letter-spacing:-0.5px; }
+  .hero-role { font-size:13px; color:rgba(255,255,255,0.15); }
+
+  /* Section label */
+  .section-label { font-size:11px; text-transform:uppercase; letter-spacing:1px; color:#333; margin:40px 32px 12px; }
+
+  .questions { padding:32px; border-top:1px solid #111; margin-top:0; }
+  .questions p { color:#555; font-size:13px; margin-bottom:8px; }
+  .questions ul { color:#777; font-size:14px; line-height:2; padding-left:20px; }
+</style>
+</head>
+<body>
+
+<!-- ==================== STATE 1: NOTHING SELECTED ==================== -->
+<div class="section-label">State 1: Nothing Selected</div>
+<div style="border:1px solid #181818; border-radius:12px; overflow:hidden; margin:0 32px 48px; height:480px; display:flex; flex-direction:column;">
+  <!-- Nav bar -->
+  <div class="navbar">
+    <div class="nav-left">
+      <div class="nav-name">Ion Mesca</div>
+      <div class="nav-tabs">
+        <div class="nav-tab active">Projects</div>
+        <div class="nav-tab">Insights</div>
+      </div>
+    </div>
+    <div class="nav-right">
+      <div class="avatar"></div>
+    </div>
+  </div>
+  <!-- Body -->
+  <div style="display:flex; flex:1; overflow:hidden;">
+    <!-- Left list -->
+    <div class="panel-left" style="width:320px; min-width:320px;">
+      <div class="list">
+        <div class="list-item">
+          <div class="list-icon" style="background:rgba(255,159,106,0.15);"></div>
+          <div style="flex:1;"><div class="list-title">Ledgy Dashboards</div><div class="list-sub">equity management redesign</div></div>
+          <div class="list-arrow">&#8250;</div>
+        </div>
+        <div class="list-item">
+          <div class="list-icon" style="background:rgba(255,255,255,0.05);"></div>
+          <div style="flex:1;"><div class="list-title">Beets</div><div class="list-sub">AI recipe platform</div></div>
+          <div class="list-arrow">&#8250;</div>
+        </div>
+        <div class="list-item">
+          <div class="list-icon" style="background:rgba(255,255,255,0.05);"></div>
+          <div style="flex:1;"><div class="list-title">Fin AI</div><div class="list-sub">financial dashboard concept</div></div>
+          <div class="list-arrow">&#8250;</div>
+        </div>
+        <div class="list-item">
+          <div class="list-icon" style="background:rgba(255,255,255,0.05);"></div>
+          <div style="flex:1;"><div class="list-title">Claude Agent</div><div class="list-sub">conversational portfolio</div></div>
+          <div class="list-arrow">&#8250;</div>
+        </div>
+        <div class="list-item">
+          <div class="list-icon" style="background:rgba(255,255,255,0.05);"></div>
+          <div style="flex:1;"><div class="list-title">Design System</div><div class="list-sub">component library &amp; tokens</div></div>
+          <div class="list-arrow">&#8250;</div>
+        </div>
+      </div>
+    </div>
+    <!-- Empty hero -->
+    <div class="hero">
+      <div class="hero-name">Design Engineer</div>
+      <div class="hero-role">select a project to explore</div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== STATE 2: PROJECT SELECTED ==================== -->
+<div class="section-label">State 2: Project Selected</div>
+<div style="border:1px solid #181818; border-radius:12px; overflow:hidden; margin:0 32px 48px; height:520px; display:flex; flex-direction:column;">
+  <!-- Nav bar -->
+  <div class="navbar">
+    <div class="nav-left">
+      <div class="nav-name">Ion Mesca</div>
+      <div class="nav-tabs">
+        <div class="nav-tab active">Projects</div>
+        <div class="nav-tab">Insights</div>
+      </div>
+    </div>
+    <div class="nav-right">
+      <div class="avatar"></div>
+    </div>
+  </div>
+  <!-- Body -->
+  <div style="display:flex; flex:1; overflow:hidden;">
+    <!-- Collapsed left list -->
+    <div class="panel-left" style="width:200px; min-width:200px;">
+      <div class="list">
+        <div class="list-item selected">
+          <div class="list-icon" style="width:24px; height:24px; background:rgba(255,159,106,0.15);"></div>
+          <div class="list-title" style="font-size:12px;">Ledgy</div>
+        </div>
+        <div class="list-item">
+          <div class="list-icon" style="width:24px; height:24px; background:rgba(255,255,255,0.03);"></div>
+          <div class="list-title" style="font-size:12px; color:#333;">Beets</div>
+        </div>
+        <div class="list-item">
+          <div class="list-icon" style="width:24px; height:24px; background:rgba(255,255,255,0.03);"></div>
+          <div class="list-title" style="font-size:12px; color:#333;">Fin AI</div>
+        </div>
+        <div class="list-item">
+          <div class="list-icon" style="width:24px; height:24px; background:rgba(255,255,255,0.03);"></div>
+          <div class="list-title" style="font-size:12px; color:#333;">Claude Agent</div>
+        </div>
+        <div class="list-item">
+          <div class="list-icon" style="width:24px; height:24px; background:rgba(255,255,255,0.03);"></div>
+          <div class="list-title" style="font-size:12px; color:#333;">Design System</div>
+        </div>
+      </div>
+    </div>
+    <!-- Detail panel -->
+    <div class="detail" style="width:300px; min-width:300px;">
+      <div class="detail-header">
+        <div class="detail-title-row">
+          <div class="detail-icon" style="background:rgba(255,159,106,0.15);"></div>
+          <div class="detail-name">Ledgy Dashboards</div>
+        </div>
+        <div class="esc-badge">Esc</div>
+      </div>
+      <div class="detail-desc">Redesigned the equity management dashboard for Ledgy, improving data density while maintaining clarity across complex cap table views.</div>
+      <div class="stats">
+        <div class="stat">
+          <div class="stat-value">40%</div>
+          <div class="stat-label">faster workflows</div>
+        </div>
+        <div class="stat">
+          <div class="stat-value">12</div>
+          <div class="stat-label">screens shipped</div>
+        </div>
+      </div>
+      <div>
+        <div class="meta-label">Role</div>
+        <div class="meta-value">Lead Design Engineer</div>
+      </div>
+      <div>
+        <div class="meta-label">Stack</div>
+        <div class="tags">
+          <div class="tag">React</div>
+          <div class="tag">TypeScript</div>
+          <div class="tag">D3.js</div>
+        </div>
+      </div>
+    </div>
+    <!-- Media gallery — VERTICAL scroll -->
+    <div class="gallery">
+      <div class="gallery-item" style="width:100%; min-height:280px; background:linear-gradient(135deg, rgba(255,159,106,0.1), rgba(255,159,106,0.03));">dashboard overview</div>
+      <div class="gallery-item" style="width:100%; min-height:240px; background:rgba(255,255,255,0.025);">cap table detail</div>
+      <div class="gallery-item" style="width:100%; min-height:260px; background:rgba(255,255,255,0.025);">data visualization</div>
+      <div class="gallery-item" style="width:100%; min-height:220px; background:rgba(255,255,255,0.02);">mobile view</div>
+    </div>
+  </div>
+</div>
+
+<div class="questions">
+  <p>Remaining questions:</p>
+  <ul>
+    <li>Does the left panel collapse when selected (as shown) or stay full-width with descriptions visible?</li>
+    <li>What do you want in the default empty state — a brief intro, or just the list filling the space?</li>
+  </ul>
+</div>
+
+</body>
+</html>

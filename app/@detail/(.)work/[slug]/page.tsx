@@ -16,9 +16,9 @@ export default async function DetailPanel({
   const { prev, next } = getAdjacentProjects(slug);
 
   return (
-    <div className="fixed inset-0 z-40 flex">
-      <div className="hidden md:block w-80 flex-shrink-0" />
-      <div className="flex flex-1">
+    <div className="fixed inset-0 z-40 flex bg-bg-base">
+      <div className="hidden md:block w-[432px] flex-shrink-0" />
+      <div className="flex flex-1 overflow-hidden">
         <ProjectDetail project={meta} prev={prev} next={next} />
         <div className="hidden md:flex flex-1">
           <ProjectGallery project={meta} />

@@ -58,8 +58,8 @@ export default async function ProjectPage({
               href={`/work/${p.slug}`}
               className={`flex items-center gap-3 px-2.5 py-2 rounded-lg text-[13px] ${
                 p.slug === slug
-                  ? "bg-bg-surface font-medium text-text-primary"
-                  : "text-text-tertiary hover:bg-bg-surface/50"
+                  ? "bg-bg-elevated font-medium text-text-primary"
+                  : "text-text-tertiary hover:bg-bg-elevated/50"
               }`}
             >
               {p.title}

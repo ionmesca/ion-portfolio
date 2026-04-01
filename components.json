@@ -7,8 +7,7 @@
     "config": "",
     "css": "app/globals.css",
     "baseColor": "zinc",
-    "cssVariables": true,
-    "prefix": ""
+    "cssVariables": true
   },
   "iconLibrary": "lucide",
   "aliases": {

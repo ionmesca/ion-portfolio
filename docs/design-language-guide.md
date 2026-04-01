@@ -2,6 +2,8 @@
 
 > The visual and interaction system for Ion Mesca's portfolio. A design engineer's proof-of-work—not a gallery, but a machine that reduces risk.
 
+**Scope**: This guide covers the visual language, token system, primitives, and page-agnostic layout patterns. Page-specific templates and custom narrative components are deferred by default and documented as experiments in Appendix D.
+
 ---
 
 ## Part 0: Critical Review of Current State
@@ -74,21 +76,7 @@ Playground demonstrates a type scale but it's not in CSS:
 
 **Action**: Fix :root to be proper dark mode defaults, or remove oklch and use hex consistently.
 
-### Issue 7: Missing Components for Content Strategy
-
-Per `docs/content-strategy.md`, these components are needed but don't exist:
-
-| Component | Purpose | Priority |
-|-----------|---------|----------|
-| `MetricCard` | Results-first hero (3 impact numbers) | Must have |
-| `Collapsible` | Section 04 technical depth | Must have |
-| `CaseStudyHero` | Results-first layout | Must have |
-| `StickyRail` | Desktop case study nav | Must have |
-| `MobileSectionNav` | Horizontal pill bar | Must have |
-| `UseCaseCard` | Filterable, expandable | High |
-| `RevealContainer` | Scroll-triggered stagger | High |
-
-### Issue 8: Motion Tokens Incomplete
+### Issue 7: Motion Tokens Incomplete
 
 **Exists**:
 ```css
@@ -158,6 +146,37 @@ This hybrid serves all audiences:
 - **Anthropic** sees reasoning traces and candid process
 - **Block/Ramp** see enterprise rigor and fintech depth
 - **OpenAI** sees shipping velocity and systems thinking
+
+---
+
+## Part 1.5: Visual Restraint Rules (Wow Without Kitsch)
+
+The system should feel premium and controlled. The goal is cinematic focus, not spectacle.
+
+> For a fast review, see `docs/visual-qa-checklist.md`.
+
+### Accent Budget
+- **One accent per viewport**. If a section has a strong accent, the rest should be monochrome.
+- **Use accent for meaning**, not decoration (status, emphasis, or CTA only).
+
+### Glow + Glass Rules
+- **Glow only on primary CTA or hero visual**, never both in the same viewport.
+- **Glass is reserved for floating UI** (dock, tooltips, modals), not content cards.
+
+### Shadow Discipline
+- **Two shadow levels max per screen** (default + elevated). Avoid stacking multiple glow + shadow + border.
+
+### Typography Restraint
+- **One headline style per screen**. If display type is used, avoid H1 elsewhere in that viewport.
+- **Body text stays neutral**; avoid colored paragraphs.
+
+### Motion Restraint
+- **One entrance pattern per section** (either fade+rise or stagger, not both).
+- **No motion on scroll by default**. Use motion for reveal or feedback, not continuous effects.
+
+### Imagery Rules
+- **Use 1 hero visual per page**. Supporting visuals should be small, schematic, or monochrome.
+- **Never mix photography + diagrams in the same section**.
 
 ---
 
@@ -507,47 +526,55 @@ AppShell
 
 ---
 
-### Case Study Components
+### Composition Patterns (Page-Agnostic)
 
-Based on the Results-First Scrollytelling structure from content strategy:
+These are reusable, page-agnostic patterns that keep the system coherent without locking us into specific page templates.
 
-#### Results-First Hero
-
-```
-CaseStudyHero
-├── Visual (key image/video)
-├── Title + Tagline
-├── Metrics (3 impact numbers)
-├── Metadata (role, timeline, stack)
-└── CTA ("Read the story ↓")
-```
-
-#### Scrollytelling Rail (Desktop)
+#### Hero (General)
 
 ```
-StickyRail (left, 280px)
-├── Project metadata
-├── Section progress (01-06)
-├── Current section highlight
-└── Quick links (live/repo)
-
-ScrollContent (right, flex-1)
-├── Section 01: Problem
-├── Section 02: Constraints
-├── Section 03: Approach
-├── Section 04: System (with collapsibles)
-├── Section 05: Use Cases (interactive cards)
-└── Section 06: Results
+Hero
+├── Title + Subhead
+├── Meta Chips (role, domain, timeframe)
+├── Primary CTA
+└── Visual (image, diagram, or short loop)
 ```
 
-#### Mobile Section Nav
-
-Horizontal scrollable pill bar:
+#### Split Layout (Aside + Content)
 
 ```
-[IMPACT] [01 Problem] [02 Constraints] [03 Approach] ...
-                      ← swipe →
+SplitLayout
+├── Aside (meta, nav, or summary)
+└── Content (stacked sections)
 ```
+
+#### Feature Grid
+
+```
+FeatureGrid
+├── Card (title + 1–2 lines)
+└── Optional media thumbnail
+```
+
+---
+
+## Part 3.5: Do / Don’t (Polish Rules)
+
+**Do**
+- Use one accent highlight per section and let whitespace carry the rest.
+- Pair dark surfaces with subtle borders instead of heavy shadows.
+- Keep typography calm: one display, one body, one caption per screen.
+- Use motion to clarify state changes (hover/press/reveal), not to decorate.
+- Let metrics and outcomes be the “wow,” not visual effects.
+
+**Don’t**
+- Stack glow + glass + heavy shadow on the same element.
+- Use multiple accent colors or gradients in a single section.
+- Mix photographic imagery with schematic visuals in the same block.
+- Animate everything on scroll; it reads as gimmick.
+- Use colored body paragraphs or excessive uppercase labels.
+
+> For a fast QA pass, see `docs/visual-qa-checklist.md`.
 
 ---
 
@@ -603,76 +630,29 @@ Horizontal scrollable pill bar:
 
 ---
 
-### Case Study Layout
-
-#### Desktop (≥1024px)
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│ Header (fixed)                                                   │
-├─────────────────────┬───────────────────────────────────────────┤
-│ Sticky Rail         │ Scrollable Content                         │
-│ (280px, sticky)     │ (flex-1, scrolls)                         │
-│                     │                                            │
-│ ┌─────────────────┐ │ ┌───────────────────────────────────────┐ │
-│ │ Project Title   │ │ │ Section 01: Problem                   │ │
-│ │ ───────────     │ │ │ [Content blocks...]                   │ │
-│ │ 01 Problem  ●   │ │ └───────────────────────────────────────┘ │
-│ │ 02 Constraints  │ │ ┌───────────────────────────────────────┐ │
-│ │ 03 Approach     │ │ │ Section 02: Constraints               │ │
-│ │ 04 System       │ │ │ [Content blocks...]                   │ │
-│ │ 05 Use Cases    │ │ └───────────────────────────────────────┘ │
-│ │ 06 Results      │ │ ...                                       │
-│ │ ───────────     │ │                                            │
-│ │ [Live Demo]     │ │                                            │
-│ │ [GitHub]        │ │                                            │
-│ └─────────────────┘ │                                            │
-├─────────────────────┴───────────────────────────────────────────┤
-│ Floating Dock (fixed)                                            │
-└─────────────────────────────────────────────────────────────────┘
-```
-
-#### Mobile
-
-```
-┌───────────────────────────┐
-│ Header (fixed)            │
-├───────────────────────────┤
-│ Hero (results-first)      │
-├───────────────────────────┤
-│ [Pill Nav] ← swipe →      │
-├───────────────────────────┤
-│ Content (full width)      │
-│ Sections stack vertically │
-├───────────────────────────┤
-│ Floating Dock (fixed)     │
-└───────────────────────────┘
-```
-
----
-
-### Sticky Rail Implementation
+### Split Layout (Sticky Aside)
 
 ```css
-.case-study-layout {
+.split-layout {
   display: grid;
   grid-template-columns: 280px 1fr;
   gap: 48px;
 }
 
-.sticky-rail {
+.sticky-aside {
   position: sticky;
   top: 96px; /* Header height + gap */
   height: fit-content;
-  max-height: calc(100vh - 192px); /* Viewport minus header and dock */
+  max-height: calc(100vh - 192px);
 }
 
 @media (max-width: 1023px) {
-  .case-study-layout {
+  .split-layout {
     display: block;
   }
-  .sticky-rail {
-    display: none; /* Use pill nav instead */
+  .sticky-aside {
+    position: static;
+    max-height: none;
   }
 }
 ```
@@ -985,6 +965,7 @@ Current contrast ratios (against #000000):
 - [x] Badge (variants: default, accent, success)
 - [x] Input
 - [x] TextLink
+- [ ] Collapsible
 
 #### Layout
 - [x] AppShell
@@ -992,17 +973,8 @@ Current contrast ratios (against #000000):
 - [x] FloatingDock
 - [x] Section, SectionLabel, SectionHeadline, SectionBody, SectionActions
 
-#### Case Study
-- [ ] CaseStudyHero (results-first)
-- [ ] StickyRail (desktop)
-- [ ] MobileSectionNav (pill bar)
-- [ ] Collapsible (for Section 04 technical depth)
-- [ ] UseCaseCard (interactive, filterable)
-- [ ] MetricCard (impact numbers)
-
 #### Motion
 - [ ] useReveal hook (IntersectionObserver)
-- [ ] useScrollSpy hook (section tracking)
 - [ ] RevealContainer (staggered children)
 
 ---
@@ -1399,11 +1371,6 @@ Update existing shadcn badge to add `accent` and `success` variants.
 
 | File | Component | Based on |
 |------|-----------|----------|
-| `components/case-study/metric-card.tsx` | MetricCard | New |
-| `components/case-study/case-study-hero.tsx` | CaseStudyHero | New |
-| `components/case-study/sticky-rail.tsx` | StickyRail | New |
-| `components/case-study/mobile-section-nav.tsx` | MobileSectionNav | New |
-| `components/case-study/use-case-card.tsx` | UseCaseCard | New |
 | `components/ui/collapsible.tsx` | Collapsible | shadcn + custom |
 | `components/motion/reveal.tsx` | Reveal, RevealGroup | New |
 
@@ -1453,3 +1420,63 @@ Update existing shadcn badge to add `accent` and `success` variants.
 ---
 
 *Last updated: January 2026*
+
+---
+
+## Appendix D: Case Study Templates (Experimental)
+
+These components are explicitly experimental. They are not required for the core design system and may change or be removed.
+
+### Results-First Case Study Hero
+
+```
+CaseStudyHero
+├── Visual (key image/video)
+├── Title + Tagline
+├── Metrics (3 impact numbers)
+├── Metadata (role, timeline, stack)
+└── CTA ("Read the story ↓")
+```
+
+### Scrollytelling Layout (Desktop)
+
+```
+StickyRail (left, 280px)
+├── Project metadata
+├── Section progress (01-06)
+├── Current section highlight
+└── Quick links (live/repo)
+
+ScrollContent (right, flex-1)
+├── Section 01: Problem
+├── Section 02: Constraints
+├── Section 03: Approach
+├── Section 04: System (with collapsibles)
+├── Section 05: Use Cases (interactive cards)
+└── Section 06: Results
+```
+
+### Mobile Section Nav
+
+Horizontal scrollable pill bar:
+
+```
+[IMPACT] [01 Problem] [02 Constraints] [03 Approach] ...
+                      ← swipe →
+```
+
+### Experimental Components
+
+| File | Component | Notes |
+|------|-----------|-------|
+| `components/case-study/case-study-hero.tsx` | CaseStudyHero | Results-first layout |
+| `components/case-study/sticky-rail.tsx` | StickyRail | Desktop navigation |
+| `components/case-study/mobile-section-nav.tsx` | MobileSectionNav | Mobile pills |
+| `components/case-study/use-case-card.tsx` | UseCaseCard | Filterable, expandable |
+| `components/case-study/metric-card.tsx` | MetricCard | Impact numbers |
+
+### Hooks
+
+| File | Hook | Notes |
+|------|------|-------|
+| `hooks/use-scroll-spy.ts` | useScrollSpy | Experimental section tracking |

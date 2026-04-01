@@ -1,0 +1,7 @@
+{"type":"server-started","port":63270,"host":"127.0.0.1","url_host":"localhost","url":"http://localhost:63270","screen_dir":"/Users/ionmesca/ion-portfolio/.superpowers/brainstorm/98102-1774986123/content","state_dir":"/Users/ionmesca/ion-portfolio/.superpowers/brainstorm/98102-1774986123/state"}
+{"type":"screen-added","file":"/Users/ionmesca/ion-portfolio/.superpowers/brainstorm/98102-1774986123/content/layout-states.html"}
+{"type":"screen-added","file":"/Users/ionmesca/ion-portfolio/.superpowers/brainstorm/98102-1774986123/content/layout-states-v2.html"}
+{"type":"screen-added","file":"/Users/ionmesca/ion-portfolio/.superpowers/brainstorm/98102-1774986123/content/layout-states-v3.html"}
+{"type":"screen-added","file":"/Users/ionmesca/ion-portfolio/.superpowers/brainstorm/98102-1774986123/content/identity-placement.html"}
+{"type":"screen-added","file":"/Users/ionmesca/ion-portfolio/.superpowers/brainstorm/98102-1774986123/content/landing-hero-v1.html"}
+{"type":"server-stopped","reason":"idle timeout"}

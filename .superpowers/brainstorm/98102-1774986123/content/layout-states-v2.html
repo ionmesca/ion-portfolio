@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Layout States</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#000; color:#fff; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; padding:40px; }
+  h2 { font-size:24px; font-weight:600; margin-bottom:6px; }
+  .subtitle { font-size:14px; color:#666; margin-bottom:32px; }
+  .label { font-size:11px; text-transform:uppercase; letter-spacing:1px; color:#555; margin-bottom:12px; }
+  .mockup { border:1px solid #222; border-radius:12px; overflow:hidden; margin-bottom:40px; }
+  .mockup-header { background:#111; padding:10px 16px; font-size:12px; color:#666; border-bottom:1px solid #222; }
+  .mockup-body { background:#0a0a0a; }
+
+  .panel-left { border-right:1px solid #1a1a1a; display:flex; flex-direction:column; }
+  .tabs { display:flex; gap:0; border-bottom:1px solid #1a1a1a; padding:16px 20px 0; }
+  .tab { padding:8px 16px; font-size:14px; color:#444; cursor:pointer; }
+  .tab.active { font-weight:600; color:#fff; border-bottom:2px solid #ff9f6a; }
+  .list { flex:1; overflow-y:auto; padding:8px 12px; }
+  .list-item { display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:8px; cursor:pointer; }
+  .list-item:hover { background:rgba(255,255,255,0.04); }
+  .list-item.selected { background:rgba(255,255,255,0.08); }
+  .list-icon { width:28px; height:28px; border-radius:6px; flex-shrink:0; }
+  .list-title { font-size:13px; font-weight:500; color:#fff; }
+  .list-sub { font-size:11px; color:#555; }
+
+  .detail { padding:20px 24px; display:flex; flex-direction:column; gap:16px; overflow-y:auto; border-right:1px solid #1a1a1a; }
+  .detail-header { display:flex; align-items:center; justify-content:space-between; }
+  .detail-title-row { display:flex; align-items:center; gap:10px; }
+  .detail-icon { width:32px; height:32px; border-radius:8px; }
+  .detail-name { font-size:16px; font-weight:600; }
+  .esc-badge { font-size:11px; color:#444; padding:4px 8px; border:1px solid #222; border-radius:4px; }
+  .detail-desc { font-size:13px; color:#888; line-height:1.6; }
+  .stats { display:flex; gap:12px; }
+  .stat { flex:1; padding:12px; border-radius:8px; background:rgba(255,255,255,0.03); }
+  .stat-value { font-size:18px; font-weight:600; color:#ff9f6a; }
+  .stat-label { font-size:11px; color:#555; margin-top:2px; }
+  .meta-label { font-size:11px; text-transform:uppercase; letter-spacing:0.5px; color:#444; }
+  .meta-value { font-size:13px; color:#999; margin-top:4px; }
+  .tags { display:flex; gap:6px; flex-wrap:wrap; margin-top:4px; }
+  .tag { font-size:11px; padding:3px 8px; border-radius:4px; background:rgba(255,255,255,0.05); color:#666; }
+
+  .gallery { flex:1; display:flex; gap:16px; padding:20px; overflow-x:auto; align-items:flex-start; }
+  .gallery-item { border-radius:12px; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:11px; color:#333; }
+
+  .hero { flex:1; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:8px; }
+  .hero-name { font-size:32px; font-weight:300; color:rgba(255,255,255,0.12); letter-spacing:-0.5px; }
+  .hero-role { font-size:13px; color:rgba(255,255,255,0.2); }
+
+  .questions { margin-top:8px; }
+  .questions ul { color:#888; font-size:14px; line-height:2; padding-left:20px; }
+</style>
+</head>
+<body>
+
+<h2>Layout States</h2>
+<p class="subtitle">How the three-panel layout behaves in default vs. selected states</p>
+
+<!-- STATE 1 -->
+<div class="label">State 1: Nothing Selected</div>
+<div class="mockup">
+  <div class="mockup-header">Default View</div>
+  <div class="mockup-body" style="display:flex; height:420px;">
+    <div class="panel-left" style="width:300px; min-width:300px;">
+      <div class="tabs">
+        <div class="tab active">Projects</div>
+        <div class="tab">Insights</div>
+      </div>
+      <div class="list">
+        <div class="list-item">
+          <div class="list-icon" style="background:rgba(255,159,106,0.2);"></div>
+          <div><div class="list-title">Ledgy Dashboards</div><div class="list-sub">equity management redesign</div></div>
+        </div>
+        <div class="list-item">
+          <div class="list-icon" style="background:rgba(255,255,255,0.06);"></div>
+          <div><div class="list-title">Beets</div><div class="list-sub">AI recipe platform</div></div>
+        </div>
+        <div class="list-item">
+          <div class="list-icon" style="background:rgba(255,255,255,0.06);"></div>
+          <div><div class="list-title">Fin AI</div><div class="list-sub">financial dashboard</div></div>
+        </div>
+        <div class="list-item">
+          <div class="list-icon" style="background:rgba(255,255,255,0.06);"></div>
+          <div><div class="list-title">Claude Agent</div><div class="list-sub">conversational portfolio</div></div>
+        </div>
+        <div class="list-item">
+          <div class="list-icon" style="background:rgba(255,255,255,0.06);"></div>
+          <div><div class="list-title">Design System</div><div class="list-sub">component library</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="hero">
+      <div class="hero-name">Ion Mesca</div>
+      <div class="hero-role">Design Engineer</div>
+    </div>
+  </div>
+</div>
+
+<!-- STATE 2 -->
+<div class="label">State 2: Project Selected</div>
+<div class="mockup">
+  <div class="mockup-header">Ledgy Dashboards selected</div>
+  <div class="mockup-body" style="display:flex; height:420px;">
+    <!-- Collapsed left panel -->
+    <div class="panel-left" style="width:200px; min-width:200px;">
+      <div class="tabs">
+        <div class="tab active" style="font-size:13px; padding:8px 12px;">Projects</div>
+        <div class="tab" style="font-size:13px; padding:8px 12px;">Insights</div>
+      </div>
+      <div class="list">
+        <div class="list-item selected">
+          <div class="list-icon" style="width:24px; height:24px; background:rgba(255,159,106,0.2);"></div>
+          <div class="list-title" style="font-size:12px;">Ledgy</div>
+        </div>
+        <div class="list-item">
+          <div class="list-icon" style="width:24px; height:24px; background:rgba(255,255,255,0.04);"></div>
+          <div class="list-title" style="font-size:12px; color:#444;">Beets</div>
+        </div>
+        <div class="list-item">
+          <div class="list-icon" style="width:24px; height:24px; background:rgba(255,255,255,0.04);"></div>
+          <div class="list-title" style="font-size:12px; color:#444;">Fin AI</div>
+        </div>
+        <div class="list-item">
+          <div class="list-icon" style="width:24px; height:24px; background:rgba(255,255,255,0.04);"></div>
+          <div class="list-title" style="font-size:12px; color:#444;">Claude Agent</div>
+        </div>
+        <div class="list-item">
+          <div class="list-icon" style="width:24px; height:24px; background:rgba(255,255,255,0.04);"></div>
+          <div class="list-title" style="font-size:12px; color:#444;">Design System</div>
+        </div>
+      </div>
+    </div>
+    <!-- Detail panel -->
+    <div class="detail" style="width:320px; min-width:320px;">
+      <div class="detail-header">
+        <div class="detail-title-row">
+          <div class="detail-icon" style="background:rgba(255,159,106,0.2);"></div>
+          <div class="detail-name">Ledgy Dashboards</div>
+        </div>
+        <div class="esc-badge">Esc</div>
+      </div>
+      <div class="detail-desc">Redesigned the equity management dashboard for Ledgy, improving data density while maintaining clarity across complex cap table views.</div>
+      <div class="stats">
+        <div class="stat">
+          <div class="stat-value">40%</div>
+          <div class="stat-label">faster workflows</div>
+        </div>
+        <div class="stat">
+          <div class="stat-value">12</div>
+          <div class="stat-label">screens shipped</div>
+        </div>
+      </div>
+      <div>
+        <div class="meta-label">Role</div>
+        <div class="meta-value">Lead Design Engineer</div>
+      </div>
+      <div>
+        <div class="meta-label">Stack</div>
+        <div class="tags">
+          <div class="tag">React</div>
+          <div class="tag">TypeScript</div>
+          <div class="tag">D3.js</div>
+        </div>
+      </div>
+    </div>
+    <!-- Media gallery -->
+    <div class="gallery">
+      <div class="gallery-item" style="min-width:260px; height:360px; background:linear-gradient(135deg, rgba(255,159,106,0.12), rgba(255,159,106,0.04));">screenshot 1</div>
+      <div class="gallery-item" style="min-width:300px; height:340px; background:rgba(255,255,255,0.03);">screenshot 2</div>
+      <div class="gallery-item" style="min-width:280px; height:350px; background:rgba(255,255,255,0.03);">screenshot 3</div>
+    </div>
+  </div>
+</div>
+
+<div class="questions">
+  <p style="color:#666; font-size:13px; margin-bottom:8px;">Questions:</p>
+  <ul>
+    <li>Does the left panel stay visible but collapsed (like shown), or fully hide when selected?</li>
+    <li>What should the empty/default state show when nothing is selected?</li>
+  </ul>
+</div>
+
+</body>
+</html>

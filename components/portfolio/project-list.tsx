@@ -8,7 +8,7 @@ export function ProjectList({ projects }: { projects: ProjectMeta[] }) {
   const { activeSlug, scrollToProject } = usePortfolio();
 
   return (
-    <div className="flex flex-col gap-0.5">
+    <div className="flex flex-col gap-1">
       {projects.map((project) => (
         <button
           key={project.slug}

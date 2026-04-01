@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Identity Placement</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#000; color:#fff; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; padding:40px; }
+  h2 { font-size:24px; font-weight:600; margin-bottom:4px; }
+  .subtitle { font-size:14px; color:#555; margin-bottom:40px; }
+  .section-label { font-size:11px; text-transform:uppercase; letter-spacing:1px; color:#444; margin-bottom:14px; }
+  .option-title { font-size:15px; font-weight:600; color:#fff; margin-bottom:4px; }
+  .option-desc { font-size:13px; color:#555; margin-bottom:16px; }
+
+  .frame { border:1px solid #181818; border-radius:12px; overflow:hidden; margin-bottom:48px; }
+
+  /* Nav bar */
+  .navbar { display:flex; align-items:center; justify-content:space-between; padding:14px 24px; border-bottom:1px solid #111; }
+  .nav-left { display:flex; align-items:center; gap:20px; }
+  .nav-name { font-size:14px; font-weight:600; color:#fff; }
+  .nav-tabs { display:flex; gap:2px; }
+  .nav-tab { padding:5px 12px; font-size:13px; color:#444; border-radius:6px; }
+  .nav-tab.active { color:#fff; font-weight:500; }
+  .nav-right { display:flex; align-items:center; gap:12px; }
+  .social { font-size:12px; color:#333; display:flex; gap:10px; }
+  .social span { cursor:pointer; transition:color 0.15s; }
+  .social span:hover { color:#666; }
+  .avatar { width:30px; height:30px; border-radius:50%; background:linear-gradient(135deg, #333, #1a1a1a); border:1px solid #222; flex-shrink:0; }
+
+  .body { display:flex; overflow:hidden; }
+  .panel-left { width:300px; min-width:300px; border-right:1px solid #111; display:flex; flex-direction:column; overflow-y:auto; }
+  .list { padding:6px 8px; }
+  .list-item { display:flex; align-items:center; gap:10px; padding:9px 12px; border-radius:8px; }
+  .list-icon { width:26px; height:26px; border-radius:6px; flex-shrink:0; background:rgba(255,255,255,0.04); }
+  .list-title { font-size:13px; font-weight:500; color:#ccc; }
+  .list-sub { font-size:11px; color:#333; margin-top:1px; }
+  .list-arrow { color:#222; font-size:12px; margin-left:auto; }
+
+  .right-area { flex:1; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:8px; }
+
+  /* Bio card styles */
+  .bio-card { padding:20px; display:flex; flex-direction:column; gap:12px; }
+  .bio-row { display:flex; align-items:center; gap:12px; }
+  .bio-avatar { width:48px; height:48px; border-radius:50%; background:linear-gradient(135deg, #333, #1a1a1a); border:1px solid #222; flex-shrink:0; }
+  .bio-name { font-size:15px; font-weight:600; }
+  .bio-role { font-size:12px; color:#555; }
+  .bio-text { font-size:13px; color:#666; line-height:1.6; }
+  .bio-social { display:flex; gap:14px; font-size:12px; color:#333; }
+  .bio-social a { color:#333; text-decoration:none; transition:color 0.15s; }
+  .bio-social a:hover { color:#888; }
+</style>
+</head>
+<body>
+
+<h2>Where does your identity live?</h2>
+<p class="subtitle">Three options for face, name, bio, and social links placement</p>
+
+<!-- ==================== OPTION A ==================== -->
+<div class="section-label">Option A: Nav bar identity — avatar click reveals dropdown</div>
+<div class="option-desc">Name in nav, socials next to avatar, click avatar for a bio popover. Minimal — keeps the list as the hero.</div>
+<div class="frame">
+  <div class="navbar">
+    <div class="nav-left">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <div class="avatar"></div>
+        <div class="nav-name">Ion Mesca</div>
+      </div>
+      <div class="nav-tabs">
+        <div class="nav-tab active">Projects</div>
+        <div class="nav-tab">Insights</div>
+      </div>
+    </div>
+    <div class="nav-right">
+      <div class="social">
+        <span>GitHub</span>
+        <span>LinkedIn</span>
+        <span>X</span>
+      </div>
+    </div>
+  </div>
+  <div class="body" style="height:300px;">
+    <div class="panel-left">
+      <div class="list">
+        <div class="list-item"><div class="list-icon" style="background:rgba(255,159,106,0.12);"></div><div style="flex:1;"><div class="list-title">Ledgy Dashboards</div><div class="list-sub">equity management redesign</div></div><div class="list-arrow">&#8250;</div></div>
+        <div class="list-item"><div class="list-icon"></div><div style="flex:1;"><div class="list-title">Beets</div><div class="list-sub">AI recipe platform</div></div><div class="list-arrow">&#8250;</div></div>
+        <div class="list-item"><div class="list-icon"></div><div style="flex:1;"><div class="list-title">Fin AI</div><div class="list-sub">financial dashboard</div></div><div class="list-arrow">&#8250;</div></div>
+      </div>
+    </div>
+    <div class="right-area">
+      <div style="font-size:14px; color:rgba(255,255,255,0.08);">select a project</div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== OPTION B ==================== -->
+<div class="section-label">Option B: Bio card at the top of the left panel</div>
+<div class="option-desc">Face + name + short bio above the project list. Socials in the nav bar on the right. Visitors see who you are immediately.</div>
+<div class="frame">
+  <div class="navbar">
+    <div class="nav-left">
+      <div class="nav-tabs">
+        <div class="nav-tab active">Projects</div>
+        <div class="nav-tab">Insights</div>
+      </div>
+    </div>
+    <div class="nav-right">
+      <div class="social">
+        <span>GitHub</span>
+        <span>LinkedIn</span>
+        <span>X</span>
+      </div>
+    </div>
+  </div>
+  <div class="body" style="height:380px;">
+    <div class="panel-left">
+      <!-- Bio at top of list -->
+      <div class="bio-card" style="border-bottom:1px solid #111;">
+        <div class="bio-row">
+          <div class="bio-avatar"></div>
+          <div>
+            <div class="bio-name">Ion Mesca</div>
+            <div class="bio-role">Design Engineer</div>
+          </div>
+        </div>
+        <div class="bio-text">I design and build interfaces for AI products. Previously at Ledgy. Based in Zurich.</div>
+      </div>
+      <div class="list">
+        <div class="list-item"><div class="list-icon" style="background:rgba(255,159,106,0.12);"></div><div style="flex:1;"><div class="list-title">Ledgy Dashboards</div><div class="list-sub">equity management redesign</div></div><div class="list-arrow">&#8250;</div></div>
+        <div class="list-item"><div class="list-icon"></div><div style="flex:1;"><div class="list-title">Beets</div><div class="list-sub">AI recipe platform</div></div><div class="list-arrow">&#8250;</div></div>
+        <div class="list-item"><div class="list-icon"></div><div style="flex:1;"><div class="list-title">Fin AI</div><div class="list-sub">financial dashboard</div></div><div class="list-arrow">&#8250;</div></div>
+      </div>
+    </div>
+    <div class="right-area">
+      <div style="font-size:14px; color:rgba(255,255,255,0.08);">select a project</div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== OPTION C ==================== -->
+<div class="section-label">Option C: Bio as the default empty state</div>
+<div class="option-desc">Face + name + bio fill the right side when nothing is selected. Socials in the nav bar. The bio IS the landing — selecting a project replaces it with detail + media.</div>
+<div class="frame">
+  <div class="navbar">
+    <div class="nav-left">
+      <div class="nav-tabs">
+        <div class="nav-tab active">Projects</div>
+        <div class="nav-tab">Insights</div>
+      </div>
+    </div>
+    <div class="nav-right">
+      <div class="social">
+        <span>GitHub</span>
+        <span>LinkedIn</span>
+        <span>X</span>
+      </div>
+    </div>
+  </div>
+  <div class="body" style="height:360px;">
+    <div class="panel-left">
+      <div class="list">
+        <div class="list-item"><div class="list-icon" style="background:rgba(255,159,106,0.12);"></div><div style="flex:1;"><div class="list-title">Ledgy Dashboards</div><div class="list-sub">equity management redesign</div></div><div class="list-arrow">&#8250;</div></div>
+        <div class="list-item"><div class="list-icon"></div><div style="flex:1;"><div class="list-title">Beets</div><div class="list-sub">AI recipe platform</div></div><div class="list-arrow">&#8250;</div></div>
+        <div class="list-item"><div class="list-icon"></div><div style="flex:1;"><div class="list-title">Fin AI</div><div class="list-sub">financial dashboard</div></div><div class="list-arrow">&#8250;</div></div>
+      </div>
+    </div>
+    <!-- Bio as the empty state -->
+    <div style="flex:1; display:flex; align-items:center; justify-content:center; padding:48px;">
+      <div style="max-width:400px; display:flex; flex-direction:column; align-items:center; gap:20px; text-align:center;">
+        <div style="width:80px; height:80px; border-radius:50%; background:linear-gradient(135deg, #333, #1a1a1a); border:2px solid #1a1a1a;"></div>
+        <div>
+          <div style="font-size:22px; font-weight:600; margin-bottom:4px;">Ion Mesca</div>
+          <div style="font-size:13px; color:#555;">Design Engineer</div>
+        </div>
+        <div style="font-size:14px; color:#666; line-height:1.7;">I design and build interfaces for AI products. Shipping craft at the intersection of design systems, engineering, and AI tooling. Previously at Ledgy.</div>
+        <div class="bio-social" style="gap:16px; margin-top:4px;">
+          <a href="#">GitHub</a>
+          <a href="#">LinkedIn</a>
+          <a href="#">X</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

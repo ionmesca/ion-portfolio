@@ -12,31 +12,31 @@ export function ProjectItem({
   return (
     <div
       className={cn(
-        "flex items-center gap-3 px-2.5 py-2 rounded-lg transition-colors cursor-pointer",
-        isActive ? "bg-bg-surface" : "hover:bg-bg-surface/50"
+        "flex items-center gap-3 p-3 rounded-xl transition-colors cursor-pointer",
+        isActive ? "bg-bg-elevated" : "hover:bg-bg-elevated/50"
       )}
     >
       <div
-        className="size-7 rounded-lg flex items-center justify-center flex-shrink-0"
+        className="size-6 rounded-[6px] flex items-center justify-center flex-shrink-0"
         style={{ backgroundColor: project.iconBg }}
       >
         <Image
           src={project.icon}
           alt={project.title}
-          width={16}
-          height={16}
-          className="size-4"
+          width={14}
+          height={14}
+          className="size-3.5"
         />
       </div>
-      <div className="flex-1 min-w-0">
-        <div className="text-[13px] font-medium text-text-primary truncate">
+      <div className="flex-1 min-w-0 flex items-baseline gap-2">
+        <span className="text-sm font-medium text-text-primary flex-shrink-0">
           {project.title}
-        </div>
-        <div className="text-[11px] text-text-tertiary truncate">
+        </span>
+        <span className="text-sm text-text-label truncate">
           {project.description}
-        </div>
+        </span>
       </div>
-      <span className="text-[11px] text-text-muted tabular-nums flex-shrink-0">
+      <span className="text-sm text-text-label tabular-nums flex-shrink-0">
         {project.year}
       </span>
     </div>

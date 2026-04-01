@@ -35,7 +35,7 @@ export function SectionLabel({ children, className }: SectionLabelProps) {
         className
       )}
     >
-      <span className="w-2 h-2 rounded-full bg-[#ff9f6a]" />
+      <span className="w-2 h-2 rounded-full bg-accent" data-testid="section-label-dot" />
       {children}
     </div>
   );
