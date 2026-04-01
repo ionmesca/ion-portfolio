@@ -9,7 +9,7 @@ export function HeroCard({ project }: { project: ProjectMeta }) {
       className="block group"
       data-project={project.slug}
     >
-      <div className="relative w-full aspect-[3/2] rounded-2xl overflow-hidden bg-bg-surface">
+      <div className="relative w-full aspect-[4/3] rounded-2xl overflow-hidden bg-bg-surface">
         <Image
           src={project.hero}
           alt={`${project.title} hero`}
