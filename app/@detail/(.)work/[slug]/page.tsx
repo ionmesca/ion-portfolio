@@ -17,10 +17,12 @@ export default async function DetailPanel({
 
   return (
     <div className="fixed inset-0 z-40 flex">
-      <div className="w-80 flex-shrink-0" />
+      <div className="hidden md:block w-80 flex-shrink-0" />
       <div className="flex flex-1">
         <ProjectDetail project={meta} prev={prev} next={next} />
-        <ProjectGallery project={meta} />
+        <div className="hidden md:flex flex-1">
+          <ProjectGallery project={meta} />
+        </div>
       </div>
     </div>
   );

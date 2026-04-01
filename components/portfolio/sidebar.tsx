@@ -7,7 +7,7 @@ export function Sidebar({
   children: React.ReactNode;
 }) {
   return (
-    <aside className="w-80 min-w-80 sticky top-0 h-screen flex flex-col border-r border-border-subtle">
+    <aside className="hidden md:flex w-80 min-w-80 sticky top-0 h-screen flex-col border-r border-border-subtle">
       <div className="flex items-center justify-between px-6 py-4">
         <Identity />
         <SocialLinks />

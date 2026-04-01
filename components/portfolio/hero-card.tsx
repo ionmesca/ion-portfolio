@@ -17,7 +17,7 @@ export function HeroCard({ project }: { project: ProjectMeta }) {
           className="object-cover"
           sizes="(max-width: 768px) 100vw, 70vw"
         />
-        <div className="absolute bottom-0 inset-x-0 p-5 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="absolute bottom-0 inset-x-0 p-5 bg-gradient-to-t from-black/40 to-transparent md:opacity-0 md:group-hover:opacity-100 transition-opacity">
           <div className="flex items-center gap-2">
             <div
               className="size-6 rounded-md flex items-center justify-center"

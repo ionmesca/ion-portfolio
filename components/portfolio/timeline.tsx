@@ -17,7 +17,7 @@ export function Timeline({
 
   return (
     <PortfolioContext value={{ activeSlug, scrollToProject }}>
-      <div className="flex h-screen">
+      <div className="flex h-[calc(100vh-44px)] md:h-screen">
         {sidebar}
         <main
           ref={containerRef}
