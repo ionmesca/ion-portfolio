@@ -65,7 +65,7 @@
 
   /* Backgrounds */
   --color-bg-base: #ffffff;
-  --color-bg-surface: #fafafa;
+  --color-bg-surface: #f5f5f5;
   --color-bg-elevated: #f5f5f5;
   --color-bg-glass: rgba(0, 0, 0, 0.02);
 
@@ -141,10 +141,7 @@
   }
 }
 
-body {
-  background: var(--color-background);
-  color: var(--color-foreground);
-}
+/* body background and color set via Tailwind classes on <body> in layout.tsx */
 
 /* ========================================
    DARK MODE OVERRIDE
@@ -265,6 +262,58 @@ body {
   .stagger-3 { transition-delay: calc(var(--stagger-delay) * 3); }
   .stagger-4 { transition-delay: calc(var(--stagger-delay) * 4); }
   .stagger-5 { transition-delay: calc(var(--stagger-delay) * 5); }
+}
+
+/* ========================================
+   SCROLLBAR (desktop only)
+   ======================================== */
+
+@media (min-width: 768px) {
+  /* Firefox */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-border-default) transparent;
+  }
+
+  /* Webkit (Chrome, Safari, Edge) */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-border-default);
+    border-radius: 3px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--color-border-strong);
+  }
+
+  /* Hide scrollbar until hover on scrollable containers */
+  .overflow-y-auto,
+  .overflow-x-auto {
+    scrollbar-color: transparent transparent;
+  }
+
+  .overflow-y-auto:hover,
+  .overflow-x-auto:hover {
+    scrollbar-color: var(--color-border-default) transparent;
+  }
+
+  .overflow-y-auto::-webkit-scrollbar-thumb,
+  .overflow-x-auto::-webkit-scrollbar-thumb {
+    background: transparent;
+  }
+
+  .overflow-y-auto:hover::-webkit-scrollbar-thumb,
+  .overflow-x-auto:hover::-webkit-scrollbar-thumb {
+    background: var(--color-border-default);
+  }
 }
 
 /* ========================================

@@ -136,37 +136,26 @@ export function Timeline({
           )}
         </AnimatePresence>
 
-        {/* Main area — heroes or gallery */}
-        <main
-          ref={!isExpanded ? containerRef : undefined}
-          className="flex-1 overflow-y-auto"
-        >
-          <AnimatePresence mode="wait">
-            {isExpanded ? (
-              <motion.div
-                key={`gallery-${expandedSlug}`}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.2 }}
-                className="h-full overflow-y-auto"
-              >
-                <InlineProjectGallery />
-              </motion.div>
-            ) : (
-              <motion.div
-                key="heroes"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.2 }}
-                className="p-4 flex flex-col gap-4"
-              >
-                {cards}
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </main>
+        {/* Main area — heroes or gallery, crossfade without flicker */}
+        <div className="flex-1 relative overflow-hidden">
+          <motion.main
+            ref={!isExpanded ? containerRef : undefined}
+            animate={{ opacity: isExpanded ? 0 : 1 }}
+            transition={{ duration: 0.2 }}
+            className="absolute inset-0 overflow-y-auto p-4 flex flex-col gap-4"
+            style={{ pointerEvents: isExpanded ? "none" : "auto" }}
+          >
+            {cards}
+          </motion.main>
+          <motion.div
+            animate={{ opacity: isExpanded ? 1 : 0 }}
+            transition={{ duration: 0.2 }}
+            className="absolute inset-0 overflow-y-auto"
+            style={{ pointerEvents: isExpanded ? "auto" : "none" }}
+          >
+            {isExpanded && <InlineProjectGallery />}
+          </motion.div>
+        </div>
       </div>
     </PortfolioContext>
   );

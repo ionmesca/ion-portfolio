@@ -1,61 +1,46 @@
 "use client";
 
+import { useEffect } from "react";
 import Image from "next/image";
 import { usePortfolio } from "./portfolio-context";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 
 export function InlineProjectDetail() {
-  const { expandedSlug, allProjects, expandProject, collapseProject } = usePortfolio();
+  const { expandedSlug, allProjects, collapseProject } = usePortfolio();
 
-  const index = allProjects.findIndex((p) => p.slug === expandedSlug);
-  const project = allProjects[index];
+  // Escape key to close
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        collapseProject();
+      }
+    }
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [collapseProject]);
+
+  const project = allProjects.find((p) => p.slug === expandedSlug);
   if (!project) return null;
-
-  const prev = index > 0 ? allProjects[index - 1] : null;
-  const next = index < allProjects.length - 1 ? allProjects[index + 1] : null;
 
   return (
     <div className="w-[360px] min-w-[360px] h-full overflow-y-auto border-r border-border-subtle p-6 flex flex-col gap-5">
       <div className="flex items-center justify-between">
-        <Button
-          variant="ghost"
-          size="sm"
+        <div className="flex items-center gap-3">
+          <div
+            className="size-8 rounded-lg flex items-center justify-center flex-shrink-0"
+            style={{ backgroundColor: project.iconBg }}
+          >
+            <Image src={project.icon} alt="" width={18} height={18} />
+          </div>
+          <h1 className="text-lg font-semibold text-text-primary">{project.title}</h1>
+        </div>
+        <button
+          type="button"
           onClick={collapseProject}
-          className="text-text-tertiary hover:text-text-primary"
+          className="text-xs text-text-tertiary border border-border-default rounded-md px-2 py-1 hover:text-text-primary hover:border-border-strong transition-colors"
         >
-          &larr; Back
-        </Button>
-        <div className="flex gap-1">
-          <Button
-            variant="ghost"
-            size="sm"
-            disabled={!prev}
-            onClick={() => prev && expandProject(prev.slug)}
-            className={prev ? "text-text-tertiary hover:text-text-primary" : "text-text-muted"}
-          >
-            Prev
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            disabled={!next}
-            onClick={() => next && expandProject(next.slug)}
-            className={next ? "text-text-tertiary hover:text-text-primary" : "text-text-muted"}
-          >
-            Next
-          </Button>
-        </div>
-      </div>
-
-      <div className="flex items-center gap-3">
-        <div
-          className="size-8 rounded-lg flex items-center justify-center flex-shrink-0"
-          style={{ backgroundColor: project.iconBg }}
-        >
-          <Image src={project.icon} alt="" width={18} height={18} />
-        </div>
-        <h1 className="text-lg font-semibold text-text-primary">{project.title}</h1>
+          Esc
+        </button>
       </div>
 
       <p className="text-sm text-text-secondary leading-relaxed">{project.description}</p>
