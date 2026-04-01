@@ -12,7 +12,7 @@ export function MobileHeader() {
           height={28}
           className="rounded-full"
         />
-        <span className="text-[14px] font-semibold text-text-primary">
+        <span className="text-sm font-medium text-text-primary">
           Ion Mesca
         </span>
       </div>

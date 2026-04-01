@@ -31,7 +31,7 @@ export function HeroCard({ project }: { project: ProjectMeta }) {
                 className="size-3.5"
               />
             </div>
-            <span className="text-[13px] font-medium text-white">
+            <span className="text-sm font-medium text-white">
               {project.title}
             </span>
           </div>

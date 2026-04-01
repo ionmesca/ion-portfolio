@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
+import { BackButton } from "./back-button";
 import type { ProjectMeta } from "@/lib/types";
 
 export function ProjectDetail({
@@ -17,32 +18,27 @@ export function ProjectDetail({
   return (
     <aside className="w-[360px] min-w-[360px] overflow-y-auto border-r border-border-subtle p-6 flex flex-col gap-5">
       <div className="flex items-center justify-between">
-        <Link
-          href="/"
-          className="text-[13px] text-text-tertiary hover:text-text-primary transition-colors"
-        >
-          &larr; Back
-        </Link>
+        <BackButton />
         <div className="flex gap-3">
           {prev ? (
             <Link
               href={`/work/${prev.slug}`}
-              className="text-[12px] text-text-tertiary hover:text-text-primary transition-colors"
+              className="text-xs text-text-tertiary hover:text-text-primary transition-colors"
             >
               Prev
             </Link>
           ) : (
-            <span className="text-[12px] text-text-muted">Prev</span>
+            <span className="text-xs text-text-muted">Prev</span>
           )}
           {next ? (
             <Link
               href={`/work/${next.slug}`}
-              className="text-[12px] text-text-tertiary hover:text-text-primary transition-colors"
+              className="text-xs text-text-tertiary hover:text-text-primary transition-colors"
             >
               Next
             </Link>
           ) : (
-            <span className="text-[12px] text-text-muted">Next</span>
+            <span className="text-xs text-text-muted">Next</span>
           )}
         </div>
       </div>
@@ -54,12 +50,12 @@ export function ProjectDetail({
         >
           <Image src={project.icon} alt="" width={18} height={18} />
         </div>
-        <h1 className="text-[17px] font-semibold text-text-primary">
+        <h1 className="text-lg font-semibold text-text-primary">
           {project.title}
         </h1>
       </div>
 
-      <p className="text-[13px] text-text-secondary leading-relaxed">
+      <p className="text-sm text-text-secondary leading-relaxed">
         {project.description}
       </p>
 
@@ -70,10 +66,10 @@ export function ProjectDetail({
               key={stat.label}
               className="flex-1 p-3.5 rounded-xl bg-bg-surface flex flex-col gap-1"
             >
-              <span className="text-[20px] font-semibold text-text-primary">
+              <span className="text-xl font-semibold text-text-primary">
                 {stat.value}
               </span>
-              <span className="text-[11px] text-text-tertiary">
+              <span className="text-xs text-text-tertiary">
                 {stat.label}
               </span>
             </div>
@@ -82,15 +78,15 @@ export function ProjectDetail({
       )}
 
       <div className="flex flex-col gap-1">
-        <span className="text-[10px] uppercase tracking-wider text-text-tertiary">
+        <span className="text-xs uppercase tracking-wider text-text-tertiary">
           Role
         </span>
-        <span className="text-[13px] text-text-secondary">{project.role}</span>
+        <span className="text-sm text-text-secondary">{project.role}</span>
       </div>
 
       {project.stack.length > 0 && (
         <div className="flex flex-col gap-2">
-          <span className="text-[10px] uppercase tracking-wider text-text-tertiary">
+          <span className="text-xs uppercase tracking-wider text-text-tertiary">
             Stack
           </span>
           <div className="flex gap-1.5 flex-wrap">
