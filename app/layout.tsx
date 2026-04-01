@@ -1,34 +1,25 @@
 import type { Metadata } from "next";
-import { Geist_Mono } from "next/font/google";
 import { ThemeProvider } from "./providers/theme-provider";
-import { ConvexClientProvider } from "./providers/convex-client-provider";
-import { AppShell } from "@/components/layout/app-shell";
 import "./globals.css";
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
 export const metadata: Metadata = {
-  title: "Ion Mesca - Design Engineer",
-  description: "Design engineer building AI-native products",
+  title: "Ion Mesca — Design Engineer",
+  description: "Design engineer building interfaces for AI products",
 };
 
 export default function RootLayout({
   children,
-}: Readonly<{
+  detail,
+}: {
   children: React.ReactNode;
-}>) {
+  detail: React.ReactNode;
+}) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body
-        className={`${geistMono.variable} font-sans antialiased bg-background text-foreground`}
-      >
+      <body className="font-sans antialiased bg-bg-base text-text-primary">
         <ThemeProvider>
-          <ConvexClientProvider>
-            <AppShell>{children}</AppShell>
-          </ConvexClientProvider>
+          {children}
+          {detail}
         </ThemeProvider>
       </body>
     </html>
