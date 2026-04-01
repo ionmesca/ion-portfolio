@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { BackButton } from "./back-button";
 import type { ProjectMeta } from "@/lib/types";
 
@@ -19,26 +20,44 @@ export function ProjectDetail({
     <aside className="w-[360px] min-w-[360px] overflow-y-auto border-r border-border-subtle p-6 flex flex-col gap-5">
       <div className="flex items-center justify-between">
         <BackButton />
-        <div className="flex gap-3">
+        <div className="flex gap-1">
           {prev ? (
-            <Link
-              href={`/work/${prev.slug}`}
-              className="text-xs text-text-tertiary hover:text-text-primary transition-colors"
+            <Button
+              variant="ghost"
+              size="sm"
+              asChild
+              className="text-text-tertiary hover:text-text-primary"
+            >
+              <Link href={`/work/${prev.slug}`}>Prev</Link>
+            </Button>
+          ) : (
+            <Button
+              variant="ghost"
+              size="sm"
+              disabled
+              className="text-text-muted"
             >
               Prev
-            </Link>
-          ) : (
-            <span className="text-xs text-text-muted">Prev</span>
+            </Button>
           )}
           {next ? (
-            <Link
-              href={`/work/${next.slug}`}
-              className="text-xs text-text-tertiary hover:text-text-primary transition-colors"
+            <Button
+              variant="ghost"
+              size="sm"
+              asChild
+              className="text-text-tertiary hover:text-text-primary"
+            >
+              <Link href={`/work/${next.slug}`}>Next</Link>
+            </Button>
+          ) : (
+            <Button
+              variant="ghost"
+              size="sm"
+              disabled
+              className="text-text-muted"
             >
               Next
-            </Link>
-          ) : (
-            <span className="text-xs text-text-muted">Next</span>
+            </Button>
           )}
         </div>
       </div>

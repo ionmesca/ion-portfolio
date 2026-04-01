@@ -5,7 +5,7 @@ import { ProjectItem } from "./project-item";
 import type { ProjectMeta } from "@/lib/types";
 
 export function ProjectList({ projects }: { projects: ProjectMeta[] }) {
-  const { activeSlug, scrollToProject } = usePortfolio();
+  const { activeSlug, expandProject } = usePortfolio();
 
   return (
     <div className="flex flex-col gap-1">
@@ -13,7 +13,7 @@ export function ProjectList({ projects }: { projects: ProjectMeta[] }) {
         <button
           key={project.slug}
           type="button"
-          onClick={() => scrollToProject(project.slug)}
+          onClick={() => expandProject(project.slug)}
           className="text-left w-full"
         >
           <ProjectItem

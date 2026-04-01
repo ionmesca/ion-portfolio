@@ -1,17 +1,19 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
 
 export function BackButton() {
   const router = useRouter();
 
   return (
-    <button
-      type="button"
+    <Button
+      variant="ghost"
+      size="sm"
       onClick={() => router.back()}
-      className="text-xs text-text-tertiary hover:text-text-primary transition-colors"
+      className="text-text-tertiary hover:text-text-primary"
     >
       &larr; Back
-    </button>
+    </Button>
   );
 }
