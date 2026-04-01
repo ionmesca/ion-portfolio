@@ -15,7 +15,7 @@ export function ProjectDetail({
   children?: React.ReactNode;
 }) {
   return (
-    <aside className="w-full md:w-[360px] md:min-w-[360px] sticky top-0 h-screen overflow-y-auto border-r border-border-subtle p-6 flex flex-col gap-5">
+    <aside className="w-[360px] min-w-[360px] overflow-y-auto border-r border-border-subtle p-6 flex flex-col gap-5">
       <div className="flex items-center justify-between">
         <Link
           href="/"

@@ -16,14 +16,17 @@ export default async function DetailPanel({
   const { prev, next } = getAdjacentProjects(slug);
 
   return (
-    <div className="fixed inset-0 z-40 flex bg-bg-base">
-      <div className="hidden md:block w-[432px] flex-shrink-0" />
-      <div className="flex flex-1 overflow-hidden">
-        <ProjectDetail project={meta} prev={prev} next={next} />
-        <div className="hidden md:flex flex-1">
-          <ProjectGallery project={meta} />
-        </div>
-      </div>
+    <div
+      className="hidden md:flex fixed z-40 bg-bg-base rounded-r-3xl overflow-hidden border-l border-bg-surface"
+      style={{
+        top: '74px',
+        left: 'calc(16px + 432px)',
+        right: '16px',
+        bottom: '16px',
+      }}
+    >
+      <ProjectDetail project={meta} prev={prev} next={next} />
+      <ProjectGallery project={meta} />
     </div>
   );
 }
