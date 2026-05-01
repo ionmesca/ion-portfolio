@@ -2,6 +2,10 @@ import Image from "next/image";
 import type { ProjectMeta } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
+function displayYear(year: string) {
+  return String(year).split("-")[0];
+}
+
 export function ProjectItem({
   project,
   isActive,
@@ -16,16 +20,13 @@ export function ProjectItem({
         isActive ? "bg-bg-elevated" : "hover:bg-bg-elevated/50"
       )}
     >
-      <div
-        className="size-7 rounded-[7px] flex items-center justify-center flex-shrink-0"
-        style={{ backgroundColor: project.iconBg }}
-      >
+      <div className="size-7 overflow-hidden rounded-[7px] flex items-center justify-center flex-shrink-0 bg-bg-elevated">
         <Image
           src={project.icon}
           alt={project.title}
-          width={16}
-          height={16}
-          className="size-4"
+          width={28}
+          height={28}
+          className="size-full object-cover"
         />
       </div>
       <div className="flex-1 min-w-0">
@@ -33,11 +34,11 @@ export function ProjectItem({
           {project.title}
         </span>
         <span className="block truncate text-[13px] leading-4 text-text-label">
-          {project.description}
+          {project.subtitle}
         </span>
       </div>
       <span className="text-sm text-text-label tabular-nums flex-shrink-0">
-        {project.year}
+        {displayYear(project.year)}
       </span>
     </div>
   );

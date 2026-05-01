@@ -110,9 +110,9 @@
   --color-destructive: #f87171;
 
   /* Cards & Popovers */
-  --color-card: var(--color-bg-surface);
+  --color-card: var(--color-bg-base);
   --color-card-foreground: var(--color-text-primary);
-  --color-popover: var(--color-bg-elevated);
+  --color-popover: var(--color-bg-base);
   --color-popover-foreground: var(--color-text-primary);
 
   /* Shadows */

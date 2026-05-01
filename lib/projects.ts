@@ -13,11 +13,15 @@ export function getAllProjects(): ProjectMeta[] {
       return fs.statSync(fullPath).isDirectory();
     });
 
-  const projects = slugs.map((slug) => {
+  const projects = slugs.flatMap((slug) => {
     const filePath = path.join(CONTENT_DIR, slug, "index.mdx");
+    if (!fs.existsSync(filePath)) return [];
+
     const raw = fs.readFileSync(filePath, "utf-8");
     const { data } = matter(raw);
-    return { ...data, slug } as ProjectMeta;
+    if (data.published === false) return [];
+
+    return [{ ...data, slug } as ProjectMeta];
   });
 
   return projects.sort((a, b) => a.order - b.order);
@@ -32,6 +36,8 @@ export function getProjectBySlug(slug: string): {
 
   const raw = fs.readFileSync(filePath, "utf-8");
   const { data, content } = matter(raw);
+  if (data.published === false) return null;
+
   return { meta: { ...data, slug } as ProjectMeta, content };
 }
 

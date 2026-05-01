@@ -41,3 +41,9 @@ yarn-error.log*
 next-env.d.ts
 # next-agents-md
 .next-docs/
+
+# git worktrees (created by superpowers)
+.claude/worktrees/
+
+# superpowers brainstorm sessions
+.superpowers/

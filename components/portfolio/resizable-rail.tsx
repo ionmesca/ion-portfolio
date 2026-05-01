@@ -20,6 +20,7 @@ export function ResizableRail({
   hideBelowMd = true,
   maxWidth = MAX_WIDTH,
   minWidth = MIN_WIDTH,
+  onWidthChange,
   resizeLabel = "Resize project rail",
   storageKey = "ion-portfolio-rail-width",
 }: {
@@ -29,6 +30,7 @@ export function ResizableRail({
   hideBelowMd?: boolean;
   maxWidth?: number;
   minWidth?: number;
+  onWidthChange?: (width: number) => void;
   resizeLabel?: string;
   storageKey?: string;
 }) {
@@ -77,7 +79,8 @@ export function ResizableRail({
 
   useEffect(() => {
     window.localStorage.setItem(storageKey, String(Math.round(width)));
-  }, [storageKey, width]);
+    onWidthChange?.(width);
+  }, [onWidthChange, storageKey, width]);
 
   const startDrag = useCallback(
     (event: ReactPointerEvent<HTMLDivElement>) => {

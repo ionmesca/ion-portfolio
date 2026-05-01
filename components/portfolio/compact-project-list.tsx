@@ -4,6 +4,10 @@ import Image from "next/image";
 import { usePortfolio } from "./portfolio-context";
 import { cn } from "@/lib/utils";
 
+function displayYear(year: string) {
+  return String(year).split("-")[0];
+}
+
 export function CompactProjectList() {
   const { allProjects, expandedSlug, expandProject } = usePortfolio();
 
@@ -21,15 +25,12 @@ export function CompactProjectList() {
               : "text-text-label hover:bg-bg-elevated/50"
           )}
         >
-          <div
-            className="size-5 rounded-[4px] flex items-center justify-center flex-shrink-0"
-            style={{ backgroundColor: project.iconBg }}
-          >
-            <Image src={project.icon} alt="" width={12} height={12} className="size-3" />
+          <div className="size-5 overflow-hidden rounded-[4px] flex items-center justify-center flex-shrink-0 bg-bg-elevated">
+            <Image src={project.icon} alt="" width={20} height={20} className="size-full object-cover" />
           </div>
           <span className="text-sm truncate">{project.title}</span>
           <span className="text-xs text-text-tertiary tabular-nums ml-auto flex-shrink-0">
-            {project.year}
+            {displayYear(project.year)}
           </span>
         </button>
       ))}

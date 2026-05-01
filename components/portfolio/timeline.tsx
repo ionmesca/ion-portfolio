@@ -10,8 +10,32 @@ import { ResizableRail } from "./resizable-rail";
 import type { ProjectMeta } from "@/lib/types";
 import type { ReactNode } from "react";
 
-const EASE_OUT = [0, 0, 0.2, 1] as const;
-const DURATION = 0.3;
+const EASE_OUT = [0.25, 1, 0.5, 1] as const;
+const DURATION = 0.36;
+const DETAIL_RAIL_DEFAULT_WIDTH = 360;
+const DETAIL_RAIL_MIN_WIDTH = 300;
+const DETAIL_RAIL_MAX_WIDTH = 560;
+const DETAIL_RAIL_STORAGE_KEY = "ion-portfolio-inline-detail-width";
+
+function clampDetailRailWidth(width: number) {
+  return Math.min(
+    DETAIL_RAIL_MAX_WIDTH,
+    Math.max(DETAIL_RAIL_MIN_WIDTH, width)
+  );
+}
+
+function getStoredDetailRailWidth() {
+  if (typeof window === "undefined") {
+    return DETAIL_RAIL_DEFAULT_WIDTH;
+  }
+
+  const storedWidth = window.localStorage.getItem(DETAIL_RAIL_STORAGE_KEY);
+  if (!storedWidth) {
+    return DETAIL_RAIL_DEFAULT_WIDTH;
+  }
+
+  return clampDetailRailWidth(Number(storedWidth));
+}
 
 function getProjectSlugFromPath(projects: ProjectMeta[]) {
   if (typeof window === "undefined") {
@@ -39,6 +63,9 @@ export function Timeline({
   const { activeSlug, containerRef, scrollToProject } = useScrollSpy(slugs);
   const [expandedSlug, setExpandedSlug] = useState<string | null>(() =>
     getProjectSlugFromPath(projects)
+  );
+  const [detailRailWidth, setDetailRailWidth] = useState(
+    getStoredDetailRailWidth
   );
   const scrollPositionRef = useRef(0);
 
@@ -98,7 +125,7 @@ export function Timeline({
                 filter: isExpanded ? "blur(8px)" : "blur(0px)",
                 y: isExpanded ? -10 : 0,
               }}
-              transition={{ duration: 0.3, ease: EASE_OUT }}
+              transition={{ duration: DURATION, ease: EASE_OUT }}
               className={isExpanded ? "pointer-events-none overflow-hidden" : "overflow-visible"}
             >
               <h1 className="text-lg font-semibold leading-6 text-text-primary">
@@ -130,18 +157,24 @@ export function Timeline({
         <AnimatePresence>
           {isExpanded && (
             <motion.div
-              initial={{ opacity: 0, x: -8 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -8 }}
+              initial={{ width: 0, opacity: 0, x: -10, filter: "blur(6px)" }}
+              animate={{
+                width: detailRailWidth,
+                opacity: 1,
+                x: 0,
+                filter: "blur(0px)",
+              }}
+              exit={{ width: 0, opacity: 0, x: -8, filter: "blur(6px)" }}
               transition={{ duration: DURATION, ease: EASE_OUT }}
-              className="h-full flex-shrink-0"
+              className="h-full flex-shrink-0 overflow-hidden"
             >
               <ResizableRail
-                defaultWidth={360}
-                minWidth={300}
-                maxWidth={560}
+                defaultWidth={DETAIL_RAIL_DEFAULT_WIDTH}
+                minWidth={DETAIL_RAIL_MIN_WIDTH}
+                maxWidth={DETAIL_RAIL_MAX_WIDTH}
+                onWidthChange={setDetailRailWidth}
                 resizeLabel="Resize project details"
-                storageKey="ion-portfolio-inline-detail-width"
+                storageKey={DETAIL_RAIL_STORAGE_KEY}
               >
                 <InlineProjectDetail />
               </ResizableRail>
@@ -153,21 +186,35 @@ export function Timeline({
         <div className="flex-1 relative overflow-hidden">
           <motion.main
             ref={!isExpanded ? containerRef : undefined}
-            animate={{ opacity: isExpanded ? 0 : 1 }}
-            transition={{ duration: 0.2 }}
+            animate={{
+              opacity: isExpanded ? 0 : 1,
+              filter: isExpanded ? "blur(6px)" : "blur(0px)",
+              scale: isExpanded ? 0.995 : 1,
+            }}
+            transition={{
+              duration: isExpanded ? 0.24 : DURATION,
+              ease: EASE_OUT,
+            }}
             className="absolute inset-0 overflow-y-auto p-4 flex flex-col gap-4"
             style={{ pointerEvents: isExpanded ? "none" : "auto" }}
           >
             {cards}
           </motion.main>
-          <motion.div
-            animate={{ opacity: isExpanded ? 1 : 0 }}
-            transition={{ duration: 0.2 }}
-            className="absolute inset-0 overflow-y-auto"
-            style={{ pointerEvents: isExpanded ? "auto" : "none" }}
-          >
-            {isExpanded && <InlineProjectGallery />}
-          </motion.div>
+          <AnimatePresence>
+            {isExpanded && (
+              <motion.div
+                key={expandedSlug}
+                initial={{ opacity: 0, filter: "blur(6px)", scale: 0.995 }}
+                animate={{ opacity: 1, filter: "blur(0px)", scale: 1 }}
+                exit={{ opacity: 0, filter: "blur(6px)", scale: 0.995 }}
+                transition={{ duration: DURATION, ease: EASE_OUT }}
+                className="absolute inset-0 overflow-y-auto"
+                style={{ pointerEvents: "auto" }}
+              >
+                <InlineProjectGallery />
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
     </PortfolioContext>

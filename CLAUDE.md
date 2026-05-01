@@ -6,7 +6,7 @@ Ion Mesca's portfolio. Design engineer targeting AI companies.
 
 | Tech | Purpose |
 |------|---------|
-| Next.js 15 | App Router, RSC, Turbopack |
+| Next.js 16 | App Router, RSC, Turbopack |
 | React 19 | UI |
 | Tailwind CSS 4 | Styling (inline @theme, no config file) |
 | shadcn/ui | Component primitives (extend, don't modify ui/) |
@@ -18,8 +18,8 @@ Ion Mesca's portfolio. Design engineer targeting AI companies.
 ## Structure
 
 - `app/` — Routes
-- `components/ui/` — shadcn (don't modify)
-- `components/layout/` — AppShell, Sidebar, TopBar
+- `components/ui/` — shadcn primitives and project variants
+- `components/portfolio/` — Current landing-page source-of-truth components
 - `content/` — MDX files
 - `convex/` — Database
 - `public/fonts/` — Aeonik Pro
@@ -34,10 +34,29 @@ bunx shadcn@latest add [name]  # Add component
 
 ## Conventions
 
-- Dark theme default, light/dark toggle in sidebar
+- Light theme default, with dark mode token overrides preserved
 - Components: PascalCase
-- Extend shadcn via CSS variables + variants
+- Extend shadcn via semantic CSS variables + variants
 - Server Components by default, "use client" only when needed
+
+## Design System Handoff
+
+Read `DESIGN.md` before making visual, interaction, motion, shadcn, or responsive layout changes.
+
+Source-of-truth hierarchy:
+
+1. `app/globals.css` owns exact token values through Tailwind v4 `@theme inline` and `.dark` overrides.
+2. `DESIGN.md` explains token semantics, component usage, motion rules, and what is current versus provisional.
+3. `app/page.tsx` and `components/portfolio/*` are the current landing-page visual source of truth.
+4. Older docs, playground routes, and non-landing routes are reference only unless `DESIGN.md` promotes them.
+
+Important design notes:
+
+- The light landing background relationship is intentional: gray app surface behind a white landing shell.
+- The current accent token exists in code but is provisional and should not be expanded into new accent-heavy UI.
+- Mobile design is under development. Preserve functionality and accessibility, but do not infer final mobile rules from current implementation.
+- shadcn components should move toward semantic token usage rather than raw `bg-white`, `text-black`, `text-white`, or hard-coded status colors.
+- Motion may use subtle blur for state transitions such as the identity panel, but glass/blur should not become the default content-card style.
 
 ## Development Approach
 

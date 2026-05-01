@@ -26,11 +26,8 @@ export function HeroCard({ project }: { project: ProjectMeta }) {
           />
           <div className="absolute bottom-0 inset-x-0 p-5 bg-gradient-to-t from-black/40 to-transparent md:opacity-0 md:group-hover:opacity-100 transition-opacity">
             <div className="flex items-center gap-2">
-              <div
-                className="size-6 rounded-md flex items-center justify-center"
-                style={{ backgroundColor: project.iconBg }}
-              >
-                <Image src={project.icon} alt="" width={14} height={14} className="size-3.5" />
+              <div className="size-6 overflow-hidden rounded-md flex items-center justify-center bg-bg-elevated">
+                <Image src={project.icon} alt="" width={24} height={24} className="size-full object-cover" />
               </div>
               <span className="text-sm font-medium text-white">{project.title}</span>
             </div>
@@ -54,11 +51,8 @@ export function HeroCard({ project }: { project: ProjectMeta }) {
           />
           <div className="absolute bottom-0 inset-x-0 p-5 bg-gradient-to-t from-black/40 to-transparent">
             <div className="flex items-center gap-2">
-              <div
-                className="size-6 rounded-md flex items-center justify-center"
-                style={{ backgroundColor: project.iconBg }}
-              >
-                <Image src={project.icon} alt="" width={14} height={14} className="size-3.5" />
+              <div className="size-6 overflow-hidden rounded-md flex items-center justify-center bg-bg-elevated">
+                <Image src={project.icon} alt="" width={24} height={24} className="size-full object-cover" />
               </div>
               <span className="text-sm font-medium text-white">{project.title}</span>
             </div>
