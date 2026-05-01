@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { AgentProvider } from "@/components/agent/agent-provider";
+import { ConvexClientProvider } from "./providers/convex-client-provider";
 import { ThemeProvider } from "./providers/theme-provider";
 import "./globals.css";
 
@@ -15,9 +17,11 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className="font-sans antialiased bg-bg-surface text-text-primary flex flex-col h-screen" suppressHydrationWarning>
-        <ThemeProvider>
-          {children}
-        </ThemeProvider>
+        <ConvexClientProvider>
+          <ThemeProvider>
+            <AgentProvider>{children}</AgentProvider>
+          </ThemeProvider>
+        </ConvexClientProvider>
       </body>
     </html>
   );

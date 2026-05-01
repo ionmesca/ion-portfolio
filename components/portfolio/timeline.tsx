@@ -7,6 +7,7 @@ import { PortfolioContext } from "./portfolio-context";
 import { InlineProjectDetail } from "./inline-project-detail";
 import { InlineProjectGallery } from "./inline-project-gallery";
 import { ResizableRail } from "./resizable-rail";
+import { OPEN_PROJECT_EVENT, type OpenProjectDetail } from "@/lib/agent/project-actions";
 import type { ProjectMeta } from "@/lib/types";
 import type { ReactNode } from "react";
 
@@ -89,6 +90,30 @@ export function Timeline({
     },
     [containerRef]
   );
+
+  useEffect(() => {
+    function handleOpenProject(event: Event) {
+      const customEvent = event as CustomEvent<OpenProjectDetail>;
+      if (!customEvent.detail?.slug) return;
+      if (!projects.some((project) => project.slug === customEvent.detail.slug)) {
+        return;
+      }
+
+      event.preventDefault();
+      expandProject(customEvent.detail.slug);
+
+      if (customEvent.detail.anchor) {
+        requestAnimationFrame(() => {
+          document
+            .getElementById(customEvent.detail.anchor!)
+            ?.scrollIntoView({ block: "start", behavior: "smooth" });
+        });
+      }
+    }
+
+    window.addEventListener(OPEN_PROJECT_EVENT, handleOpenProject);
+    return () => window.removeEventListener(OPEN_PROJECT_EVENT, handleOpenProject);
+  }, [expandProject, projects]);
 
   const collapseProject = useCallback(() => {
     setExpandedSlug(null);

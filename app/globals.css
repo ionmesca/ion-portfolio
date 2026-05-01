@@ -272,8 +272,8 @@
   .identity-panel-surface[data-state="open"] {
     background-color: var(--identity-panel-bg);
     border-color: var(--identity-panel-border);
-    height: 332px;
-    width: 340px;
+    height: min(560px, calc(100vh - 96px));
+    width: min(520px, calc(100vw - 40px));
   }
 
   .identity-root:hover .identity-panel-surface[data-state="closed"] {
