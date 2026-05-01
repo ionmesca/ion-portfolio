@@ -131,6 +131,18 @@
 
 :root {
   color-scheme: light;
+  --identity-panel-bg: var(--color-bg-base);
+  --identity-panel-fg: var(--color-text-primary);
+  --identity-panel-secondary: var(--color-text-secondary);
+  --identity-panel-muted: var(--color-text-tertiary);
+  --identity-panel-placeholder: var(--color-text-tertiary);
+  --identity-panel-border: var(--color-border-default);
+  --identity-panel-control: var(--color-bg-surface);
+  --identity-panel-control-hover: var(--color-bg-elevated);
+  --identity-panel-field: var(--color-bg-surface);
+  --identity-panel-field-hover: var(--color-bg-elevated);
+  --identity-panel-field-border: var(--color-border-default);
+  --identity-panel-row-hover: var(--color-bg-surface);
 }
 
 /* Dock sizing responsive */
@@ -242,6 +254,114 @@
    ======================================== */
 
 @layer utilities {
+  .identity-panel-surface {
+    color: var(--identity-panel-fg);
+  }
+
+  .identity-panel-surface {
+    will-change: width, height, box-shadow;
+  }
+
+  .identity-panel-surface[data-state="closed"] {
+    background-color: transparent;
+    border-color: transparent;
+    box-shadow: none;
+  }
+
+  .identity-root:hover .identity-panel-surface[data-state="closed"],
+  .identity-panel-surface[data-state="open"] {
+    background-color: var(--identity-panel-bg);
+    border-color: var(--identity-panel-border);
+    height: 332px;
+    width: 340px;
+  }
+
+  .identity-root:hover .identity-panel-surface[data-state="closed"] {
+    box-shadow: var(--shadow-card);
+  }
+
+  .identity-root:hover .identity-overlay {
+    opacity: 1;
+  }
+
+  .identity-root:hover .identity-trigger,
+  .identity-panel-surface[data-state="open"] .identity-trigger {
+    opacity: 0;
+    filter: blur(12px);
+    transform: translateY(-2px);
+  }
+
+  .identity-root:hover .identity-panel-content,
+  .identity-panel-surface[data-state="open"] .identity-panel-content {
+    opacity: 1;
+    filter: blur(0);
+    transform: translateY(0);
+    transition-delay: 100ms;
+  }
+
+  .identity-panel-secondary {
+    color: var(--identity-panel-secondary);
+  }
+
+  .identity-panel-muted {
+    color: var(--identity-panel-muted);
+  }
+
+  .identity-panel-control {
+    background-color: var(--identity-panel-control);
+    color: var(--identity-panel-fg);
+  }
+
+  .identity-panel-control:hover {
+    background-color: var(--identity-panel-control-hover);
+  }
+
+  .identity-panel-field {
+    background-color: var(--identity-panel-field);
+    border-color: var(--identity-panel-field-border);
+    color: var(--identity-panel-fg);
+  }
+
+  .identity-panel-field::placeholder {
+    color: var(--identity-panel-placeholder);
+  }
+
+  .identity-panel-field:hover,
+  .identity-panel-field:focus {
+    background-color: var(--identity-panel-field-hover);
+  }
+
+  .identity-panel-divider {
+    border-color: var(--identity-panel-border);
+  }
+
+  .identity-panel-row {
+    color: var(--identity-panel-secondary);
+  }
+
+  .identity-panel-row:hover {
+    background-color: var(--identity-panel-row-hover);
+    color: var(--identity-panel-fg);
+  }
+
+  .ledgy-capability-tooltip {
+    opacity: 0;
+    filter: blur(8px);
+    transform: translateY(4px);
+    transition:
+      opacity var(--duration-default) cubic-bezier(0.25, 1, 0.5, 1),
+      filter var(--duration-default) cubic-bezier(0.25, 1, 0.5, 1),
+      transform var(--duration-default) cubic-bezier(0.25, 1, 0.5, 1);
+    will-change: opacity, filter, transform;
+  }
+
+  .ledgy-capability:hover .ledgy-capability-tooltip,
+  .ledgy-capability:focus-within .ledgy-capability-tooltip {
+    opacity: 1;
+    filter: blur(0);
+    transform: translateY(0);
+  }
+
   /* Reveal animation base */
   .reveal {
     opacity: 0;

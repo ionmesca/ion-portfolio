@@ -6,6 +6,8 @@ import {
 } from "@/lib/projects";
 import { ProjectDetail } from "@/components/portfolio/project-detail";
 import { ProjectGallery } from "@/components/portfolio/project-gallery";
+import { ProjectItem } from "@/components/portfolio/project-item";
+import { ResizableRail } from "@/components/portfolio/resizable-rail";
 import { Sidebar } from "@/components/portfolio/sidebar";
 import type { Metadata } from "next";
 
@@ -51,23 +53,28 @@ export default async function ProjectPage({
   return (
     <div className="flex h-screen">
       <Sidebar>
-        <div className="flex flex-col gap-0.5">
+        <div className="flex flex-col gap-1">
           {projects.map((p) => (
             <a
               key={p.slug}
               href={`/work/${p.slug}`}
-              className={`flex items-center gap-3 px-2.5 py-2 rounded-lg text-[13px] ${
-                p.slug === slug
-                  ? "bg-bg-elevated font-medium text-text-primary"
-                  : "text-text-tertiary hover:bg-bg-elevated/50"
-              }`}
+              className="block text-left"
             >
-              {p.title}
+              <ProjectItem project={p} isActive={p.slug === slug} />
             </a>
           ))}
         </div>
       </Sidebar>
-      <ProjectDetail project={meta} prev={prev} next={next} />
+      <ResizableRail
+        defaultWidth={360}
+        hideBelowMd={false}
+        minWidth={300}
+        maxWidth={560}
+        resizeLabel="Resize project details"
+        storageKey="ion-portfolio-project-detail-width"
+      >
+        <ProjectDetail project={meta} prev={prev} next={next} />
+      </ResizableRail>
       <ProjectGallery project={meta} />
     </div>
   );

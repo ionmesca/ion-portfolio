@@ -12,7 +12,10 @@ export default function Home() {
     <>
       <MobileHeader />
       <NavBar />
-      <div className="flex-1 min-h-0 md:mx-4 md:mb-4 md:bg-bg-base md:rounded-3xl md:shadow-card md:ring-1 md:ring-black/[0.06] md:overflow-hidden">
+      <div
+        id="work"
+        className="flex-1 min-h-0 md:mx-4 md:mb-4 md:bg-bg-base md:rounded-3xl md:shadow-card md:ring-1 md:ring-black/[0.06] md:overflow-hidden"
+      >
         <Timeline
           projects={projects}
           sidebar={<ProjectList projects={projects} />}

@@ -17,7 +17,7 @@ export function ProjectDetail({
   children?: React.ReactNode;
 }) {
   return (
-    <aside className="w-[360px] min-w-[360px] overflow-y-auto border-r border-border-subtle p-6 flex flex-col gap-5">
+    <div className="h-full w-full overflow-y-auto p-6 flex flex-col gap-5">
       <div className="flex items-center justify-between">
         <BackButton />
         <div className="flex gap-1">
@@ -119,6 +119,6 @@ export function ProjectDetail({
       {children && (
         <div className="prose prose-sm prose-neutral mt-2">{children}</div>
       )}
-    </aside>
+    </div>
   );
 }

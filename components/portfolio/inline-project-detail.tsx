@@ -23,7 +23,7 @@ export function InlineProjectDetail() {
   if (!project) return null;
 
   return (
-    <div className="w-[360px] min-w-[360px] h-full overflow-y-auto border-r border-border-subtle p-6 flex flex-col gap-5">
+    <div className="h-full w-full overflow-y-auto p-6 flex flex-col gap-5">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div
