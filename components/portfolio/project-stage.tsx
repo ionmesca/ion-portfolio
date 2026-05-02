@@ -1,25 +1,56 @@
 "use client";
 
+import { MeshGradient } from "@paper-design/shaders-react";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 export type ProjectStageTint = "ledgy" | "beets";
 export type ProjectStageMotion = "active" | "frozen";
 
+type Palette = readonly [string, string, string, string];
+
+const PALETTES_LIGHT: Record<ProjectStageTint, Palette> = {
+  ledgy: ["#5A1EFF", "#FFFFFF", "#FFFFFF", "#FFFFFF"],
+  beets: ["#C5475F", "#FFFFFF", "#FFFFFF", "#FFFFFF"],
+};
+
+const ACTIVE_PARAMS = {
+  speed: 0.06,
+  scale: 0.82,
+  distortion: 0.58,
+  swirl: 0.18,
+  rotation: 10,
+  offsetX: -0.08,
+  offsetY: 0.03,
+} as const;
+
 export interface ProjectStageProps {
-  /** Palette family. Defaults to 'ledgy'. */
   tint?: ProjectStageTint;
-  /** Motion mode. 'active' = animated drift; 'frozen' = locked still frame. Defaults to 'active'. */
   motion?: ProjectStageMotion;
-  /** Optional className for sizing/radius/etc. */
   className?: string;
-  /** Optional content layered on top of the shader. */
   children?: ReactNode;
 }
 
-export function ProjectStage({ className, children }: ProjectStageProps) {
+export function ProjectStage({
+  tint = "ledgy",
+  className,
+  children,
+}: ProjectStageProps) {
+  const colors = PALETTES_LIGHT[tint];
+
   return (
     <div className={cn("relative isolate overflow-hidden", className)}>
+      <MeshGradient
+        speed={ACTIVE_PARAMS.speed}
+        scale={ACTIVE_PARAMS.scale}
+        distortion={ACTIVE_PARAMS.distortion}
+        swirl={ACTIVE_PARAMS.swirl}
+        rotation={ACTIVE_PARAMS.rotation}
+        offsetX={ACTIVE_PARAMS.offsetX}
+        offsetY={ACTIVE_PARAMS.offsetY}
+        colors={colors as unknown as string[]}
+        style={{ position: "absolute", inset: 0, pointerEvents: "none" }}
+      />
       {children && <div className="relative h-full">{children}</div>}
     </div>
   );
