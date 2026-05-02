@@ -77,6 +77,8 @@
 
   /* Accent */
   --color-accent: #ff9f6a;
+  --color-brand-ledgy: #5A1EFF;
+  --color-brand-beets: #C5475F;
   --color-accent-soft: rgba(255, 159, 106, 0.1);
   --color-accent-hover: #ff8c4a;
 
