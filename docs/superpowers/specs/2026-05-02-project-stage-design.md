@@ -47,9 +47,11 @@ Every Ledgy project (AI Document Auditor, Tranche Builder, Admin Home, Ledgy Age
 
 Why not one shader per project? Two parameterized shaders give us identity + variety. Ten unrelated shaders give us inconsistency, more design surface to maintain, and more GPU cost.
 
-### 2.3 Light-mode default
+### 2.3 Light + dark parity from day one
 
-Per DESIGN.md: the landing is a soft gray app surface behind a white shell. The shader sits **inside** that white shell, so it must be designed light-first — mostly white with a focal color blob, not a dark dramatic field. Dark-mode parity is a future concern.
+Per DESIGN.md: the landing is a soft gray app surface behind a white shell. The shader sits **inside** that white shell, so it must be designed light-first — mostly white with a focal color blob, not a dark dramatic field.
+
+Dark mode follows the same philosophy with one swap: same focal brand color, but the field becomes a **deep-tinted near-black** (a dark indigo for Ledgy, a deep burgundy for Beets), not pure black. This keeps the brand recognizable in both modes and avoids the "dark dramatic curtain" energy that would undermine the calm thesis.
 
 ### 2.4 Paper Design's `MeshGradient` as the primitive
 
@@ -107,19 +109,28 @@ export function ProjectStage(props: ProjectStageProps): JSX.Element;
 
 import { MeshGradient } from '@paper-design/shaders-react';
 import { useReducedMotion } from 'motion/react';
+import { useTheme } from 'next-themes';
 import type { ReactNode } from 'react';
 import { cn } from '@/lib/utils';
 
 type Tint = 'ledgy' | 'beets';
 type Motion = 'active' | 'frozen';
+type Palette = [string, string, string, string]; // 4 stops for MeshGradient
 
-const PALETTES: Record<Tint, [string, string, string, string]> = {
+// Light: brand-color focal blob in a white field.
+const PALETTES_LIGHT: Record<Tint, Palette> = {
   ledgy: ['#5A1EFF', '#FFFFFF', '#FFFFFF', '#FFFFFF'],
   beets: ['#C5475F', '#FFFFFF', '#FFFFFF', '#FFFFFF'],
 };
 
-// "Money frame" captured from Paper for each tint.
-// Lock by setting speed=0 + frame=<this value>.
+// Dark: same focal brand color, field swapped to a deep-tinted near-black.
+const PALETTES_DARK: Record<Tint, Palette> = {
+  ledgy: ['#5A1EFF', '#1A0B5E', '#1A0B5E', '#1A0B5E'],
+  beets: ['#C5475F', '#2C0815', '#2C0815', '#2C0815'],
+};
+
+// "Money frame" captured from Paper for each tint. Frame is theme-agnostic:
+// it controls the noise phase, not colors.
 const FROZEN_FRAME: Record<Tint, number> = {
   ledgy: 114899.41599999536,
   beets: 0, // TODO: capture in Paper, paste exact value
@@ -146,7 +157,10 @@ export function ProjectStage({
   children,
 }: ProjectStageProps) {
   const prefersReduced = useReducedMotion();
+  const { resolvedTheme } = useTheme();
   const isFrozen = motion === 'frozen' || prefersReduced;
+  const isDark = resolvedTheme === 'dark';
+  const colors = (isDark ? PALETTES_DARK : PALETTES_LIGHT)[tint];
 
   return (
     <div className={cn('relative isolate overflow-hidden', className)}>
@@ -156,7 +170,7 @@ export function ProjectStage({
         distortion={ACTIVE_PARAMS.distortion}
         swirl={ACTIVE_PARAMS.swirl}
         frame={isFrozen ? FROZEN_FRAME[tint] : undefined}
-        colors={PALETTES[tint]}
+        colors={colors}
         style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}
       />
       {children && <div className="relative h-full">{children}</div>}
@@ -164,6 +178,8 @@ export function ProjectStage({
   );
 }
 ```
+
+**SSR / hydration note.** `useTheme()` from `next-themes` returns `undefined` on first server render, then resolves on the client. Until resolved, the falsy check on `resolvedTheme === 'dark'` defaults to the light palette. There may be a one-frame flash for users on dark mode. This is acceptable for an MVP — the shader fades in via WebGL anyway. If the flash becomes noticeable in practice, we can gate render on a `mounted` state.
 
 ### 4.5 Validated shader parameters
 
@@ -187,20 +203,19 @@ Captured from Paper file `01KMJ9G3R26NWX4WDDZJKJ0AZD`, node `97-0`, on 2026-05-0
 Add to `app/globals.css` `@theme inline` block (alongside existing `--color-*` tokens):
 
 ```css
-/* Ledgy violet ramp */
---color-ledgy-violet: #5A1EFF;        /* brand primary, the shader focal */
---color-ledgy-violet-hi: #EAE2F8;     /* lilac haze, optional accent */
---color-ledgy-violet-mid: #3F2A85;    /* deep amethyst, optional shadow */
---color-ledgy-violet-anchor: #0F0F28; /* indigo near-black, dark surfaces */
-
-/* Beets burgundy ramp */
---color-beets-oxblood: #C5475F;       /* brand primary, the shader focal */
---color-beets-rose: #F4D3CB;          /* warm rose haze */
---color-beets-deep: #7A1F33;          /* deep burgundy */
---color-beets-anchor: #2C0815;        /* warm near-black */
+--color-brand-ledgy: #5A1EFF;  /* Ledgy primary brand violet */
+--color-brand-beets: #C5475F;  /* Beets primary brand oxblood */
 ```
 
-These tokens are **not consumed by `<ProjectStage>` directly** (the shader carries its own palette internally). They exist for icons, badges, focus rings, hover states, and other surfaces that need brand-coherent accent moments.
+That's it. Two tokens.
+
+**Why so few?**
+
+- `<ProjectStage>` carries its own palettes internally (light + dark). It does not consume these tokens directly.
+- These exist as canonical brand references for any *future* consumer — badges, focus rings, hover states, decorative accents — so the brand is defined in one place.
+- We add more shades only when a real consumer needs them. Defining a full ramp now is YAGNI.
+
+**Note on existing accent token.** `--color-accent: #ff9f6a` in `globals.css` is flagged by DESIGN.md as provisional ("not the final brand accent"). It's not removed in this spec, but the long-term direction is to migrate accent uses toward `--color-brand-ledgy` and retire `#ff9f6a`. Tracked in Section 11.
 
 ## 6. Motion rules
 
@@ -308,25 +323,26 @@ Phase 2 — not required for the first ship. Phase 1 ships with `tint="ledgy"` h
 
 The following are explicitly **not** part of this spec:
 
-- **Dark mode parity.** Light-mode only for now. Dark-mode palette and the question of whether the shader inverts or swaps entirely is a future spec.
-- **Beets `frozen` frame value.** The Ledgy frozen frame is captured (`114899.41599999536`); the Beets equivalent must be captured in Paper before Beets stages ship in `motion="frozen"`. Tracked in Section 11.
-- **Diagonal CSS-bar pattern variant.** Earlier in the design exploration we built a CSS `repeating-linear-gradient` bar pattern at the Ledgy logo angle (see `.superpowers/brainstorm/.../05-stage-lab.html`). It's parked as a future direction — could be a more graphic, "logo-led" alternative or an additional layer behind the shader.
+- **Beets `frozen` frame value.** The Ledgy frozen frame is captured (`114899.41599999536`); the Beets equivalent must be captured in Paper before Beets stages ship in `motion="frozen"`. Tracked in Section 10.
+- **Active-project-driven tint switching.** Phase 1 hardcodes `tint="ledgy"` in Timeline. Switching tints when Beets is the active project (with crossfade) is Phase 2.
+- **Diagonal CSS-bar pattern variant.** Earlier in the design exploration we built a CSS `repeating-linear-gradient` bar pattern at the Ledgy logo angle (parked at `.superpowers/brainstorm/.../05-stage-lab.html`). Future direction — could be a graphic, "logo-led" alternative or an additional layer behind the shader.
 - **Ripple-specific tint variant.** All Ledgy projects use the same `ledgy` tint in this spec. If Ripple, Agent, or any specific project needs a distinct accent, that's a future palette extension.
-- **Detail-page animation.** Project detail surfaces are `frozen` for now. Subtle motion on detail pages is a future polish.
+- **Detail-page subtle motion.** Project detail surfaces are `frozen` for now. Subtle motion on detail pages is a future polish.
+- **Retiring `--color-accent`.** Migrating existing `#ff9f6a` accent uses to `--color-brand-ledgy` is a separate cleanup tracked in Section 11.
 
 ## 10. Open questions
 
 - **Beets `FROZEN_FRAME` value.** Capture in Paper before Beets stages ship in frozen mode. Workflow: open the Paper file, drop a Mesh Gradient with the Beets palette, drag the `frame` slider until the burgundy blob lands in a beautiful position, copy that frame value, paste into the constant.
 - **Where does the active stage tint switch?** Phase 2 work — answered when we wire tint-per-active-project.
-- **Crossfade implementation choice.** `framer-motion` two-instance vs. CSS `key` re-mount. Decided when Phase 2 lands.
+- **Crossfade implementation choice.** `motion/react` two-instance vs. CSS `key` re-mount. Decided when Phase 2 lands.
 
 ## 11. Future directions
 
-- **Phase 2:** active-project-driven tint switching with crossfade.
-- **Phase 3:** ProjectStage on inline detail pages and About page (frozen).
-- **Phase 4:** Dark-mode parity.
-- **Optional:** the diagonal CSS-bar pattern as an alternative or composable layer.
-- **Optional:** a per-project accent override (e.g., Ripple gets a cyan tinge inside the Ledgy violet) — only if a specific need surfaces.
+- **Phase 2 — active-project-driven tint switching.** When the active project changes between Ledgy work and Beets, crossfade the stage tint. Implementation choice (two stacked instances vs. key-remount) decided when the work lands.
+- **Phase 3 — ProjectStage on detail surfaces.** Inline project detail and About page get `motion="frozen"` stages.
+- **Accent retirement.** Migrate existing `--color-accent: #ff9f6a` consumers to `--color-brand-ledgy` and remove the provisional accent token.
+- **Diagonal CSS-bar pattern.** Optional alternative or composable layer (Section 9).
+- **Per-project accent override.** Only if a specific need surfaces (e.g., Ripple needs a cyan tinge).
 
 ## Appendix A — captured shader JSX (source of truth)
 
@@ -365,8 +381,9 @@ export default function () {
 
 - [ ] `@paper-design/shaders-react@0.0.76` installed.
 - [ ] `components/portfolio/project-stage.tsx` created with the reference implementation from Section 4.4.
-- [ ] Palette tokens from Section 5 added to `app/globals.css`.
+- [ ] Palette tokens from Section 5 added to `app/globals.css` (`--color-brand-ledgy`, `--color-brand-beets`).
 - [ ] `<ProjectStage tint="ledgy" motion="active" />` integrated into `components/portfolio/timeline.tsx` per Section 7.1.
-- [ ] Verified visually: shader visible behind HeroCards, no click blocking, drift is slow.
-- [ ] Verified `prefers-reduced-motion`: shader freezes when OS setting is on.
-- [ ] No regressions: existing tests pass; manual smoke test of expand/collapse and scroll-spy.
+- [ ] **Light-mode visual check:** shader visible behind HeroCards, no click blocking, drift is slow, brand violet feels like a focal blob in a white field.
+- [ ] **Dark-mode visual check:** toggle theme to dark; shader field swaps to deep indigo, focal violet still recognizable, no harsh banding.
+- [ ] **Reduced motion check:** enable OS `prefers-reduced-motion: reduce`; shader freezes (no drift visible).
+- [ ] **No regressions:** existing tests pass; manual smoke test of expand/collapse, scroll-spy, identity panel open/close.
