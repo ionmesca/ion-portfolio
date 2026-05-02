@@ -20,6 +20,11 @@ const PALETTES_DARK: Record<ProjectStageTint, Palette> = {
   beets: ["#C5475F", "#2C0815", "#2C0815", "#2C0815"],
 };
 
+const FROZEN_FRAME: Record<ProjectStageTint, number> = {
+  ledgy: 114899.41599999536,
+  beets: 0,
+};
+
 const ACTIVE_PARAMS = {
   speed: 0.06,
   scale: 0.82,
@@ -39,23 +44,26 @@ export interface ProjectStageProps {
 
 export function ProjectStage({
   tint = "ledgy",
+  motion = "active",
   className,
   children,
 }: ProjectStageProps) {
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme === "dark";
+  const isFrozen = motion === "frozen";
   const colors = (isDark ? PALETTES_DARK : PALETTES_LIGHT)[tint];
 
   return (
     <div className={cn("relative isolate overflow-hidden", className)}>
       <MeshGradient
-        speed={ACTIVE_PARAMS.speed}
+        speed={isFrozen ? 0 : ACTIVE_PARAMS.speed}
         scale={ACTIVE_PARAMS.scale}
         distortion={ACTIVE_PARAMS.distortion}
         swirl={ACTIVE_PARAMS.swirl}
         rotation={ACTIVE_PARAMS.rotation}
         offsetX={ACTIVE_PARAMS.offsetX}
         offsetY={ACTIVE_PARAMS.offsetY}
+        frame={isFrozen ? FROZEN_FRAME[tint] : undefined}
         colors={colors as unknown as string[]}
         style={{ position: "absolute", inset: 0, pointerEvents: "none" }}
       />
