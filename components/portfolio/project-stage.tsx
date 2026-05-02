@@ -1,6 +1,7 @@
 "use client";
 
 import { MeshGradient } from "@paper-design/shaders-react";
+import { useTheme } from "next-themes";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
@@ -12,6 +13,11 @@ type Palette = readonly [string, string, string, string];
 const PALETTES_LIGHT: Record<ProjectStageTint, Palette> = {
   ledgy: ["#5A1EFF", "#FFFFFF", "#FFFFFF", "#FFFFFF"],
   beets: ["#C5475F", "#FFFFFF", "#FFFFFF", "#FFFFFF"],
+};
+
+const PALETTES_DARK: Record<ProjectStageTint, Palette> = {
+  ledgy: ["#5A1EFF", "#1A0B5E", "#1A0B5E", "#1A0B5E"],
+  beets: ["#C5475F", "#2C0815", "#2C0815", "#2C0815"],
 };
 
 const ACTIVE_PARAMS = {
@@ -36,7 +42,9 @@ export function ProjectStage({
   className,
   children,
 }: ProjectStageProps) {
-  const colors = PALETTES_LIGHT[tint];
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
+  const colors = (isDark ? PALETTES_DARK : PALETTES_LIGHT)[tint];
 
   return (
     <div className={cn("relative isolate overflow-hidden", className)}>
