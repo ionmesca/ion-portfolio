@@ -1,6 +1,7 @@
 "use client";
 
 import { MeshGradient } from "@paper-design/shaders-react";
+import { useReducedMotion } from "motion/react";
 import { useTheme } from "next-themes";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
@@ -48,9 +49,10 @@ export function ProjectStage({
   className,
   children,
 }: ProjectStageProps) {
+  const prefersReduced = useReducedMotion();
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme === "dark";
-  const isFrozen = motion === "frozen";
+  const isFrozen = motion === "frozen" || prefersReduced === true;
   const colors = (isDark ? PALETTES_DARK : PALETTES_LIGHT)[tint];
 
   return (
