@@ -3,15 +3,20 @@
 import type { KeyboardEvent } from "react";
 import { useId, useRef, useState } from "react";
 import Image from "next/image";
-import { ChevronDown } from "lucide-react";
+import { ChevronsUpDown } from "lucide-react";
 import { AgentSurface } from "@/components/agent/agent-surface";
 import { cn } from "@/lib/utils";
 
+const IDENTITY_LABEL = "Ion Mesca";
+const AGENT_LABEL = "Ask Agent Ion";
+
 export function Identity() {
   const [isOpen, setIsOpen] = useState(false);
+  const [isHovering, setIsHovering] = useState(false);
   const panelContentId = useId();
   const labelId = useId();
   const triggerRef = useRef<HTMLButtonElement>(null);
+  const isAgentMode = isOpen || isHovering;
 
   function handleTriggerClick() {
     if (isOpen) {
@@ -33,6 +38,8 @@ export function Identity() {
     <div
       className="identity-root relative h-10 w-[184px]"
       onKeyDown={handleKeyDown}
+      onPointerEnter={() => setIsHovering(true)}
+      onPointerLeave={() => setIsHovering(false)}
     >
       <div
         aria-hidden
@@ -48,7 +55,7 @@ export function Identity() {
         data-state={isOpen ? "open" : "closed"}
         className={cn(
           "identity-panel-surface absolute left-0 top-0 z-50 origin-top-left overflow-hidden rounded-3xl border transition-[width,height,box-shadow,background-color,border-color] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]",
-          isOpen ? "h-[560px] w-[520px] shadow-card" : "h-10 w-[158px] shadow-none"
+          isOpen ? "h-[560px] w-[520px] shadow-card" : "h-10 w-[184px] shadow-none"
         )}
       >
         <button
@@ -59,38 +66,72 @@ export function Identity() {
           aria-haspopup="dialog"
           onClick={handleTriggerClick}
           className={cn(
-            "identity-trigger absolute left-0 top-0 z-[60] inline-flex h-10 w-[158px] items-center gap-2 overflow-hidden rounded-full py-1 pl-1 pr-2 text-left outline-none transition-[width] duration-150 ease-[cubic-bezier(0.25,1,0.5,1)] focus-visible:ring-2 focus-visible:ring-accent",
-            isOpen && "w-10"
+            "identity-trigger absolute left-0 top-0 z-[60] inline-flex h-10 w-[184px] items-center gap-2 overflow-hidden rounded-full py-1 pl-1 pr-2 text-left outline-none focus-visible:ring-2 focus-visible:ring-accent"
           )}
           aria-label="Open Ion Mesca contact card"
         >
           <span className="relative shrink-0">
             <Image
-              src="/ion.jpeg"
+              src={isAgentMode ? "/ion-agent-avatar.png" : "/ion-avatar.png"}
               alt="Ion Mesca"
               width={32}
               height={32}
-              className="size-8 rounded-full object-cover"
+              className="identity-avatar size-8 rounded-full object-cover"
               priority
             />
             <span className="absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full border-2 border-bg-surface bg-success" />
           </span>
           <span
             id={labelId}
-            className={cn(
-              "identity-trigger-copy whitespace-nowrap text-base font-medium transition-[opacity,filter,transform] duration-150 ease-[cubic-bezier(0.25,1,0.5,1)]",
-              isOpen ? "opacity-0 blur-sm" : "opacity-100 blur-0"
-            )}
+            className="identity-trigger-label relative h-6 min-w-0 flex-1 overflow-hidden text-base font-medium"
           >
-            Ion Mesca
+            <span className="sr-only">{isAgentMode ? AGENT_LABEL : IDENTITY_LABEL}</span>
+            {isAgentMode ? (
+              <span
+                aria-hidden
+                className="identity-trigger-label-morph absolute inset-0 whitespace-nowrap"
+              >
+                <span className="identity-trigger-label-primary absolute inset-0 whitespace-nowrap">
+                  {IDENTITY_LABEL.split("").map((letter, index) => (
+                    <span
+                      key={`identity-${letter}-${index}`}
+                      className="identity-label-char inline-block animate-[identity-label-out_180ms_cubic-bezier(0.16,1,0.3,1)_both]"
+                      style={{ animationDelay: `${120 + index * 10}ms` }}
+                    >
+                      {letter === " " ? "\u00a0" : letter}
+                    </span>
+                  ))}
+                </span>
+                <span className="identity-trigger-label-agent absolute inset-0 whitespace-nowrap">
+                {AGENT_LABEL.split("").map((letter, index) => (
+                  <span
+                    key={`agent-${letter}-${index}`}
+                    className="identity-label-char inline-block animate-[identity-label-in_200ms_cubic-bezier(0.16,1,0.3,1)_both]"
+                    style={{ animationDelay: `${220 + index * 16}ms` }}
+                  >
+                    {letter === " " ? "\u00a0" : letter}
+                  </span>
+                ))}
+                </span>
+              </span>
+            ) : (
+              <span
+                aria-hidden
+                className="identity-trigger-label-primary absolute inset-0 whitespace-nowrap"
+              >
+                {IDENTITY_LABEL}
+              </span>
+            )}
           </span>
-          <ChevronDown
+          <span
             className={cn(
-              "identity-trigger-copy size-4 shrink-0 text-text-tertiary transition-[opacity,filter,transform] duration-250 ease-[cubic-bezier(0.16,1,0.3,1)]",
-              isOpen && "rotate-180"
+              "identity-trigger-disclosure flex size-4 shrink-0 items-center justify-center text-text-tertiary transition-[opacity,transform] duration-200 ease-[cubic-bezier(0.16,1,0.3,1)]",
+              isAgentMode && "pointer-events-none -translate-y-0.5 scale-95 opacity-0"
             )}
             aria-hidden
-          />
+          >
+            <ChevronsUpDown className="size-4" />
+          </span>
         </button>
 
         <div className="h-full p-1">

@@ -1,18 +1,19 @@
 "use client";
 
 import type { FormEvent } from "react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
   ArrowLeft,
+  ArrowUp,
   ArrowUpRight,
   Check,
   ExternalLink,
+  Expand,
   Loader2,
   Plus,
   Search,
-  Send,
   X,
 } from "lucide-react";
 import type { UIMessage } from "ai";
@@ -39,14 +40,21 @@ export function AgentSurface({
 }) {
   const agent = useAgent();
   const [input, setInput] = useState("");
+  const [isComposerExpanded, setIsComposerExpanded] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const hasMessages = agent.messages.length > 0;
   const isBusy = agent.status === "streaming" || agent.status === "submitted";
-  const showHeaderAvatar = mode === "page";
 
   async function submitMessage(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const message = input;
+    if (!message.trim()) return;
+
     setInput("");
+    setIsComposerExpanded(false);
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "auto";
+    }
     await agent.sendText(message);
   }
 
@@ -65,6 +73,17 @@ export function AgentSurface({
     }
   }
 
+  function updateInput(value: string, element: HTMLTextAreaElement) {
+    setInput(value);
+
+    element.style.height = "auto";
+    const nextHeight = Math.min(element.scrollHeight, 72);
+    element.style.height = `${nextHeight}px`;
+    setIsComposerExpanded(
+      value.includes("\n") || value.length > 36 || nextHeight > 40
+    );
+  }
+
   return (
     <section
       className={cn(
@@ -76,9 +95,16 @@ export function AgentSurface({
       )}
       aria-label="Ion's portfolio agent"
     >
-      <header className="flex h-14 shrink-0 items-center justify-between px-4 pt-1">
-        <div className={cn("flex items-center gap-2", !showHeaderAvatar && "pl-10")}>
-          {showHeaderAvatar ? (
+      <header
+        className={cn(
+          "relative z-20 flex shrink-0 items-start justify-between bg-transparent",
+          mode === "popover" ? "h-14 px-5 pt-2" : "h-14 px-4 pt-1"
+        )}
+      >
+        {mode === "popover" ? (
+          <div aria-hidden className="relative w-[184px]" />
+        ) : (
+          <div className="relative flex items-center gap-3">
             <span className="relative flex size-8 shrink-0">
               <Image
                 src="/ion.jpeg"
@@ -89,28 +115,42 @@ export function AgentSurface({
               />
               <span className="absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full border-2 border-bg-base bg-success" />
             </span>
-          ) : null}
-          <div className="leading-none">
-            <p className="text-sm font-medium">
-              {agent.isHydrating ? "Warming up" : "Ion, in context"}
-            </p>
+            <div className="leading-none">
+              <p className="text-sm font-medium">
+                {agent.isHydrating ? "Warming up" : "Ion, in context"}
+              </p>
+            </div>
           </div>
-        </div>
+        )}
 
-        <div className="flex items-center gap-1">
+        <div
+          className={cn(
+            "relative flex items-center gap-2"
+          )}
+        >
           <Button
             type="button"
             size="icon-sm"
             variant="ghost"
             onClick={newConversation}
             aria-label="New conversation"
+            className={cn(
+              mode === "popover" &&
+                "rounded-full text-text-secondary hover:bg-bg-surface hover:text-text-primary"
+            )}
           >
             <Plus />
           </Button>
           {mode === "popover" ? (
-            <Button asChild size="icon-sm" variant="ghost" aria-label="Open full agent page">
+            <Button
+              asChild
+              size="icon-sm"
+              variant="ghost"
+              aria-label="Open full agent page"
+              className="rounded-full text-text-secondary hover:bg-bg-surface hover:text-text-primary"
+            >
               <Link href="/agent">
-                <ArrowUpRight />
+                <Expand />
               </Link>
             </Button>
           ) : (
@@ -124,59 +164,84 @@ export function AgentSurface({
         </div>
       </header>
 
-      <div className="min-h-0 flex-1 overflow-y-auto px-4 py-2">
-        {!hasMessages ? (
-          <EmptyState onPrompt={submitPrompt} />
-        ) : (
-          <div className="flex flex-col gap-4">
-            {agent.messages.map((message) => (
-              <AgentMessage key={message.id} message={message} />
-            ))}
-            {isBusy ? (
-              <div className="flex items-center gap-2 text-xs text-text-tertiary">
-                <Loader2 className="size-3 animate-spin" />
-                Thinking through the evidence
-              </div>
-            ) : null}
-            {agent.error ? (
-              <div className="rounded-lg border border-warning/30 bg-warning/10 px-3 py-2 text-xs text-text-secondary">
-                Generation interrupted. Try again in a moment.
-              </div>
-            ) : null}
-          </div>
-        )}
-      </div>
-
-      <form
-        onSubmit={submitMessage}
-        className="shrink-0 px-4 pb-4 pt-2"
-      >
-        <div className="flex min-h-11 items-end gap-1 rounded-full border border-border-default bg-bg-surface px-3 py-1.5 transition-colors focus-within:border-border-strong">
-          <textarea
-            value={input}
-            onChange={(event) => setInput(event.target.value)}
-            onKeyDown={(event) => {
-              if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
-                event.currentTarget.form?.requestSubmit();
-              }
-            }}
-            disabled={isBusy}
-            rows={1}
-            maxLength={1200}
-            placeholder="Ask about Ion's work..."
-            className="max-h-24 min-h-8 flex-1 resize-none bg-transparent py-1.5 text-sm leading-5 outline-none placeholder:text-text-tertiary disabled:opacity-60"
-          />
-          <Button
-            type="submit"
-            size="icon-sm"
-            disabled={isBusy || !input.trim()}
-            aria-label="Send message"
-            className="mb-0.5 rounded-full"
-          >
-            <Send />
-          </Button>
+      <div className="relative min-h-0 flex-1">
+        <div className="absolute inset-0 overflow-y-auto px-5 pb-32 pt-5">
+          {!hasMessages ? (
+            <EmptyState mode={mode} onPrompt={submitPrompt} />
+          ) : (
+            <div className="flex flex-col gap-4">
+              {agent.messages.map((message) => (
+                <AgentMessage key={message.id} message={message} />
+              ))}
+              {isBusy ? (
+                <div className="flex items-center gap-2 text-xs text-text-tertiary">
+                  <Loader2 className="size-3 animate-spin" />
+                  Thinking through the evidence
+                </div>
+              ) : null}
+              {agent.error ? (
+                <div className="rounded-lg border border-warning/30 bg-warning/10 px-3 py-2 text-xs text-text-secondary">
+                  Generation interrupted. Try again in a moment.
+                </div>
+              ) : null}
+            </div>
+          )}
         </div>
-      </form>
+
+        <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-28">
+          <div className="absolute inset-0 bg-gradient-to-t from-bg-base/88 via-bg-base/42 via-48% to-transparent" />
+        </div>
+
+        <form
+          onSubmit={submitMessage}
+          className="absolute inset-x-0 bottom-0 z-20 px-5 pb-5 pt-8"
+        >
+          <div
+            className={cn(
+              "flex items-end gap-1 rounded-full border border-border-default bg-bg-base px-3 py-1.5 shadow-card transition-[min-height,border-radius,border-color,box-shadow] duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] focus-within:border-border-strong",
+              isComposerExpanded
+                ? "min-h-[88px] rounded-[28px]"
+                : "min-h-11"
+            )}
+          >
+            <textarea
+              ref={textareaRef}
+              value={input}
+              onChange={(event) => updateInput(event.target.value, event.currentTarget)}
+              onKeyDown={(event) => {
+                if (
+                  event.key === "Enter" &&
+                  !event.shiftKey &&
+                  !event.nativeEvent.isComposing
+                ) {
+                  event.preventDefault();
+                  event.currentTarget.form?.requestSubmit();
+                }
+              }}
+              disabled={isBusy}
+              rows={1}
+              maxLength={1200}
+              placeholder="Ask about Ion's work..."
+              className="max-h-[72px] min-h-8 flex-1 resize-none overflow-y-auto bg-transparent py-1.5 text-sm leading-5 outline-none transition-[height] duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] placeholder:text-text-tertiary disabled:opacity-60"
+            />
+            <Button
+              type="submit"
+              size="icon-sm"
+              variant={input.trim() ? "default" : "ghost"}
+              disabled={isBusy || !input.trim()}
+              aria-label="Send message"
+              className={cn(
+                "mb-0.5 rounded-full transition-[transform,background-color,color,box-shadow,opacity] duration-200 ease-[cubic-bezier(0.16,1,0.3,1)]",
+                input.trim()
+                  ? "scale-100 shadow-card"
+                  : "scale-95 text-text-tertiary"
+              )}
+            >
+              <ArrowUp />
+            </Button>
+          </div>
+        </form>
+      </div>
 
       {mode === "page" ? (
         <div className="px-3 pb-3 text-right font-mono text-[10px] text-text-tertiary">
@@ -187,27 +252,35 @@ export function AgentSurface({
   );
 }
 
-function EmptyState({ onPrompt }: { onPrompt: (prompt: string) => void }) {
+function EmptyState({
+  mode,
+  onPrompt,
+}: {
+  mode: AgentSurfaceMode;
+  onPrompt: (prompt: string) => void;
+}) {
   return (
-    <div className="flex h-full flex-col justify-center gap-5">
-      <div>
-        <p className="typo-label text-text-label">Agent</p>
-        <p className="mt-2 text-sm leading-6 text-text-secondary">
-          I&apos;m an agent Ion designed to talk about his work and route you to
-          the relevant case studies. A few places to start:
-        </p>
-      </div>
-
-      <div className="flex flex-col gap-2">
-        {suggestedPrompts.map((prompt) => (
+    <div
+      className={cn(
+        "flex h-full flex-col gap-5",
+        mode === "page" ? "justify-start pt-24" : "justify-start pt-12"
+      )}
+    >
+      <div className="flex flex-col gap-1.5">
+        {suggestedPrompts.map((prompt, index) => (
           <button
             key={prompt}
             type="button"
             onClick={() => onPrompt(prompt)}
-            className="group flex min-h-11 items-center justify-between gap-3 rounded-xl border border-border-subtle bg-bg-surface px-3 py-2 text-left text-sm text-text-primary transition-colors hover:bg-bg-elevated focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border-strong"
+            className={cn(
+              "group flex min-h-10 items-center justify-between gap-3 rounded-xl bg-bg-surface px-3 py-2 text-left text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border-strong",
+              index === 0
+                ? "text-text-primary hover:bg-bg-elevated"
+                : "text-text-secondary hover:bg-bg-elevated hover:text-text-primary"
+            )}
           >
             <span>{prompt}</span>
-            <ArrowUpRight className="size-4 shrink-0 text-text-tertiary transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+            <ArrowUpRight className="size-3.5 shrink-0 text-text-tertiary transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
           </button>
         ))}
       </div>
