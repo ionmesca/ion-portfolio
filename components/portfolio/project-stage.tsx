@@ -2,7 +2,7 @@
 
 import { MeshGradient } from "@paper-design/shaders-react";
 import { useReducedMotion } from "motion/react";
-import { useTheme } from "next-themes";
+import { useTheme } from "@/app/providers/theme-provider";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
@@ -39,6 +39,7 @@ const ACTIVE_PARAMS = {
 export interface ProjectStageProps {
   tint?: ProjectStageTint;
   motion?: ProjectStageMotion;
+  frame?: number;
   className?: string;
   children?: ReactNode;
 }
@@ -46,6 +47,7 @@ export interface ProjectStageProps {
 export function ProjectStage({
   tint = "ledgy",
   motion = "active",
+  frame,
   className,
   children,
 }: ProjectStageProps) {
@@ -65,7 +67,7 @@ export function ProjectStage({
         rotation={ACTIVE_PARAMS.rotation}
         offsetX={ACTIVE_PARAMS.offsetX}
         offsetY={ACTIVE_PARAMS.offsetY}
-        frame={isFrozen ? FROZEN_FRAME[tint] : undefined}
+        frame={isFrozen ? (frame ?? FROZEN_FRAME[tint]) : undefined}
         colors={colors as unknown as string[]}
         style={{ position: "absolute", inset: 0, pointerEvents: "none" }}
       />

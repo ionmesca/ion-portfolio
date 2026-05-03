@@ -19,8 +19,12 @@ export default function Home() {
         <Timeline
           projects={projects}
           sidebar={<ProjectList projects={projects} />}
-          cards={projects.map((project) => (
-            <HeroCard key={project.slug} project={project} />
+          cards={projects.map((project, index) => (
+            <HeroCard
+              key={project.slug}
+              project={project}
+              stageMotion={index === 0 ? "active" : "frozen"}
+            />
           ))}
         />
       </div>
