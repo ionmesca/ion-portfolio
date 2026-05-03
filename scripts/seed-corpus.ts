@@ -18,77 +18,98 @@ type CorpusChunk = {
 };
 
 const root = process.cwd();
-const corpusDir = path.join(root, "content/corpus");
+const globalCorpusDir = path.join(root, "content/corpus/global");
 const workDir = path.join(root, "content/work");
 
-function readCorpusChunks() {
-  if (!fs.existsSync(corpusDir)) {
+function chunkFromMarkdown(file: string, raw: string, fallbackSlug: string): CorpusChunk {
+  const parsed = matter(raw);
+  const slug = String(parsed.data.slug ?? fallbackSlug);
+
+  return {
+    slug,
+    kind: parsed.data.kind ?? "writing",
+    title: parsed.data.title ?? slug,
+    body: parsed.content.trim(),
+    tags: parsed.data.tags ?? [],
+    sourceUrl: parsed.data.sourceUrl || undefined,
+    projectSlug: parsed.data.projectSlug || undefined,
+    updatedAt: parsed.data.updatedAt
+      ? new Date(parsed.data.updatedAt).getTime()
+      : Date.now(),
+  };
+}
+
+function readGlobalCorpusChunks(): CorpusChunk[] {
+  if (!fs.existsSync(globalCorpusDir)) {
     return [];
   }
 
   return fs
-    .readdirSync(corpusDir)
+    .readdirSync(globalCorpusDir)
     .filter((file) => file.endsWith(".md"))
-    .map((file): CorpusChunk => {
-      const raw = fs.readFileSync(path.join(corpusDir, file), "utf8");
-      const parsed = matter(raw);
-      const slug = String(parsed.data.slug ?? file.replace(/\.md$/, ""));
-
-      return {
-        slug,
-        kind: parsed.data.kind ?? "writing",
-        title: parsed.data.title ?? slug,
-        body: parsed.content.trim(),
-        tags: parsed.data.tags ?? [],
-        sourceUrl: parsed.data.sourceUrl || undefined,
-        projectSlug: parsed.data.projectSlug || undefined,
-        updatedAt: parsed.data.updatedAt
-          ? new Date(parsed.data.updatedAt).getTime()
-          : Date.now(),
-      };
+    .map((file) => {
+      const raw = fs.readFileSync(path.join(globalCorpusDir, file), "utf8");
+      return chunkFromMarkdown(file, raw, file.replace(/\.md$/, ""));
     });
 }
 
-function readWorkChunks() {
+function readProjectAgentChunks(): CorpusChunk[] {
   if (!fs.existsSync(workDir)) {
     return [];
   }
 
-  return fs
-    .readdirSync(workDir)
-    .flatMap((slug): CorpusChunk[] => {
-      const filePath = path.join(workDir, slug, "index.mdx");
-      if (!fs.existsSync(filePath)) return [];
+  return fs.readdirSync(workDir).flatMap((projectSlug): CorpusChunk[] => {
+    const agentDir = path.join(workDir, projectSlug, "agent");
+    if (!fs.existsSync(agentDir)) return [];
 
-      const raw = fs.readFileSync(filePath, "utf8");
-      const parsed = matter(raw);
-      if (parsed.data.published === false) return [];
+    return fs
+      .readdirSync(agentDir)
+      .filter((file) => file.endsWith(".md"))
+      .map((file) => {
+        const raw = fs.readFileSync(path.join(agentDir, file), "utf8");
+        return chunkFromMarkdown(file, raw, `${projectSlug}-${file.replace(/\.md$/, "")}`);
+      });
+  });
+}
 
-      const body = [
-        parsed.data.tagline,
-        parsed.data.theBet,
-        parsed.data.role?.title,
-        parsed.data.role?.description,
-        ...(parsed.data.stats ?? []).map(
-          (stat: { value: string; label: string }) => `${stat.value} ${stat.label}`
-        ),
-        parsed.content,
-      ]
-        .filter(Boolean)
-        .join("\n\n");
+function readProjectSpineChunks(): CorpusChunk[] {
+  if (!fs.existsSync(workDir)) {
+    return [];
+  }
 
-      return [
-        {
-          slug: `project-${slug}`,
-          kind: "writing",
-          title: parsed.data.title ?? slug,
-          body,
-          tags: ["project", ...(parsed.data.stack ?? [])],
-          projectSlug: slug,
-          updatedAt: Date.now(),
-        },
-      ];
-    });
+  return fs.readdirSync(workDir).flatMap((slug): CorpusChunk[] => {
+    const filePath = path.join(workDir, slug, "index.mdx");
+    if (!fs.existsSync(filePath)) return [];
+
+    const raw = fs.readFileSync(filePath, "utf8");
+    const parsed = matter(raw);
+    if (parsed.data.published === false) return [];
+
+    const body = [
+      parsed.data.tagline,
+      parsed.data.theBet,
+      parsed.data.role?.title,
+      parsed.data.role?.description,
+      ...(parsed.data.stats ?? []).map(
+        (stat: { value: string; label: string }) => `${stat.value} ${stat.label}`
+      ),
+      parsed.content,
+    ]
+      .filter(Boolean)
+      .join("\n\n");
+
+    return [
+      {
+        slug: `project-${slug}`,
+        kind: "writing",
+        title: parsed.data.title ?? slug,
+        body,
+        tags: ["project", ...(parsed.data.stack ?? [])],
+        projectSlug: slug,
+        updatedAt: Date.now(),
+      },
+    ];
+  });
 }
 
 async function main() {
@@ -97,9 +118,16 @@ async function main() {
     throw new Error("NEXT_PUBLIC_CONVEX_URL is required.");
   }
 
-  const chunks = [...readWorkChunks(), ...readCorpusChunks()].filter(
-    (chunk) => chunk.body.length > 0
-  );
+  const chunks = [
+    ...readProjectSpineChunks(),
+    ...readProjectAgentChunks(),
+    ...readGlobalCorpusChunks(),
+  ].filter((chunk) => chunk.body.length > 0);
+
+  if (chunks.length === 0) {
+    console.warn("No chunks found to seed.");
+    return;
+  }
 
   const convex = new ConvexHttpClient(url);
   const result = await convex.mutation(api.agent.upsertCorpus, { chunks });
