@@ -77,13 +77,13 @@ export function AgentSurface({
     >
       <header className="flex h-12 shrink-0 items-center justify-between border-b border-border-subtle px-3">
         <div className="flex items-center gap-2">
-          <span className="relative flex size-7">
+          <span className="relative flex size-7 shrink-0">
             <Image
               src="/ion.jpeg"
               alt=""
               width={28}
               height={28}
-              className="rounded-full"
+              className="size-7 shrink-0 rounded-full object-cover"
             />
             <span className="absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full border-2 border-bg-base bg-success" />
           </span>

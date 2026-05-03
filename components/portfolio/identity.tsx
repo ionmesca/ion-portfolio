@@ -72,7 +72,7 @@ export function Identity() {
               alt="Ion Mesca"
               width={32}
               height={32}
-              className="rounded-full"
+              className="size-8 rounded-full object-cover"
               priority
             />
             <span className="absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full border-2 border-bg-surface bg-success" />

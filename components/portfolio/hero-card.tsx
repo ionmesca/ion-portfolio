@@ -62,40 +62,25 @@ export function HeroCard({
   const stageFrame = PROJECT_STAGE_FRAMES[project.slug];
 
   return (
-    <>
-      {/* Desktop: client-side expand */}
-      <div
-        className="hidden md:block group cursor-pointer"
-        data-project={project.slug}
-        onClick={() => expandProject(project.slug)}
+    <Link
+      href={`/work/${project.slug}`}
+      className="block group cursor-pointer"
+      data-project={project.slug}
+      onClick={(event) => {
+        if (!window.matchMedia("(min-width: 768px)").matches) return;
+        event.preventDefault();
+        expandProject(project.slug);
+      }}
+    >
+      <ProjectStage
+        tint={stageTint}
+        motion={stageMotion}
+        frame={stageFrame}
+        className="relative w-full aspect-[4/3] rounded-2xl bg-bg-surface"
       >
-        <ProjectStage
-          tint={stageTint}
-          motion={stageMotion}
-          frame={stageFrame}
-          className="relative w-full aspect-[4/3] rounded-2xl bg-bg-surface"
-        >
-          <ProjectStagePlaceholder project={project} />
-          <ProjectStageLabel project={project} />
-        </ProjectStage>
-      </div>
-
-      {/* Mobile: navigate to standalone page */}
-      <Link
-        href={`/work/${project.slug}`}
-        className="block md:hidden group"
-        data-project={project.slug}
-      >
-        <ProjectStage
-          tint={stageTint}
-          motion={stageMotion}
-          frame={stageFrame}
-          className="relative w-full aspect-[4/3] rounded-2xl bg-bg-surface"
-        >
-          <ProjectStagePlaceholder project={project} />
-          <ProjectStageLabel project={project} />
-        </ProjectStage>
-      </Link>
-    </>
+        <ProjectStagePlaceholder project={project} />
+        <ProjectStageLabel project={project} />
+      </ProjectStage>
+    </Link>
   );
 }
