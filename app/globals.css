@@ -286,11 +286,16 @@
     opacity: 1;
   }
 
-  .identity-root:hover .identity-trigger,
+  .identity-root:hover .identity-panel-surface[data-state="closed"] .identity-trigger,
   .identity-panel-surface[data-state="open"] .identity-trigger {
+    width: 2.5rem;
+  }
+
+  .identity-root:hover .identity-panel-surface[data-state="closed"] .identity-trigger-copy,
+  .identity-panel-surface[data-state="open"] .identity-trigger-copy {
     opacity: 0;
-    filter: blur(12px);
-    transform: translateY(-2px);
+    filter: blur(8px);
+    transform: translateY(-1px);
   }
 
   .identity-root:hover .identity-panel-content,

@@ -41,6 +41,7 @@ export function AgentSurface({
   const [input, setInput] = useState("");
   const hasMessages = agent.messages.length > 0;
   const isBusy = agent.status === "streaming" || agent.status === "submitted";
+  const showHeaderAvatar = mode === "page";
 
   async function submitMessage(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -75,22 +76,23 @@ export function AgentSurface({
       )}
       aria-label="Ion's portfolio agent"
     >
-      <header className="flex h-12 shrink-0 items-center justify-between border-b border-border-subtle px-3">
-        <div className="flex items-center gap-2">
-          <span className="relative flex size-7 shrink-0">
-            <Image
-              src="/ion.jpeg"
-              alt=""
-              width={28}
-              height={28}
-              className="size-7 shrink-0 rounded-full object-cover"
-            />
-            <span className="absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full border-2 border-bg-base bg-success" />
-          </span>
+      <header className="flex h-14 shrink-0 items-center justify-between px-4 pt-1">
+        <div className={cn("flex items-center gap-2", !showHeaderAvatar && "pl-10")}>
+          {showHeaderAvatar ? (
+            <span className="relative flex size-8 shrink-0">
+              <Image
+                src="/ion.jpeg"
+                alt=""
+                width={32}
+                height={32}
+                className="size-8 shrink-0 rounded-full object-cover"
+              />
+              <span className="absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full border-2 border-bg-base bg-success" />
+            </span>
+          ) : null}
           <div className="leading-none">
-            <p className="text-sm font-medium">Ion&apos;s agent</p>
-            <p className="mt-1 text-[11px] text-text-tertiary">
-              {agent.isHydrating ? "Loading thread" : "Portfolio guide"}
+            <p className="text-sm font-medium">
+              {agent.isHydrating ? "Warming up" : "Ion, in context"}
             </p>
           </div>
         </div>
@@ -98,7 +100,7 @@ export function AgentSurface({
         <div className="flex items-center gap-1">
           <Button
             type="button"
-            size="icon-xs"
+            size="icon-sm"
             variant="ghost"
             onClick={newConversation}
             aria-label="New conversation"
@@ -106,7 +108,7 @@ export function AgentSurface({
             <Plus />
           </Button>
           {mode === "popover" ? (
-            <Button asChild size="icon-xs" variant="ghost" aria-label="Open full agent page">
+            <Button asChild size="icon-sm" variant="ghost" aria-label="Open full agent page">
               <Link href="/agent">
                 <ArrowUpRight />
               </Link>
@@ -122,7 +124,7 @@ export function AgentSurface({
         </div>
       </header>
 
-      <div className="min-h-0 flex-1 overflow-y-auto px-3 py-3">
+      <div className="min-h-0 flex-1 overflow-y-auto px-4 py-2">
         {!hasMessages ? (
           <EmptyState onPrompt={submitPrompt} />
         ) : (
@@ -147,25 +149,33 @@ export function AgentSurface({
 
       <form
         onSubmit={submitMessage}
-        className="flex shrink-0 items-end gap-2 border-t border-border-subtle p-3"
+        className="shrink-0 px-4 pb-4 pt-2"
       >
-        <textarea
-          value={input}
-          onChange={(event) => setInput(event.target.value)}
-          onKeyDown={(event) => {
-            if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
-              event.currentTarget.form?.requestSubmit();
-            }
-          }}
-          disabled={isBusy}
-          rows={mode === "page" ? 2 : 1}
-          maxLength={1200}
-          placeholder="Ask about Ion's work..."
-          className="min-h-9 flex-1 resize-none rounded-lg border border-border-default bg-bg-surface px-3 py-2 text-sm outline-none transition-colors placeholder:text-text-tertiary focus:border-border-strong disabled:opacity-60"
-        />
-        <Button type="submit" size="icon" disabled={isBusy || !input.trim()}>
-          <Send />
-        </Button>
+        <div className="flex min-h-11 items-end gap-1 rounded-full border border-border-default bg-bg-surface px-3 py-1.5 transition-colors focus-within:border-border-strong">
+          <textarea
+            value={input}
+            onChange={(event) => setInput(event.target.value)}
+            onKeyDown={(event) => {
+              if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
+                event.currentTarget.form?.requestSubmit();
+              }
+            }}
+            disabled={isBusy}
+            rows={1}
+            maxLength={1200}
+            placeholder="Ask about Ion's work..."
+            className="max-h-24 min-h-8 flex-1 resize-none bg-transparent py-1.5 text-sm leading-5 outline-none placeholder:text-text-tertiary disabled:opacity-60"
+          />
+          <Button
+            type="submit"
+            size="icon-sm"
+            disabled={isBusy || !input.trim()}
+            aria-label="Send message"
+            className="mb-0.5 rounded-full"
+          >
+            <Send />
+          </Button>
+        </div>
       </form>
 
       {mode === "page" ? (

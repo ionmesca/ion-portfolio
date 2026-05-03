@@ -59,10 +59,8 @@ export function Identity() {
           aria-haspopup="dialog"
           onClick={handleTriggerClick}
           className={cn(
-            "identity-trigger absolute left-0 top-0 z-[60] inline-flex h-10 items-center gap-2 rounded-full py-1 pl-1 pr-2 text-left outline-none transition-[opacity,filter,transform] duration-150 ease-[cubic-bezier(0.25,1,0.5,1)] focus-visible:ring-2 focus-visible:ring-accent",
-            isOpen
-              ? "-translate-y-0.5 opacity-0 blur-md"
-              : "translate-y-0 opacity-100 blur-0"
+            "identity-trigger absolute left-0 top-0 z-[60] inline-flex h-10 w-[158px] items-center gap-2 overflow-hidden rounded-full py-1 pl-1 pr-2 text-left outline-none transition-[width] duration-150 ease-[cubic-bezier(0.25,1,0.5,1)] focus-visible:ring-2 focus-visible:ring-accent",
+            isOpen && "w-10"
           )}
           aria-label="Open Ion Mesca contact card"
         >
@@ -77,12 +75,18 @@ export function Identity() {
             />
             <span className="absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full border-2 border-bg-surface bg-success" />
           </span>
-          <span id={labelId} className="whitespace-nowrap text-base font-medium">
+          <span
+            id={labelId}
+            className={cn(
+              "identity-trigger-copy whitespace-nowrap text-base font-medium transition-[opacity,filter,transform] duration-150 ease-[cubic-bezier(0.25,1,0.5,1)]",
+              isOpen ? "opacity-0 blur-sm" : "opacity-100 blur-0"
+            )}
+          >
             Ion Mesca
           </span>
           <ChevronDown
             className={cn(
-              "size-4 shrink-0 text-text-tertiary transition-transform duration-250 ease-[cubic-bezier(0.16,1,0.3,1)]",
+              "identity-trigger-copy size-4 shrink-0 text-text-tertiary transition-[opacity,filter,transform] duration-250 ease-[cubic-bezier(0.16,1,0.3,1)]",
               isOpen && "rotate-180"
             )}
             aria-hidden

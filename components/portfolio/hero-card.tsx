@@ -30,9 +30,20 @@ function ProjectStagePlaceholder({ project }: { project: ProjectMeta }) {
 
 function ProjectStageLabel({ project }: { project: ProjectMeta }) {
   return (
-    <div className="absolute inset-x-0 bottom-0 p-5 opacity-100 transition-opacity duration-200 ease-out md:opacity-0 md:group-hover:opacity-100">
-      <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-white/58 via-white/30 to-transparent backdrop-blur-xl [mask-image:linear-gradient(to_top,black_0%,black_54%,transparent_100%)] dark:from-white/24 dark:via-white/10" />
-      <div className="relative flex items-center gap-3">
+    <div className="absolute inset-x-0 bottom-0 p-5">
+      <div className="absolute inset-x-0 -bottom-px h-56 opacity-[0.001] transition-opacity duration-200 ease-out will-change-[opacity] md:group-hover:opacity-100">
+        <div className="absolute inset-0 bg-gradient-to-t from-white/38 via-white/14 via-55% to-transparent dark:from-white/18 dark:via-white/6" />
+        <div
+          className="absolute inset-0 transform-gpu backdrop-blur-xl"
+          style={{
+            maskImage:
+              "linear-gradient(to top, black 0%, rgba(0,0,0,0.82) 30%, rgba(0,0,0,0.34) 66%, transparent 100%)",
+            WebkitMaskImage:
+              "linear-gradient(to top, black 0%, rgba(0,0,0,0.82) 30%, rgba(0,0,0,0.34) 66%, transparent 100%)",
+          }}
+        />
+      </div>
+      <div className="relative flex items-center gap-3 opacity-100 transition-opacity duration-200 ease-out md:opacity-0 md:group-hover:opacity-100">
         <div className="size-8 overflow-hidden rounded-lg flex items-center justify-center bg-bg-base/86 shadow-card ring-1 ring-black/[0.06] backdrop-blur-xl">
           <Image
             src={project.icon}
