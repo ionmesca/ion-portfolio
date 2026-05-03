@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "seed:corpus": "bun scripts/seed-corpus.ts"
+    "seed:corpus": "bun scripts/seed-corpus.ts",
+    "validate:corpus": "bun scripts/validate-corpus.ts"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.31",
