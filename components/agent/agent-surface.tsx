@@ -44,6 +44,8 @@ export function AgentSurface({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const hasMessages = agent.messages.length > 0;
   const isBusy = agent.status === "streaming" || agent.status === "submitted";
+  const surfaceInset = mode === "popover" ? "px-2" : "px-5";
+  const composerInset = mode === "popover" ? "pb-2" : "pb-5";
 
   async function submitMessage(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -98,7 +100,7 @@ export function AgentSurface({
       <header
         className={cn(
           "relative z-20 flex shrink-0 items-start justify-between bg-transparent",
-          mode === "popover" ? "h-14 px-5 pt-2" : "h-14 px-4 pt-1"
+          mode === "popover" ? "h-14 px-2 pt-2" : "h-14 px-4 pt-1"
         )}
       >
         {mode === "popover" ? (
@@ -165,7 +167,7 @@ export function AgentSurface({
       </header>
 
       <div className="relative min-h-0 flex-1">
-        <div className="absolute inset-0 overflow-y-auto px-5 pb-32 pt-5">
+        <div className={cn("absolute inset-0 overflow-y-auto pb-32 pt-5", surfaceInset)}>
           {!hasMessages ? (
             <EmptyState mode={mode} onPrompt={submitPrompt} />
           ) : (
@@ -194,7 +196,11 @@ export function AgentSurface({
 
         <form
           onSubmit={submitMessage}
-          className="absolute inset-x-0 bottom-0 z-20 px-5 pb-5 pt-8"
+          className={cn(
+            "absolute inset-x-0 bottom-0 z-20 pt-8",
+            surfaceInset,
+            composerInset
+          )}
         >
           <div
             className={cn(
@@ -263,21 +269,16 @@ function EmptyState({
     <div
       className={cn(
         "flex h-full flex-col gap-5",
-        mode === "page" ? "justify-start pt-24" : "justify-start pt-12"
+        mode === "page" ? "justify-start pt-24" : "justify-start pt-4"
       )}
     >
       <div className="flex flex-col gap-1.5">
-        {suggestedPrompts.map((prompt, index) => (
+        {suggestedPrompts.map((prompt) => (
           <button
             key={prompt}
             type="button"
             onClick={() => onPrompt(prompt)}
-            className={cn(
-              "group flex min-h-10 items-center justify-between gap-3 rounded-xl bg-bg-surface px-3 py-2 text-left text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border-strong",
-              index === 0
-                ? "text-text-primary hover:bg-bg-elevated"
-                : "text-text-secondary hover:bg-bg-elevated hover:text-text-primary"
-            )}
+            className="group flex min-h-10 items-center justify-between gap-3 rounded-xl bg-bg-surface px-3 py-2 text-left text-sm text-text-secondary transition-colors hover:bg-bg-elevated hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border-strong"
           >
             <span>{prompt}</span>
             <ArrowUpRight className="size-3.5 shrink-0 text-text-tertiary transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
@@ -292,13 +293,13 @@ function AgentMessage({ message }: { message: UIMessage }) {
   const isUser = message.role === "user";
 
   return (
-    <div className={cn("flex", isUser ? "justify-end" : "justify-start")}>
+    <div className="flex justify-start">
       <div
         className={cn(
-          "max-w-[92%] rounded-2xl px-3 py-2 text-sm",
+          "rounded-2xl px-3 py-2 text-sm",
           isUser
-            ? "bg-primary text-primary-foreground"
-            : "border border-border-subtle bg-bg-surface text-text-secondary"
+            ? "max-w-[92%] bg-primary text-primary-foreground"
+            : "w-full border border-border-subtle bg-bg-surface text-text-secondary"
         )}
       >
         <MessageParts parts={message.parts} isUser={isUser} />

@@ -157,6 +157,27 @@
 
 /* body background and color set via Tailwind classes on <body> in layout.tsx */
 
+@layer base {
+  :where(
+    a[href],
+    button:not(:disabled),
+    summary,
+    label[for],
+    select:not(:disabled),
+    input[type="checkbox"]:not(:disabled),
+    input[type="radio"]:not(:disabled),
+    input[type="file"]:not(:disabled),
+    [role="button"]:not([aria-disabled="true"]),
+    [role="link"]:not([aria-disabled="true"])
+  ) {
+    cursor: pointer;
+  }
+
+  :where(button:disabled, [aria-disabled="true"]) {
+    cursor: not-allowed;
+  }
+}
+
 /* ========================================
    DARK MODE OVERRIDE
    ======================================== */
