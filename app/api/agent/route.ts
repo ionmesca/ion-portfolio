@@ -3,7 +3,7 @@ import { createAgentUIStreamResponse } from "ai";
 import { api } from "@/convex/_generated/api";
 import { getOrCreateAgentCookies } from "@/lib/agent/cookies";
 import { getAgentConvexClient } from "@/lib/agent/convex";
-import { portfolioAgent } from "@/lib/agent/portfolio-agent";
+import { createPortfolioAgent } from "@/lib/agent/portfolio-agent";
 
 export const runtime = "nodejs";
 
@@ -15,7 +15,7 @@ export async function POST(req: Request) {
   await convex.mutation(api.agent.ensureThread, { threadId, visitorId });
 
   return await createAgentUIStreamResponse({
-    agent: portfolioAgent,
+    agent: createPortfolioAgent(),
     uiMessages: messages,
     sendReasoning: false,
     sendSources: true,
