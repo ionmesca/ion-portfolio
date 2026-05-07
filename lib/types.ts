@@ -22,6 +22,50 @@ export type ProjectRole = {
   description?: string;
 };
 
+export type ProjectImage =
+  | {
+      type: "stage";
+      alt?: string;
+      caption?: string;
+      motion?: "active" | "frozen";
+      aspect?: string;
+    }
+  | {
+      src: string;
+      alt: string;
+      caption?: string;
+      type?: "image";
+    }
+  | {
+      type: "video";
+      src: string;
+      webm?: string;
+      poster?: string;
+      alt: string;
+      caption?: string;
+      aspect?: string;
+    }
+  | {
+      type: "comparison";
+      alt: string;
+      caption?: string;
+      defaultView?: "before" | "after";
+      before: {
+        src: string;
+        avif?: string;
+        webp?: string;
+        alt: string;
+        label: string;
+      };
+      after: {
+        src: string;
+        avif?: string;
+        webp?: string;
+        alt: string;
+        label: string;
+      };
+    };
+
 export type ProjectMeta = {
   title: string;
   slug: string;
@@ -33,12 +77,18 @@ export type ProjectMeta = {
   icon: string;
   iconBg: string;
   hero: string;
+  heroVideo?: {
+    src: string;
+    webm?: string;
+    poster?: string;
+    alt: string;
+  };
   stats: [Stat, Stat, Stat];
   theBet: string;
   role: ProjectRole;
   collaborators: Collaborator[];
   stack: string[];
-  images: { src: string; alt: string }[];
+  images: ProjectImage[];
   order: number;
   published?: boolean;
 };

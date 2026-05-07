@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import { ProjectMedia } from "./project-media";
 import { usePortfolio } from "./portfolio-context";
 
 export function InlineProjectGallery() {
@@ -12,18 +12,19 @@ export function InlineProjectGallery() {
   return (
     <div className="flex flex-col gap-4 p-4">
       {project.images.map((image) => (
-        <div
-          key={image.src}
-          className="relative w-full aspect-[4/3] rounded-2xl overflow-hidden bg-bg-surface"
-        >
-          <Image
-            src={image.src}
-            alt={image.alt}
-            fill
-            className="object-cover"
-            sizes="60vw"
-          />
-        </div>
+        <ProjectMedia
+          key={
+            image.type === "stage"
+              ? `stage-${project.slug}`
+              : image.type === "comparison"
+                ? image.alt
+                : image.src
+          }
+          project={project}
+          image={image}
+          sizes="60vw"
+          plainAspectClass="aspect-[4/3]"
+        />
       ))}
     </div>
   );

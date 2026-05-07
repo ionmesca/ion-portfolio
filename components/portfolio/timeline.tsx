@@ -38,14 +38,19 @@ function getStoredDetailRailWidth() {
   return clampDetailRailWidth(Number(storedWidth));
 }
 
-function getProjectSlugFromPath(projects: ProjectMeta[]) {
+function getProjectSlugFromUrl(projects: ProjectMeta[]) {
   if (typeof window === "undefined") {
     return null;
   }
 
-  const match = window.location.pathname.match(/^\/work\/([^/]+)$/);
-  if (match && projects.some((p) => p.slug === match[1])) {
-    return match[1];
+  const searchSlug = new URLSearchParams(window.location.search).get("project");
+  if (searchSlug && projects.some((p) => p.slug === searchSlug)) {
+    return searchSlug;
+  }
+
+  const hashSlug = window.location.hash.replace(/^#project-/, "");
+  if (hashSlug && projects.some((p) => p.slug === hashSlug)) {
+    return hashSlug;
   }
 
   return null;
@@ -62,9 +67,7 @@ export function Timeline({
 }) {
   const slugs = projects.map((p) => p.slug);
   const { activeSlug, containerRef, scrollToProject } = useScrollSpy(slugs);
-  const [expandedSlug, setExpandedSlug] = useState<string | null>(() =>
-    getProjectSlugFromPath(projects)
-  );
+  const [expandedSlug, setExpandedSlug] = useState<string | null>(null);
   const [detailRailWidth, setDetailRailWidth] = useState(
     getStoredDetailRailWidth
   );
@@ -73,10 +76,25 @@ export function Timeline({
   // Listen for browser back/forward
   useEffect(() => {
     const handlePopState = () => {
-      setExpandedSlug(getProjectSlugFromPath(projects));
+      setExpandedSlug(getProjectSlugFromUrl(projects));
     };
     window.addEventListener("popstate", handlePopState);
     return () => window.removeEventListener("popstate", handlePopState);
+  }, [projects]);
+
+  useEffect(() => {
+    const initialSlug = getProjectSlugFromUrl(projects);
+    if (initialSlug) {
+      setExpandedSlug(initialSlug);
+    }
+
+    if (
+      window.location.pathname !== "/" ||
+      window.location.search ||
+      window.location.hash
+    ) {
+      window.history.replaceState(null, "", "/");
+    }
   }, [projects]);
 
   const expandProject = useCallback(
@@ -86,7 +104,13 @@ export function Timeline({
         scrollPositionRef.current = containerRef.current.scrollTop;
       }
       setExpandedSlug(slug);
-      window.history.pushState(null, "", `/work/${slug}`);
+      if (
+        window.location.pathname !== "/" ||
+        window.location.search ||
+        window.location.hash
+      ) {
+        window.history.replaceState(null, "", "/");
+      }
     },
     [containerRef]
   );
@@ -117,7 +141,7 @@ export function Timeline({
 
   const collapseProject = useCallback(() => {
     setExpandedSlug(null);
-    window.history.pushState(null, "", "/");
+    window.history.replaceState(null, "", "/");
     // Restore scroll position after collapse
     requestAnimationFrame(() => {
       if (containerRef.current) {

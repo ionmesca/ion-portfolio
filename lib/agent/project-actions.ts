@@ -13,6 +13,6 @@ export function requestOpenProject(detail: OpenProjectDetail) {
 
   const wasNotHandled = window.dispatchEvent(event);
   if (wasNotHandled) {
-    window.location.href = `/work/${detail.slug}`;
+    window.location.href = `/#project-${detail.slug}`;
   }
 }
