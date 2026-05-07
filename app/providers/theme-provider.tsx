@@ -40,8 +40,10 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const storedTheme = getStoredTheme();
-    setThemeState(storedTheme);
     applyTheme(storedTheme);
+    queueMicrotask(() => {
+      setThemeState(storedTheme);
+    });
 
     function handleStorage(event: StorageEvent) {
       if (event.key !== STORAGE_KEY) return;

@@ -88,7 +88,9 @@ export function Timeline({
   useEffect(() => {
     const initialSlug = getProjectSlugFromUrl(projects);
     if (initialSlug) {
-      setExpandedSlug(initialSlug);
+      queueMicrotask(() => {
+        setExpandedSlug(initialSlug);
+      });
     }
 
     if (

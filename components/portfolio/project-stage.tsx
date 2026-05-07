@@ -1,6 +1,6 @@
 "use client";
 
-import { MeshGradient } from "@paper-design/shaders-react";
+import dynamic from "next/dynamic";
 import { useReducedMotion } from "motion/react";
 import { useTheme } from "@/app/providers/theme-provider";
 import { useEffect, useState, type ReactNode } from "react";
@@ -36,6 +36,14 @@ const ACTIVE_PARAMS = {
   offsetY: 0.03,
 } as const;
 
+const ProjectStageShader = dynamic(
+  () =>
+    import("./project-stage-shader").then(
+      (module) => module.ProjectStageShader
+    ),
+  { ssr: false }
+);
+
 function browserSupportsWebGL() {
   try {
     const canvas = document.createElement("canvas");
@@ -61,6 +69,7 @@ export interface ProjectStageProps {
   tint?: ProjectStageTint;
   motion?: ProjectStageMotion;
   frame?: number;
+  renderShader?: boolean;
   className?: string;
   children?: ReactNode;
 }
@@ -69,6 +78,7 @@ export function ProjectStage({
   tint = "ledgy",
   motion = "active",
   frame,
+  renderShader = true,
   className,
   children,
 }: ProjectStageProps) {
@@ -78,15 +88,20 @@ export function ProjectStage({
   const isDark = resolvedTheme === "dark";
   const isFrozen = motion === "frozen" || prefersReduced === true;
   const colors = (isDark ? PALETTES_DARK : PALETTES_LIGHT)[tint];
+  const shouldRenderShader = renderShader && supportsWebGL && !isFrozen;
 
   useEffect(() => {
-    setSupportsWebGL(browserSupportsWebGL());
-  }, []);
+    if (!renderShader || isFrozen) return;
+
+    queueMicrotask(() => {
+      setSupportsWebGL(browserSupportsWebGL());
+    });
+  }, [isFrozen, renderShader]);
 
   return (
     <div className={cn("relative isolate overflow-hidden", className)}>
-      {supportsWebGL ? (
-        <MeshGradient
+      {shouldRenderShader ? (
+        <ProjectStageShader
           speed={isFrozen ? 0 : ACTIVE_PARAMS.speed}
           scale={ACTIVE_PARAMS.scale}
           distortion={ACTIVE_PARAMS.distortion}
@@ -96,7 +111,6 @@ export function ProjectStage({
           offsetY={ACTIVE_PARAMS.offsetY}
           frame={isFrozen ? (frame ?? FROZEN_FRAME[tint]) : undefined}
           colors={colors as unknown as string[]}
-          style={{ position: "absolute", inset: 0, pointerEvents: "none" }}
         />
       ) : (
         <div

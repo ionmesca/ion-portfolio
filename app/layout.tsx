@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
-import { AgentProvider } from "@/components/agent/agent-provider";
-import { ConvexClientProvider } from "./providers/convex-client-provider";
 import { ThemeProvider } from "./providers/theme-provider";
 import "./globals.css";
 
@@ -19,13 +17,11 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className="font-sans antialiased bg-bg-surface text-text-primary flex flex-col h-screen" suppressHydrationWarning>
-        <ConvexClientProvider>
-          <ThemeProvider>
-            <AgentProvider>{children}</AgentProvider>
-            <Analytics />
-            <SpeedInsights />
-          </ThemeProvider>
-        </ConvexClientProvider>
+        <ThemeProvider>
+          {children}
+          <Analytics />
+          <SpeedInsights />
+        </ThemeProvider>
       </body>
     </html>
   );

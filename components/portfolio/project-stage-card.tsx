@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { useEffect, useRef, useState } from "react";
 import {
   ProjectStage,
   type ProjectStageMotion,
@@ -22,6 +23,24 @@ const PROJECT_STAGE_FRAMES: Record<string, number> = {
   "admin-home": 163200,
 };
 
+function scheduleIdleVideoLoad(callback: () => void) {
+  let cancelIdleLoad: (() => void) | undefined;
+  const timeoutId = window.setTimeout(() => {
+    if (typeof window.requestIdleCallback === "function") {
+      const idleId = window.requestIdleCallback(callback, { timeout: 1200 });
+      cancelIdleLoad = () => window.cancelIdleCallback(idleId);
+      return;
+    }
+
+    callback();
+  }, 900);
+
+  return () => {
+    window.clearTimeout(timeoutId);
+    cancelIdleLoad?.();
+  };
+}
+
 function ProjectStagePlaceholder({
   project,
   playWhenVisible,
@@ -29,26 +48,59 @@ function ProjectStagePlaceholder({
   project: ProjectMeta;
   playWhenVisible: boolean;
 }) {
-  const videoRef = useManagedVideoPlayback(Boolean(project.heroVideo) && playWhenVisible);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [shouldLoadVideo, setShouldLoadVideo] = useState(false);
+  const videoRef = useManagedVideoPlayback(
+    Boolean(project.heroVideo) && playWhenVisible && shouldLoadVideo
+  );
+
+  useEffect(() => {
+    if (!project.heroVideo || !playWhenVisible || shouldLoadVideo) return;
+    const container = containerRef.current;
+    if (!container) return;
+
+    let cancelIdleLoad: (() => void) | undefined;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting || entry.intersectionRatio < 0.35) return;
+        observer.disconnect();
+        cancelIdleLoad = scheduleIdleVideoLoad(() => {
+          setShouldLoadVideo(true);
+        });
+      },
+      { threshold: [0, 0.35, 0.65, 1] }
+    );
+
+    observer.observe(container);
+
+    return () => {
+      observer.disconnect();
+      cancelIdleLoad?.();
+    };
+  }, [playWhenVisible, project.heroVideo, shouldLoadVideo]);
 
   if (project.heroVideo) {
     return (
-      <video
-        ref={videoRef}
-        className="absolute inset-0 size-full object-cover"
-        poster={project.heroVideo.poster}
-        autoPlay={playWhenVisible}
-        loop
-        muted
-        playsInline
-        preload="metadata"
-        aria-label={project.heroVideo.alt}
-      >
-        {project.heroVideo.webm && (
-          <source src={project.heroVideo.webm} type="video/webm" />
-        )}
-        <source src={project.heroVideo.src} type="video/mp4" />
-      </video>
+      <div ref={containerRef} className="absolute inset-0">
+        <video
+          ref={videoRef}
+          className="absolute inset-0 size-full object-cover"
+          poster={project.heroVideo.poster}
+          autoPlay={playWhenVisible && shouldLoadVideo}
+          loop
+          muted
+          playsInline
+          preload={shouldLoadVideo ? "metadata" : "none"}
+          aria-label={project.heroVideo.alt}
+        >
+          {shouldLoadVideo && project.heroVideo.webm && (
+            <source src={project.heroVideo.webm} type="video/webm" />
+          )}
+          {shouldLoadVideo && (
+            <source src={project.heroVideo.src} type="video/mp4" />
+          )}
+        </video>
+      </div>
     );
   }
 
@@ -112,6 +164,7 @@ export function ProjectStageCard({
       tint={getProjectStageTint(project)}
       motion={motion}
       frame={PROJECT_STAGE_FRAMES[project.slug]}
+      renderShader={motion === "active" && !project.heroVideo}
       className={cn(
         showLabel && "group",
         "relative w-full rounded-2xl bg-bg-surface",

@@ -1,22 +1,81 @@
 "use client";
 
 import type { KeyboardEvent } from "react";
-import { useId, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
+import dynamic from "next/dynamic";
 import Image from "next/image";
 import { ChevronsUpDown } from "lucide-react";
-import { AgentSurface } from "@/components/agent/agent-surface";
 import { cn } from "@/lib/utils";
 
 const IDENTITY_LABEL = "Ion Mesca";
 const AGENT_LABEL = "Ask Agent Ion";
 
+const loadAgentRuntimeSurface = () =>
+  import("@/components/agent/agent-runtime-surface").then(
+    (module) => module.AgentRuntimeSurface
+  );
+
+const AgentRuntimeSurface = dynamic(
+  loadAgentRuntimeSurface,
+  {
+    ssr: false,
+    loading: () => <AgentPanelLoading />,
+  }
+);
+
+function AgentPanelLoading() {
+  return (
+    <div
+      className="flex h-full flex-col overflow-hidden rounded-[22px] bg-bg-base text-text-primary"
+      aria-label="Loading Ion's portfolio agent"
+    >
+      <div className="h-14 px-2 pt-2">
+        <div aria-hidden className="relative w-[184px]" />
+      </div>
+      <div className="flex flex-1 flex-col gap-2 px-2 pt-5">
+        <div className="h-10 rounded-xl bg-bg-surface" />
+        <div className="h-10 rounded-xl bg-bg-surface" />
+        <div className="h-10 rounded-xl bg-bg-surface" />
+      </div>
+      <div className="px-2 pb-2 pt-8">
+        <div className="h-11 rounded-full border border-border-default bg-bg-base shadow-card" />
+      </div>
+    </div>
+  );
+}
+
 export function Identity() {
   const [isOpen, setIsOpen] = useState(false);
   const [isHovering, setIsHovering] = useState(false);
+  const [hasLoadedAgent, setHasLoadedAgent] = useState(false);
   const panelContentId = useId();
   const labelId = useId();
   const triggerRef = useRef<HTMLButtonElement>(null);
   const isAgentMode = isOpen || isHovering;
+  const isPreviewOpen = isOpen || isHovering;
+
+  const prepareAgent = useCallback(() => {
+    setHasLoadedAgent(true);
+    void loadAgentRuntimeSurface();
+  }, []);
+
+  useEffect(() => {
+    const prewarm = () => {
+      void loadAgentRuntimeSurface();
+    };
+    const idleWindow = window as Window & {
+      requestIdleCallback?: (callback: () => void, options?: { timeout: number }) => number;
+      cancelIdleCallback?: (handle: number) => void;
+    };
+
+    if (idleWindow.requestIdleCallback) {
+      const handle = idleWindow.requestIdleCallback(prewarm, { timeout: 1800 });
+      return () => idleWindow.cancelIdleCallback?.(handle);
+    }
+
+    const handle = window.setTimeout(prewarm, 1200);
+    return () => window.clearTimeout(handle);
+  }, []);
 
   function handleTriggerClick() {
     if (isOpen) {
@@ -24,6 +83,7 @@ export function Identity() {
       return;
     }
 
+    prepareAgent();
     setIsOpen(true);
   }
 
@@ -38,7 +98,11 @@ export function Identity() {
     <div
       className="identity-root relative h-10 w-[184px]"
       onKeyDown={handleKeyDown}
-      onPointerEnter={() => setIsHovering(true)}
+      onFocusCapture={prepareAgent}
+      onPointerEnter={() => {
+        prepareAgent();
+        setIsHovering(true);
+      }}
       onPointerLeave={() => setIsHovering(false)}
     >
       <div
@@ -52,16 +116,16 @@ export function Identity() {
       <div
         role={isOpen ? "dialog" : undefined}
         aria-labelledby={isOpen ? labelId : undefined}
-        data-state={isOpen ? "open" : "closed"}
+        data-state={isPreviewOpen ? "open" : "closed"}
         className={cn(
           "identity-panel-surface absolute left-0 top-0 z-50 origin-top-left overflow-hidden rounded-3xl border transition-[width,height,box-shadow,background-color,border-color] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]",
-          isOpen ? "h-[560px] w-[520px] shadow-card" : "h-10 w-[184px] shadow-none"
+          isPreviewOpen ? "h-[560px] w-[520px] shadow-card" : "h-10 w-[184px] shadow-none"
         )}
       >
         <button
           ref={triggerRef}
           type="button"
-          aria-expanded={isOpen}
+          aria-expanded={isPreviewOpen}
           aria-controls={panelContentId}
           aria-haspopup="dialog"
           onClick={handleTriggerClick}
@@ -137,15 +201,17 @@ export function Identity() {
         <div className="h-full p-1">
           <div
             id={panelContentId}
-            aria-hidden={!isOpen}
+            aria-hidden={!isPreviewOpen}
             className={cn(
               "identity-panel-content h-full transition-[opacity,filter,transform] duration-200 ease-[cubic-bezier(0.25,1,0.5,1)]",
-              isOpen
+              isPreviewOpen
                 ? "translate-y-0 opacity-100 blur-0 delay-100"
                 : "-translate-y-1 opacity-0 blur-md"
             )}
           >
-            <AgentSurface mode="popover" className="rounded-[22px]" />
+            {hasLoadedAgent ? (
+              <AgentRuntimeSurface mode="popover" className="rounded-[22px]" />
+            ) : null}
           </div>
         </div>
       </div>
