@@ -98,11 +98,13 @@ export function ProjectStageCard({
   project,
   motion = "frozen",
   playWhenVisible = true,
+  showLabel = true,
   className,
 }: {
   project: ProjectMeta;
   motion?: ProjectStageMotion;
   playWhenVisible?: boolean;
+  showLabel?: boolean;
   className?: string;
 }) {
   return (
@@ -110,13 +112,17 @@ export function ProjectStageCard({
       tint={getProjectStageTint(project)}
       motion={motion}
       frame={PROJECT_STAGE_FRAMES[project.slug]}
-      className={cn("group relative w-full rounded-2xl bg-bg-surface", className)}
+      className={cn(
+        showLabel && "group",
+        "relative w-full rounded-2xl bg-bg-surface",
+        className
+      )}
     >
       <ProjectStagePlaceholder
         project={project}
         playWhenVisible={playWhenVisible}
       />
-      <ProjectStageLabel project={project} />
+      {showLabel && <ProjectStageLabel project={project} />}
     </ProjectStage>
   );
 }

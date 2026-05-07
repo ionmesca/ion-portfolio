@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
 import { ProjectStageCard } from "./project-stage-card";
 import { useManagedVideoPlayback } from "./use-managed-video";
 import { cn } from "@/lib/utils";
@@ -69,24 +68,29 @@ function ProjectScreenshot({
   sizes,
   className,
 }: {
-  image: Extract<ProjectImage, { src: string }>;
+  image: Extract<ProjectImage, { type?: "image" }>;
   sizes: string;
   className?: string;
 }) {
   return (
     <figure
       className={cn(
-        "group/comparison relative w-full overflow-hidden rounded-[22px] bg-bg-surface shadow-card ring-1 ring-black/[0.06]",
+        "relative w-full overflow-hidden rounded-[22px] bg-bg-surface shadow-card",
         className
       )}
     >
-      <Image
-        src={image.src}
-        alt={image.alt}
-        fill
-        className="object-cover"
-        sizes={sizes}
-      />
+      <picture className="absolute inset-0 block">
+        {image.avif && <source srcSet={image.avif} type="image/avif" />}
+        {image.webp && <source srcSet={image.webp} type="image/webp" />}
+        <img
+          src={image.src}
+          alt={image.alt}
+          className="size-full object-cover"
+          sizes={sizes}
+          decoding="async"
+          loading="lazy"
+        />
+      </picture>
       {image.caption && (
         <figcaption className="absolute inset-x-3 bottom-3 rounded-lg bg-bg-base/90 px-3 py-2 text-[11px] leading-4 text-text-secondary shadow-card ring-1 ring-black/[0.05] backdrop-blur-md">
           {image.caption}
@@ -113,7 +117,7 @@ function ComparisonImage({
   return (
     <figure
       className={cn(
-        "relative w-full overflow-hidden rounded-2xl bg-bg-surface shadow-card ring-1 ring-black/[0.05]",
+        "relative w-full overflow-hidden rounded-2xl bg-bg-surface shadow-card",
         className
       )}
     >
@@ -167,7 +171,7 @@ export function ProjectMedia({
   sizes,
   className,
   plainAspectClass = "aspect-[3/2]",
-  comparisonAspectClass = "aspect-video",
+  comparisonAspectClass = "aspect-[4/3]",
 }: {
   project: ProjectMeta;
   image: ProjectImage;
@@ -181,6 +185,7 @@ export function ProjectMedia({
       <ProjectStageCard
         project={project}
         motion={image.motion ?? "frozen"}
+        showLabel={false}
         className={cn(image.aspect ?? "aspect-[4/3]", className)}
       />
     );
@@ -209,7 +214,7 @@ export function ProjectMedia({
     <ProjectScreenshot
       image={image}
       sizes={sizes}
-      className={cn(plainAspectClass, className)}
+      className={cn(image.aspect ?? plainAspectClass, className)}
     />
   );
 }

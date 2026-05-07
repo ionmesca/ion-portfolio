@@ -7,6 +7,7 @@ import type { ProjectMeta } from "@/lib/types";
 export function ProjectList({ projects }: { projects: ProjectMeta[] }) {
   const { activeSlug, expandedSlug, expandProject } = usePortfolio();
   const selectedSlug = expandedSlug ?? activeSlug;
+  const isCompact = expandedSlug !== null;
 
   return (
     <div className="flex flex-col gap-1">
@@ -20,6 +21,7 @@ export function ProjectList({ projects }: { projects: ProjectMeta[] }) {
           <ProjectItem
             project={project}
             isActive={selectedSlug === project.slug}
+            compact={isCompact}
           />
         </button>
       ))}

@@ -32,9 +32,12 @@ export type ProjectImage =
     }
   | {
       src: string;
+      avif?: string;
+      webp?: string;
       alt: string;
       caption?: string;
       type?: "image";
+      aspect?: string;
     }
   | {
       type: "video";

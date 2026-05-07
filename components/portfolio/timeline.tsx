@@ -13,6 +13,9 @@ import type { ReactNode } from "react";
 
 const EASE_OUT = [0.25, 1, 0.5, 1] as const;
 const DURATION = 0.36;
+const OVERVIEW_RAIL_DEFAULT_WIDTH = 244;
+const OVERVIEW_RAIL_MIN_WIDTH = 224;
+const OVERVIEW_RAIL_MAX_WIDTH = 360;
 const DETAIL_RAIL_DEFAULT_WIDTH = 360;
 const DETAIL_RAIL_MIN_WIDTH = 300;
 const DETAIL_RAIL_MAX_WIDTH = 560;
@@ -162,45 +165,51 @@ export function Timeline({
       allProjects: projects,
     }}>
       <div className="flex h-[calc(100vh-44px)] md:h-full">
-        <ResizableRail storageKey="ion-portfolio-overview-rail-width">
-          <motion.div className="px-4 pb-5 pt-6">
+        <AnimatePresence initial={false}>
+          {!isExpanded && (
             <motion.div
-              aria-hidden={isExpanded}
-              initial={false}
-              animate={{
-                height: isExpanded ? 0 : "auto",
-                marginBottom: isExpanded ? 0 : 28,
-                opacity: isExpanded ? 0 : 1,
-                filter: isExpanded ? "blur(8px)" : "blur(0px)",
-                y: isExpanded ? -10 : 0,
-              }}
+              key="overview-rail"
+              initial={{ width: 0, opacity: 0, x: -10, filter: "blur(6px)" }}
+              animate={{ width: "auto", opacity: 1, x: 0, filter: "blur(0px)" }}
+              exit={{ width: 0, opacity: 0, x: -10, filter: "blur(6px)" }}
               transition={{ duration: DURATION, ease: EASE_OUT }}
-              className={isExpanded ? "pointer-events-none overflow-hidden" : "overflow-visible"}
+              className="h-full flex-shrink-0 overflow-hidden"
             >
-              <h1 className="text-lg font-semibold leading-6 text-text-primary">
-                Lead Product Designer at{" "}
-                <span className="ledgy-capability relative inline-flex cursor-help">
-                  <span className="ledgy-capability-trigger decoration-text-tertiary/60 underline decoration-dotted underline-offset-4">
-                    Ledgy
-                  </span>
-                  <span
-                    aria-hidden
-                    className="ledgy-capability-tooltip pointer-events-none absolute right-0 top-full z-50 mt-2 w-[240px] rounded-xl bg-text-primary px-3 py-2 font-mono text-[12px] leading-5 text-bg-base shadow-card"
-                  >
-                    0-&gt;1 design function, equity workflows, design systems, AI feedback ops
-                  </span>
-                </span>
-              </h1>
-              <p className="text-lg font-semibold leading-6 text-text-label">
-                Building AI-native software for complex work
-              </p>
+              <ResizableRail
+                defaultWidth={OVERVIEW_RAIL_DEFAULT_WIDTH}
+                minWidth={OVERVIEW_RAIL_MIN_WIDTH}
+                maxWidth={OVERVIEW_RAIL_MAX_WIDTH}
+                storageKey="ion-portfolio-overview-rail-width-compact"
+              >
+                <motion.div className="px-3 pb-5 pt-6">
+                  <div className="mb-7">
+                    <h1 className="text-lg font-semibold leading-6 text-text-primary">
+                      Lead Product Designer at{" "}
+                      <span className="ledgy-capability relative inline-flex cursor-help">
+                        <span className="ledgy-capability-trigger decoration-text-tertiary/60 underline decoration-dotted underline-offset-4">
+                          Ledgy
+                        </span>
+                        <span
+                          aria-hidden
+                          className="ledgy-capability-tooltip pointer-events-none absolute right-0 top-full z-50 mt-2 w-[240px] rounded-xl bg-text-primary px-3 py-2 font-mono text-[12px] leading-5 text-bg-base shadow-card"
+                        >
+                          0-&gt;1 design function, equity workflows, design systems, AI feedback ops
+                        </span>
+                      </span>
+                    </h1>
+                    <p className="text-lg font-semibold leading-6 text-text-label">
+                      Building AI-native software for complex work
+                    </p>
+                  </div>
+                  <span className="text-sm font-medium text-text-label">Projects</span>
+                </motion.div>
+                <nav className="flex-1 overflow-y-auto px-3 pb-6">
+                  {sidebar}
+                </nav>
+              </ResizableRail>
             </motion.div>
-            <span className="text-sm font-medium text-text-label">Projects</span>
-          </motion.div>
-          <nav className="flex-1 overflow-y-auto px-4 pb-6">
-            {sidebar}
-          </nav>
-        </ResizableRail>
+          )}
+        </AnimatePresence>
 
         {/* Detail panel — slides in */}
         <AnimatePresence>
