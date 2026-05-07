@@ -136,11 +136,11 @@ function StatGrid({ stats }: { stats: [Stat, Stat, Stat] }) {
   return (
     <div className="grid grid-cols-1 divide-y divide-border-subtle min-[390px]:grid-cols-3 min-[390px]:divide-x min-[390px]:divide-y-0">
       {stats.map((stat) => (
-        <div key={stat.label} className="py-2.5 min-[390px]:px-3 min-[390px]:py-1">
-          <div className="text-[22px] font-semibold leading-none text-text-primary">
+        <div key={stat.label} className="py-2.5 min-[390px]:px-3 min-[390px]:py-1.5">
+          <div className="text-[19px] font-semibold leading-none text-text-primary min-[390px]:text-[20px]">
             {formatStatValue(stat.value)}
           </div>
-          <div className="mt-1.5 flex items-start gap-1 text-[13px] leading-5 text-text-label">
+          <div className="mt-1.5 flex items-start gap-1 text-[12px] leading-5 text-text-label">
             <span>{stat.label}</span>
             {stat.icon === "bot" && (
               <Bot className="mt-0.5 size-3 shrink-0" aria-label="Agent-assisted" />
@@ -256,7 +256,7 @@ export function MobileProjectDetail({
       <MobileProjectHeader />
 
       <main className="flex-1 overflow-y-auto bg-bg-base">
-        <article className="pb-24">
+        <article className="pb-[calc(8rem+env(safe-area-inset-bottom))]">
           <section className="px-4 pb-4 pt-4">
             <div className="flex items-start gap-3">
               <ProjectMark project={project} />
@@ -275,13 +275,13 @@ export function MobileProjectDetail({
               </div>
             </div>
 
-            <p className="mt-4 text-[17px] font-medium leading-7 text-text-primary">
+            <p className="mt-4 text-[15px] leading-6 text-text-secondary">
               {project.tagline}
             </p>
           </section>
 
           {heroImage && (
-            <section className="px-3 pb-4">
+            <section className="px-3 pb-5">
               <ProjectMedia
                 project={project}
                 image={heroImage}
@@ -343,13 +343,13 @@ export function MobileProjectDetail({
 
           {galleryImages.length > 0 && (
             <section
-              className="border-t border-border-subtle px-3 py-4"
+              className="border-t border-border-subtle px-3 py-5"
               aria-labelledby="gallery-title"
             >
-              <h2 id="gallery-title" className="typo-label mb-3 px-1 text-text-label">
+              <h2 id="gallery-title" className="typo-label mb-4 px-1 text-text-label">
                 Gallery
               </h2>
-              <div className="space-y-4">
+              <div className="space-y-6">
                 {galleryImages.map((image) => (
                   <ProjectMedia
                     key={
