@@ -2,7 +2,9 @@
 
 Ion Mesca's portfolio. Design engineer targeting AI companies.
 
-## Issue tracker
+## Agent skills
+
+### Issue tracker
 
 Issues, PRDs, and wayfinder maps live in the local Paperclip instance (company
 "Portfolio", http://localhost:42862). See `docs/agents/issue-tracker.md`.

@@ -1,5 +1,12 @@
 # AGENTS
 
+## Agent skills
+
+### Issue tracker
+
+Issues, PRDs, and wayfinder maps live in the local Paperclip instance (company
+"Portfolio", `http://localhost:42862`). See `docs/agents/issue-tracker.md`.
+
 ## Design System
 
 Read `DESIGN.md` before visual, motion, responsive, or shadcn component work.
