@@ -1,5 +1,5 @@
 import { ConvexHttpClient } from "convex/browser";
-import { ToolLoopAgent, stepCountIs, tool } from "ai";
+import { ToolLoopAgent, isStepCount, tool } from "ai";
 import { z } from "zod";
 import { api } from "@/convex/_generated/api";
 import { DEFAULT_AGENT_MODEL, loadSystemPrompt } from "@/lib/agent/system-prompt";
@@ -17,7 +17,7 @@ export function createPortfolioAgent() {
   return new ToolLoopAgent({
     model: process.env.AGENT_MODEL ?? DEFAULT_AGENT_MODEL,
     instructions: loadSystemPrompt(),
-    stopWhen: stepCountIs(5),
+    stopWhen: isStepCount(5),
     tools: {
       searchPortfolio: tool({
         description:

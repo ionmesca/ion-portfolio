@@ -19,7 +19,7 @@ export async function POST(req: Request) {
     uiMessages: messages,
     sendReasoning: false,
     sendSources: true,
-    onFinish: async ({ messages: finishedMessages }) => {
+    onEnd: async ({ messages: finishedMessages }) => {
       await convex.mutation(api.agent.saveMessages, {
         threadId,
         visitorId,

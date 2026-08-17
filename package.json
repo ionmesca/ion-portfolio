@@ -11,8 +11,8 @@
     "validate:corpus": "bun scripts/validate-corpus.ts"
   },
   "dependencies": {
-    "@ai-sdk/anthropic": "^3.0.111",
-    "@ai-sdk/react": "^3.0.259",
+    "@ai-sdk/anthropic": "^4",
+    "@ai-sdk/react": "^4",
     "@mdx-js/loader": "^3.1.1",
     "@mdx-js/react": "^3.1.1",
     "@next/mdx": "^16.3.1",
@@ -20,7 +20,7 @@
     "@types/mdx": "^2.0.14",
     "@vercel/analytics": "^2.0.1",
     "@vercel/speed-insights": "^2.0.0",
-    "ai": "^6.0.256",
+    "ai": "^7",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "convex": "^1.44.0",
