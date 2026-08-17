@@ -2,6 +2,11 @@
 
 Ion Mesca's portfolio. Design engineer targeting AI companies.
 
+## Issue tracker
+
+Issues, PRDs, and wayfinder maps live in the local Paperclip instance (company
+"Portfolio", http://localhost:42862). See `docs/agents/issue-tracker.md`.
+
 ## Tech Stack
 
 | Tech | Purpose |
@@ -11,7 +16,7 @@ Ion Mesca's portfolio. Design engineer targeting AI companies.
 | Tailwind CSS 4 | Styling (inline @theme, no config file) |
 | shadcn/ui | Component primitives (extend, don't modify ui/) |
 | Convex | Database (stack, collections) |
-| AI SDK 6 | Claude chat on /agent |
+| AI SDK 7 | Chat agent on /agent (model via AI Gateway) |
 | MDX | Case studies, articles |
 | Aeonik Pro | Typography (variable font in public/fonts/) |
 
