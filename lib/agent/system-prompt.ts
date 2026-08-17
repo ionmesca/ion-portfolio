@@ -6,4 +6,4 @@ export function loadSystemPrompt(): string {
   return fs.readFileSync(promptPath, "utf-8");
 }
 
-export const DEFAULT_AGENT_MODEL = "google/gemini-3.1-flash-lite-preview";
+export const DEFAULT_AGENT_MODEL = "google/gemini-3.1-flash-lite";
