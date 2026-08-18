@@ -16,7 +16,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet"
-import { Check, Copy, ICON_STROKE, Menu, Search, Sun } from "@/lib/icons"
+import { Check, Copy, ICON_STROKE, Menu, Sun } from "@/lib/icons"
 import { useCopyToClipboard } from "@/lib/use-copy"
 import { cn } from "@/lib/utils"
 
@@ -38,21 +38,35 @@ import { ThemeSegment, useTheme } from "../theme-segment"
    WHAT CHANGES FROM THE DESKTOP PALETTE, and why:
 
    - Trigger is an icon BUTTON with lucide `menu`, not `search` and not a
-     keycap. Ion's ruling (pass 11 §B): on mobile the affordance is navigation;
-     search lives inside the sheet.
+     keycap. Ion's ruling (pass 11 §B): on mobile the affordance is navigation.
    - ZERO shortcuts. Not the nav mnemonics, not ⌘⇧C, no footer hints. There is
      no keyboard to press them on.
    - Rows are 44 tall (Figma 20:749 …), the touch step, against 32 on desktop.
    - The scrim is KEPT. The morph family forbids scrims; POR-22 ratified the
      bottom sheet as the platform exception, so the overlay paints `scrim`.
-   - The search input is `text-base` (16px), NOT the Body 14 the Figma frame
-     draws. iOS Safari zooms the viewport on focus for anything under 16px,
-     which would break the whole scroll-as-control page. Ratified in the POR-22
-     contract ("mobile inputs MUST be text-base 16px"); FLAGGED as the one
-     place the frame and the shipped sheet differ on purpose.
    - The current route's row is `Selected` (Figma shows Home selected). On
      touch there is no hover to carry the highlight, so "where I am" is the
      only honest use of that state.
+
+   THE LEAN SHEET (Ion, 2026-08-18) — the desktop palette's cuts, applied here
+   the same day and for the same reasons. "We forgot to clean up the menu on
+   the phone."
+
+     · the SEARCH ROW is gone, and the filtering, the empty state and the
+       per-visit query reset with it. Ten rows you can already see did not need
+       a search box on a 390px screen any more than on a 1512px one. (The
+       POR-22 rule that mobile inputs must be `text-base` 16px so iOS does not
+       zoom the viewport on focus still stands — there is simply no input left
+       in this sheet to apply it to. Do not shrink one back in.)
+     · the GROUP CAPTION ROWS are gone. The groups stay, still labelled for a
+       screen reader, still visual clusters.
+     · there was never a footer hint bar here to remove.
+
+   THE SEAM is the desktop panel's, transposed: Navigate and Actions are
+   separated by rhythm — 8 + 8 of padding against 0 between rows inside a
+   cluster — and Preferences by the 1px full-bleed rule, because it holds a
+   control rather than a command. The header keeps its own rule, which the
+   deleted search row used to carry.
    ========================================================================== */
 
 /** Figma 20:693: the sheet stops 76px below the top of the screen. */
@@ -60,33 +74,15 @@ const SHEET_TOP_GAP = 76
 
 export function MobileMenu() {
   const [open, setOpen] = React.useState(false)
-  const [query, setQuery] = React.useState("")
   const { copied, copy } = useCopyToClipboard()
   const { theme, pickTheme } = useTheme()
   const pathname = usePathname()
 
-  // A fresh sheet every time: the search box should not remember the last
-  // visit's query. "Copied" is NOT reset here — it belongs to
-  // `useCopyToClipboard`, whose ratified ruling is that the 1.5s clock starts
-  // at the copy itself and runs out on its own schedule.
-  React.useEffect(() => {
-    if (open) return
-    setQuery("")
-  }, [open])
-
-  const groups = React.useMemo(() => {
-    const q = query.trim().toLowerCase()
-    if (!q) return PALETTE_GROUPS
-    return PALETTE_GROUPS.map((g) => ({
-      ...g,
-      items: g.items.filter((i) => i.label.toLowerCase().includes(q)),
-    })).filter((g) => g.items.length > 0)
-  }, [query])
-
-  const showPreferences = React.useMemo(() => {
-    const q = query.trim().toLowerCase()
-    return !q || "theme preferences".includes(q)
-  }, [query])
+  /* The sheet used to reset its query on close, filter the groups, and hide
+     Preferences when the query did not match it. All three went with the
+     search row. "Copied" was never reset here and still is not — it belongs to
+     `useCopyToClipboard`, whose ratified ruling is that the 1.5s clock starts
+     at the copy itself and runs out on its own schedule. */
 
   // One clock, one fallback, one sound rule — lib/use-copy.ts, exactly as the
   // collection pages' install chip consumes it. A failed write shows nothing.
@@ -126,8 +122,10 @@ export function MobileMenu() {
           Navigate the site, copy contact details, and set the theme.
         </SheetDescription>
 
-        {/* header — the desktop palette's header anatomy at touch scale */}
-        <div className="flex shrink-0 items-center gap-3 p-4">
+        {/* header — the desktop palette's header anatomy at touch scale. The
+            rule under it used to belong to the search row; it moved here when
+            the search row was cut, so the header still reads as a header. */}
+        <div className="flex shrink-0 items-center gap-3 border-b border-border p-4">
           <Image
             src="/ion-avatar.png"
             alt=""
@@ -146,79 +144,45 @@ export function MobileMenu() {
           </div>
         </div>
 
-        {/* search — 16px text, always, or iOS zooms the page on focus */}
-        <div className="flex h-12 shrink-0 items-center gap-2 border-b border-border px-4">
-          <Search
-            className="size-4 shrink-0 text-muted-foreground"
-            strokeWidth={ICON_STROKE}
-          />
-          <input
-            type="text"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search or jump to…"
-            aria-label="Search commands"
-            autoComplete="off"
-            spellCheck={false}
-            className="h-full min-w-0 flex-1 bg-transparent text-base text-foreground outline-none placeholder:text-muted-foreground"
-          />
-        </div>
-
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
-          {groups.map((group) => (
-            <section
+          {PALETTE_GROUPS.map((group) => (
+            /* No caption row, but still a GROUP: `aria-label` carries what the
+               deleted text row carried. `py-2` on every cluster is the seam —
+               8 + 8 against 0 between rows inside one. */
+            <div
               key={group.id}
-              aria-labelledby={`sheet-group-${group.id}`}
-              className="first:pt-2"
+              role="group"
+              aria-label={group.label}
+              className="px-2 py-2"
             >
-              <div
-                id={`sheet-group-${group.id}`}
-                className="px-4 pt-3 pb-1 text-xs text-muted-foreground"
-              >
-                {group.label}
-              </div>
-              <div className="px-2 pb-2">
-                {group.items.map((item) => (
-                  <MenuRow
-                    key={item.id}
-                    item={item}
-                    copied={copied}
-                    selected={item.href === pathname}
-                    onCopy={copyEmail}
-                  />
-                ))}
-              </div>
-            </section>
+              {group.items.map((item) => (
+                <MenuRow
+                  key={item.id}
+                  item={item}
+                  copied={copied}
+                  selected={item.href === pathname}
+                  onCopy={copyEmail}
+                />
+              ))}
+            </div>
           ))}
 
-          {showPreferences && (
-            <section aria-labelledby="sheet-group-preferences">
-              <div
-                id="sheet-group-preferences"
-                className="px-4 pt-3 pb-1 text-xs text-muted-foreground"
-              >
-                Preferences
-              </div>
-              <div className="px-2 pb-2">
-                <div className="flex h-11 items-center gap-2 rounded-md pr-3 pl-2">
-                  <Sun
-                    className="size-4 shrink-0 text-muted-foreground"
-                    strokeWidth={ICON_STROKE}
-                  />
-                  <span className="min-w-0 flex-1 truncate text-sm text-foreground">
-                    Theme
-                  </span>
-                  <ThemeSegment value={theme} onPick={pickTheme} />
-                </div>
-              </div>
-            </section>
-          )}
+          {/* The one rule inside the body. Preferences holds a control, not a
+              command — the same seam ruling as the desktop panel. */}
+          <span aria-hidden="true" className="block h-px w-full bg-border" />
 
-          {groups.length === 0 && !showPreferences && (
-            <p className="px-4 py-8 text-center text-sm text-muted-foreground">
-              No matches
-            </p>
-          )}
+          <div role="group" aria-label="Preferences" className="px-2 py-2">
+            <div className="flex h-11 items-center gap-2 rounded-md pr-3 pl-2">
+              <Sun
+                className="size-4 shrink-0 text-muted-foreground"
+                strokeWidth={ICON_STROKE}
+              />
+              <span className="min-w-0 flex-1 truncate text-sm text-foreground">
+                Theme
+              </span>
+              <ThemeSegment value={theme} onPick={pickTheme} />
+            </div>
+          </div>
         </div>
       </SheetContent>
     </Sheet>
