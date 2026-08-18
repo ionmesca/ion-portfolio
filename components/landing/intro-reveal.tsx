@@ -47,6 +47,15 @@ import { cn } from "@/lib/utils"
       components with no animation classes at all. It is deliberately NOT
       per-session storage: a real reload is a real arrival.
 
+   4. THE CLASSES LEAVE WHEN THE SHOW ENDS. `fill-mode-both` must stay for the
+      pre-delay hold (backwards fill keeps late groups hidden), but a filling
+      animation keeps the wrapper a stacking context forever — and a stacked
+      wrapper on a project row paints OVER the open ⌘K panel, whose z-40 the
+      chip's slot depends on. So after the choreography's 400ms (plus slack)
+      the classes are dropped wholesale. The final frame is the settled page,
+      so the drop is invisible; it is the same class-drop rule the number
+      pop-in ruling established (POR-17: fill-mode traps).
+
    Reduced motion: every class is `motion-safe:`-gated, so under
    `prefers-reduced-motion` there is no animation-name and the inline delay is
    inert. The page renders settled, instantly — not "settled after 400ms of
@@ -78,14 +87,21 @@ const FADE =
 
 let played = false
 
-/** True for the first client render of the session, and on the server. */
+/** ms. When the animation classes are dropped (rule 4): last start (250) +
+    duration (150) + generous slack for a busy main thread. */
+const INTRO_TEARDOWN = 700
+
+/** True on the server, and on the client from first paint until teardown. */
 function usePlayOnce() {
-  const [play] = React.useState(() =>
+  const [play, setPlay] = React.useState(() =>
     typeof window === "undefined" ? true : !played
   )
   React.useEffect(() => {
     played = true
-  }, [])
+    if (!play) return
+    const t = window.setTimeout(() => setPlay(false), INTRO_TEARDOWN)
+    return () => window.clearTimeout(t)
+  }, [play])
   return play
 }
 
