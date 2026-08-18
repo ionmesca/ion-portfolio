@@ -38,8 +38,17 @@ They are historical reference and will be replaced.
 | MDX | Case studies, articles |
 | Aeonik Pro | Typography (variable font in public/fonts/) |
 
-No animation library. Motion is vanilla CSS transitions plus
-`requestAnimationFrame` where a transition cannot express it.
+Animation (Ion's ruling, 2026-08-18): the `motion` package (motion/react)
+is sanctioned for MICRO-INTERACTIONS only — text swaps, meters, indicators,
+counters, presses, carousels. Spring configs live exclusively in
+`lib/motion.ts`; consumers use LazyMotion + `m.` and must prove their
+bundle split point (first-load JS delta reported). interior.dev / Amicro
+registry components come in via the shadcn CLI (copy-in) and get rethemed
+to the tokens. The big systems stay vanilla CSS + `requestAnimationFrame`
+and must not be rewritten onto the library: the ⌘K zero-jump morph, the
+landing document-scroll wheel, the hover-preview container morph
+(`lib/morph.ts` / `lib/morph-preview.ts`), and simple color/opacity hovers
+(token ladder: 150/200/400ms, snap-in/ease-out).
 
 ## Structure
 
