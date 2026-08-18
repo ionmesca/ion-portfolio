@@ -29,6 +29,8 @@ export {
   Layers,
   Package,
   ChevronRight,
+  // The letter's "← Home" button (Figma 13:2943 draws lucide's arrow-left).
+  ArrowLeft,
   // actions
   Search,
   ArrowUpRight,
