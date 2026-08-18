@@ -5,23 +5,22 @@ import { cn } from "@/lib/utils"
 /**
  * Kbd — an inline keycap.
  *
- * Metrics measured off the Figma palette export
- * (`docs/design/reference/palette-light-p9.png`, the `esc` chip):
- * fill `muted`, label `kbd-foreground` at `text-xs` (12), 20px tall,
- * 20px minimum width, 6px horizontal padding.
+ * Geometry comes from the live Figma component 11:1595: fill `muted`, label
+ * `kbd-foreground` at `text-xs` (12), 4px horizontal padding, `rounded-sm`
+ * (the 9px token step).
  *
- * The 6px radius is RAW on purpose: the radius scale is derived from one
- * `--radius` knob and its smallest step is `rounded-sm` (9px), which is too
- * round for a 20px chip. 6px matches the Figma component. Documented here so
- * it does not read as an escape from the token system.
+ * The 23px height and matching min-width are the one raw pair here: 23 is the
+ * keycap's line-box in Figma — measured, not derived from any scale — and the
+ * min-width keeps a single glyph like `⌘` square instead of pinched.
  */
 function Kbd({ className, ...props }: React.ComponentProps<"kbd">) {
   return (
     <kbd
       data-slot="kbd"
       className={cn(
-        "inline-flex h-5 min-w-5 shrink-0 select-none items-center justify-center",
-        "rounded-[6px] px-1.5", // 6px radius — documented raw, see above.
+        // Figma Kbd component height — keycap line-box, measured not derived.
+        "inline-flex h-[23px] min-w-[23px] shrink-0 select-none items-center justify-center",
+        "rounded-sm px-1",
         "bg-muted text-xs text-kbd-foreground",
         "font-sans align-middle",
         className

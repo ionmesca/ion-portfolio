@@ -91,7 +91,7 @@ const VARIANTS = ["primary", "secondary", "ghost"] as const;
 // rule inside the component.
 const FORCED_HOVER: Record<(typeof VARIANTS)[number], string> = {
   primary: "bg-primary-hover",
-  secondary: "bg-secondary-hover",
+  secondary: "bg-muted",
   ghost: "bg-ghost-hover",
 };
 

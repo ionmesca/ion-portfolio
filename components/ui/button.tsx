@@ -53,8 +53,13 @@ const buttonVariants = cva(
       variant: {
         primary:
           "bg-primary text-primary-foreground shadow-subtle hover:bg-primary-hover [&_svg]:text-primary-foreground-muted",
+        // Secondary rests on `card` (white) with the Subtle elevation, whose
+        // 1px ring layer gives it its edge, and hovers to `muted`. It does NOT
+        // consume --secondary / --secondary-hover: in light mode both resolve
+        // to stone-100, so the hover would be invisible. Live Figma Button set
+        // 11:1607 is the source for this pairing.
         secondary:
-          "bg-secondary text-secondary-foreground shadow-subtle hover:bg-secondary-hover [&_svg]:text-muted-foreground",
+          "bg-card text-secondary-foreground shadow-subtle hover:bg-muted [&_svg]:text-muted-foreground",
         ghost:
           "bg-transparent text-foreground hover:bg-ghost-hover [&_svg]:text-muted-foreground",
       },
