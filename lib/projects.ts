@@ -23,6 +23,18 @@ export type Project = {
   name: string
   year: string
   mark: ProjectMark
+  /**
+   * The panel artwork, one entry per panel, in panel order.
+   *
+   * OPTIONAL, AND EMPTY ON EVERY PROJECT BELOW. Figma's Panel component
+   * (11:1662) is an empty muted rectangle, and the blank tiles in the reference
+   * export are the ratified design until the artwork ticket lands — see the
+   * note at the top of `components/landing/media-column.tsx`. This field is the
+   * SOCKET that ticket plugs into, and `components/ui/settle-in.tsx` is what
+   * makes a picture arrive quietly rather than pop into the column while
+   * someone is scrolling past it.
+   */
+  media?: { src: string; alt: string }[]
 }
 
 export const projects: Project[] = [

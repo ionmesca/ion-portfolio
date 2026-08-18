@@ -1,8 +1,8 @@
 "use client"
 
 import * as React from "react"
-import Image from "next/image"
 
+import { SettleImage } from "@/components/ui/settle-in"
 import {
   createSpring,
   prefersReducedMotion,
@@ -96,6 +96,14 @@ import {
                                              200/25 sits in the same
                                              neighbourhood; CROSSFADE is the
                                              version of it we already own.
+
+     A THIRD SPRING RUNS HERE AND IS NOT THIS COMPONENT'S: each photograph
+     settles in when its own bytes land, on `SPRING_SETTLE` — the muted plate
+     behind the card, the picture rising out of it. It lives in
+     `components/ui/settle-in.tsx` as a bare callback ref precisely so it can
+     be attached inside the `photos.map` below without a hook and without a
+     single re-render, which is what keeps the "renders exactly once" rule
+     above true. The deck's own two drivers never learn that it happened.
 
    ── REDUCED MOTION IS A CSS DECISION ───────────────────────────────────────
 
@@ -603,22 +611,32 @@ export function CoverFlow({
                 "motion-safe:[z-index:var(--cf-z)] motion-safe:will-change-transform",
               ].join(" ")}
             >
-              <Image
-                src={photo.src}
-                alt={photo.alt}
-                width={1200}
-                height={900}
-                draggable={false}
-                // Hand-written SVG placeholders. Next's optimiser refuses SVG
-                // unless `dangerouslyAllowSVG` is set globally, and that is not
-                // a switch a placeholder gets to throw; the flag comes off with
-                // the first real photograph.
-                unoptimized
-                // Concentric: 21px card, 6px of card left showing as a print
-                // margin, 21 − 6 = 15 = `rounded-lg` on the image.
-                className="block aspect-[4/3] w-full rounded-lg bg-muted object-cover"
-                sizes="(max-width: 640px) 60vw, 288px"
-              />
+              {/* THE STAND-IN MOVED OFF THE PICTURE, and that is the only
+                  structural change POR settle-in made here. `bg-muted` used to
+                  sit on the <img> itself, which was correct while a photograph
+                  appeared instantly and wrong the moment it fades in: an
+                  element at opacity 0 takes its own background with it, so the
+                  card would have shown `bg-card` exactly where the stone plate
+                  belongs. The muted rectangle is now the box, the picture
+                  rises out of it, and the 4:3 ratio and the concentric radius
+                  came across with it —
+                  concentric: 21px card, 6px of card left showing as a print
+                  margin, 21 − 6 = 15 = `rounded-lg` on the image. */}
+              <div className="relative aspect-[4/3] w-full overflow-hidden rounded-lg bg-muted">
+                <SettleImage
+                  src={photo.src}
+                  alt={photo.alt}
+                  fill
+                  draggable={false}
+                  // Hand-written SVG placeholders. Next's optimiser refuses SVG
+                  // unless `dangerouslyAllowSVG` is set globally, and that is
+                  // not a switch a placeholder gets to throw; the flag comes
+                  // off with the first real photograph.
+                  unoptimized
+                  className="object-cover"
+                  sizes="(max-width: 640px) 60vw, 288px"
+                />
+              </div>
               {/* The caption belongs to its own figure, in both layouts. In the
                   deck it is only read aloud — what is SEEN is the stacked slot
                   below, which is decoration and says so. */}

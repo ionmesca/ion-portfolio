@@ -1,5 +1,6 @@
 "use client"
 
+import { SettleImage } from "@/components/ui/settle-in"
 import type { Project } from "@/lib/projects"
 
 import { useActiveProject } from "./active-project"
@@ -45,15 +46,42 @@ function Panel({
   index: number
   anchor?: (el: HTMLDivElement | null) => void
 }) {
+  const art = project.media?.[index]
   return (
     <div
       ref={anchor}
-      className="h-[538px] shrink-0 rounded-xl bg-muted"
+      className="relative h-[538px] shrink-0 overflow-hidden rounded-xl bg-muted"
       data-project={project.id}
-      role="img"
-      aria-label={`${project.name}, image ${index + 1} of ${PANELS_PER_PROJECT}`}
+      // With no artwork the muted rectangle IS the picture, and it has to say
+      // which project it belongs to. With artwork the <img> carries its own
+      // description, and a `role="img"` wrapped round it would announce the
+      // panel twice.
+      role={art ? undefined : "img"}
+      aria-label={
+        art
+          ? undefined
+          : `${project.name}, image ${index + 1} of ${PANELS_PER_PROJECT}`
+      }
     >
-      <div className="size-full">{/* art slot — project media lands here */}</div>
+      {/* The art slot. Empty today — see `media` in lib/projects.ts. The
+          picture settles in when its bytes land rather than replacing the
+          stand-in in one frame, which matters more on this surface than
+          anywhere else on the site: this column IS the scroll, so a panel
+          loads while the reader is already moving through it. */}
+      {art ? (
+        <SettleImage
+          src={art.src}
+          alt={art.alt}
+          fill
+          // Next's optimiser refuses SVG unless `dangerouslyAllowSVG` is set
+          // globally. Derived rather than hard-coded, so a real screenshot
+          // dropped into the same slot is optimised without anyone
+          // remembering to say so.
+          unoptimized={art.src.endsWith(".svg")}
+          className="object-cover"
+          sizes="(max-width: 1024px) 100vw, 60vw"
+        />
+      ) : null}
     </div>
   )
 }

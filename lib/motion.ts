@@ -140,6 +140,61 @@ export const SPRING_PRESS = SPRING_CELL
  */
 export const SPRING_POP = SPRING_CELL
 
+/**
+ * The spring an image arrives on when its bytes land.
+ *
+ * IT IS `SPRING_CROSSFADE`, NOT A NEW FAMILY, and — like `SPRING_PRESS` and
+ * `SPRING_POP` above — the alias is the record of the decision rather than a
+ * shortcut.
+ *
+ * WHY THIS FAMILY. The shelf splits motion into a READOUT that snaps and
+ * CONTENT that settles. A photograph appearing is the purest CONTENT case on
+ * this site: nothing was asked, nothing is being answered, a picture simply
+ * arrived. CROSSFADE is also interior.dev's own constant for exactly the two
+ * lanes this animates — "its slide scale/opacity" — so the mapping is the
+ * literal one for once, rather than the argued one the two aliases above make.
+ *
+ * IT LANDS ON THE RIGHT RUNG. The ratified ladder puts ENTRANCES on
+ * `--duration-slow` (400ms), and CROSSFADE is at 95% of its travel by 342ms —
+ * the table under `SWAP_EXIT_MS`, integrated with `createSpring`'s own solver.
+ * So an image is visually there inside the entrance ceiling and never becomes
+ * a thing you watch.
+ *
+ * WHY NOT `SPRING_CELL`, which the two aliases above both chose. CELL is at
+ * 95% by 171ms, which is the READOUT rung, and on this surface that reads as a
+ * cut rather than an arrival. `SPRING_POP` needed the readout rung because a
+ * hover preview is a thing you WAIT for. An image is the opposite: it is a
+ * thing that interrupts a page you were already reading, so the one rule is
+ * that it must not snatch at the eye.
+ *
+ *   ω      = √(k/m)     = √(260 / 0.8)  = 18.0 rad/s
+ *   c_crit = 2√(km)     = 2√(260 × 0.8) = 28.8
+ *   ζ      = c / c_crit = 34 / 28.8     = 1.18
+ *
+ * ζ above 1 is overdamped: the picture never overshoots past its own frame and
+ * settles back, which on a `scale` lane inside a clipped box would read as a
+ * bounce against the edge.
+ */
+export const SPRING_SETTLE = SPRING_CROSSFADE
+
+/**
+ * The scale an image settles in FROM. 0.98 → 1.
+ *
+ * NOT A NEW NUMBER. It is the `.hover-pop-inner` recipe's own arrival scale —
+ * `transform: scale(calc(0.98 + 0.02 * var(--p)))`, section 6 of
+ * app/globals.css — which is the one ratified opacity-plus-scale arrival this
+ * system already owns. Reusing it means the site has ONE idea of how big a
+ * surface is just before it is fully here, and two places cannot drift apart.
+ *
+ * THE POP'S 4px RISE IS DELIBERATELY NOT TAKEN. That card rises off an anchor
+ * it is attached to, so the travel is what says where it came from. An image
+ * has no anchor: it fills a stand-in box that is already exactly the right
+ * size, and a rise would only be the picture sliding around inside its own
+ * frame. Ion's brief is "fade + a whisper of scale", and 2% of the box is the
+ * whisper.
+ */
+export const SETTLE_SCALE = 0.98
+
 /** The channel `.hover-pop-inner` reads. Same trick as `--swap-p` and the
  *  morph's `--morph-p`: one JS-owned 0→1 number, every visual lane derived
  *  from it in CSS, so the lanes cannot desynchronise from each other or from

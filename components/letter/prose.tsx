@@ -1,4 +1,5 @@
 import { CoverFlow } from "@/components/letter/cover-flow"
+import { SettleImage } from "@/components/ui/settle-in"
 import type { LetterBlock, LetterSection, LetterSpan } from "@/content/letter"
 
 /**
@@ -58,15 +59,60 @@ function Spans({ spans }: { spans: LetterSpan[] }) {
    ------------------------------------------------------------------------- */
 
 /**
- * A media slot. Art lands post-build, so this is the muted rounded rect the
- * frame draws: 220px tall, `rounded-xl` (the 21px step, bound to radius/xl in
- * Figma), `bg-muted`. The rect is decorative until there is a real image, so it
- * is hidden from the accessibility tree and the caption carries the meaning.
+ * A media slot: the muted rounded rect the frame draws — 220px tall,
+ * `rounded-xl` (the 21px step, bound to radius/xl in Figma), `bg-muted` — with
+ * a picture in it once there is one.
+ *
+ * THE RECT IS NOT A LOADING STATE, IT IS THE SLOT. It reserves the exact box
+ * whether art has landed or not, which is what lets the picture arrive with no
+ * layout shift at all: nothing below it can move, because nothing above it
+ * ever changes size. When `src` is given the picture rises out of the rect on
+ * the spring shelf — `components/ui/settle-in.tsx` — and when it is not, the
+ * rect is the whole slot and the caption carries the meaning, exactly as
+ * before.
+ *
+ * `SettleImage` is a Client Component inside this Server Component, which is
+ * ordinary: what crosses the boundary is a reference the bundler resolves, and
+ * the prose stays on the server. It is the same crossing `CoverFlow` makes.
  */
-export function Photo({ caption }: { caption: string }) {
+export function Photo({
+  caption,
+  src,
+  alt,
+}: {
+  caption: string
+  /** Path under /public. Omitted, the slot is the muted rectangle alone. */
+  src?: string
+  /** The picture's own description, for anyone who cannot see it. Leave it
+   *  empty only when the caption below genuinely says everything the picture
+   *  does. */
+  alt?: string
+}) {
   return (
     <figure className="flex flex-1 flex-col gap-3">
-      <div className="h-55 w-full rounded-xl bg-muted" aria-hidden="true" />
+      <div
+        className="relative h-55 w-full overflow-hidden rounded-xl bg-muted"
+        // Decorative while it is an empty rectangle; once it holds a picture
+        // the picture's own `alt` is what should be read.
+        aria-hidden={src ? undefined : true}
+      >
+        {src ? (
+          <SettleImage
+            src={src}
+            alt={alt ?? ""}
+            fill
+            // Next's optimiser refuses SVG unless `dangerouslyAllowSVG` is set
+            // globally, and that is not a switch a placeholder gets to throw.
+            // Derived rather than hard-coded so a real JPEG dropped into the
+            // same slot is optimised without anyone remembering to say so.
+            unoptimized={src.endsWith(".svg")}
+            className="object-cover"
+            // The reading column is 640 wide; a `PhotoRow` halves that, and
+            // asking for the larger of the two is the safe way round.
+            sizes="(max-width: 768px) 100vw, 640px"
+          />
+        ) : null}
+      </div>
       <figcaption className="text-xs text-muted-foreground">{caption}</figcaption>
     </figure>
   )
