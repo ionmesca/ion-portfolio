@@ -19,13 +19,19 @@ import { cn } from "@/lib/utils"
 
    WHY REBUILT AND NOT IMPORTED. `TextEffect` imports `motion/react`. CLAUDE.md
    ratifies Motion for micro-interactions, but only behind a proven split point
-   — and the hero is on `/`, the route the whole portfolio is judged by, with
-   no split point available to it. The measured cost of putting Motion on the
-   desktop-critical path is +41.4KB gz against a ~3KB gz allowance; lib/motion.ts
-   records the same measurement and the same escape hatch for the theme thumb.
-   What the library would have bought here is a variant system and a stagger
-   scheduler. What this needs is two keyframes and a delay ladder, and CSS has
-   both. See the report for the before/after bytes.
+   — and the hero is on `/`, the route the whole portfolio is judged by, with no
+   split point available to it. lib/motion.ts already records +41.4KB gz for the
+   theme thumb; rather than quote it, the counterfactual was BUILT: this file
+   rewritten with `motion/react` and `motion.span` per unit, then reverted.
+
+     /  first-load JS, gz     223.13  before this wave
+                              224.37  this file, in CSS          +1.24
+                              270.97  this file, on motion/react +47.84
+
+   Against a ~3KB gz allowance, the library is roughly fifteen times the budget
+   for this one effect. What it would have bought is a variant system and a
+   stagger scheduler; what this needs is two keyframes and a delay ladder, and
+   CSS has both.
 
    ENTRANCE, NEVER A LOOP. This is the hero group's arrival inside the landing
    choreography (components/landing/intro-reveal.tsx), which is why the base
