@@ -26,10 +26,27 @@ export type LetterSpan = {
   underline?: boolean
 }
 
+/**
+ * One photograph in the letter's deck.
+ *
+ * PLACEHOLDER ART. `public/placeholder/photo-0*.svg` are five hand-drawn stone
+ * plates — no stock, no downloads — that exist so the deck can be judged before
+ * Ion's real photographs arrive. Swapping in a real file is a change to `src`
+ * and `alt` and nothing else.
+ */
+export type LetterPhoto = {
+  src: string
+  /** The photograph's own description, for anyone who cannot see it. */
+  alt: string
+  /** The line under the deck. */
+  caption: string
+}
+
 export type LetterBlock =
   | { type: "paragraph"; spans: LetterSpan[] }
-  /** The two-up media row. Art lands post-build; these are muted rects for now. */
-  | { type: "photos"; photos: { caption: string }[] }
+  /** The photo deck — `components/letter/cover-flow.tsx`. It replaced the
+   *  frame's static two-up row on POR-31. */
+  | { type: "photos"; photos: LetterPhoto[] }
 
 export type LetterSection = {
   /** Anchor id. Also the scroll-spy target and the wheel row's href. */
@@ -117,9 +134,41 @@ export const letterSections: LetterSection[] = [
           { text: "." },
         ],
       },
+      /**
+       * The deck. The frame drew TWO photo slots; a cover flow wants four or
+       * five to read as a deck at all, so three captions here are INVENTED
+       * placeholder copy and the first two are Figma's own. Flagged in the
+       * POR-31 report — when Ion writes the real letter, all five are his.
+       */
       {
         type: "photos",
-        photos: [{ caption: "The first computer" }, { caption: "The dog, supervising" }],
+        photos: [
+          {
+            src: "/placeholder/photo-01.svg",
+            alt: "A low sun over layered ridgelines, in flat grey light.",
+            caption: "The first computer",
+          },
+          {
+            src: "/placeholder/photo-02.svg",
+            alt: "Two panels of window light thrown across a dark wall.",
+            caption: "The dog, supervising",
+          },
+          {
+            src: "/placeholder/photo-03.svg",
+            alt: "A wide concrete curve sweeping out of the bottom corner.",
+            caption: "Barcelona, most mornings",
+          },
+          {
+            src: "/placeholder/photo-04.svg",
+            alt: "Vertical bands of shade, like light through a half-shut blind.",
+            caption: "The desk, on a good day",
+          },
+          {
+            src: "/placeholder/photo-05.svg",
+            alt: "A pale sphere lit from the left, resting on a grey plane.",
+            caption: "A long walk, thinking",
+          },
+        ],
       },
     ],
   },

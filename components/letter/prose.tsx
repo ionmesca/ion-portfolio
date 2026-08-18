@@ -1,3 +1,4 @@
+import { CoverFlow } from "@/components/letter/cover-flow"
 import type { LetterBlock, LetterSection, LetterSpan } from "@/content/letter"
 
 /**
@@ -84,15 +85,20 @@ export function PhotoRow({ children }: { children: React.ReactNode }) {
   return <div className="flex gap-4">{children}</div>
 }
 
+/**
+ * A `photos` block is the deck — `components/letter/cover-flow.tsx`.
+ *
+ * POR-31 replaced the frame's static two-up row with it. `Photo` and `PhotoRow`
+ * above are untouched and still exported: they are the plain slot an article
+ * reaches for when a deck would be too much, and they are what the deck falls
+ * back to under reduced motion in spirit if not in code.
+ *
+ * A "use client" import inside a Server Component is ordinary — what crosses is
+ * a reference the bundler resolves, and the letter's prose stays on the server.
+ */
 function Block({ block }: { block: LetterBlock }) {
   if (block.type === "photos") {
-    return (
-      <div className="flex gap-4">
-        {block.photos.map((photo) => (
-          <Photo key={photo.caption} caption={photo.caption} />
-        ))}
-      </div>
-    )
+    return <CoverFlow photos={block.photos} label="Photographs from the letter" />
   }
   return (
     <p className="text-base text-foreground">
