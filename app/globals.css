@@ -258,10 +258,10 @@
      high lightness, and these have to stay quiet against stone-800. The HUES
      are identical to light, so a block does not change its mind about what a
      keyword is when the theme flips. --status-available is not touched. */
-  --code-keyword: oklch(0.78 0.07 55); /* clay */
-  --code-string: oklch(0.78 0.07 135); /* moss */
-  --code-function: oklch(0.78 0.07 250); /* slate-blue */
-  --code-constant: oklch(0.78 0.07 330); /* plum */
+  --code-keyword: oklch(0.86 0.07 55); /* clay */
+  --code-string: oklch(0.86 0.07 135); /* moss */
+  --code-function: oklch(0.86 0.07 250); /* slate-blue */
+  --code-constant: oklch(0.86 0.07 330); /* plum */
 
   /* -- elevation — dark ------------------------------------------------------
      Same four black layers as light. Only the 5th layer, the hairline ring,
