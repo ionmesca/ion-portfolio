@@ -8,10 +8,11 @@ import { ArrowUpRight } from "@/lib/icons"
 import type { Project } from "@/lib/projects"
 import { cn } from "@/lib/utils"
 
-import { ProjectIcon } from "../project-icon"
 import { SOCIALS } from "../socials"
+import { MobileIndicator } from "./mobile-indicator-lazy"
 import { MobileMenu } from "./mobile-menu"
-import { INDICATOR_H, TOPBAR_H, useMobileScroll } from "./use-mobile-scroll"
+import { useProgressChannel } from "./progress-channel"
+import { TOPBAR_H, useMobileScroll } from "./use-mobile-scroll"
 
 /* ============================================================================
    MOBILE LANDING — Option B, "scroll as control" (POR-22, ratified).
@@ -69,10 +70,20 @@ const CARD_ART: Record<string, string> = {
 export function MobileLanding({ projects }: { projects: Project[] }) {
   const listRef = React.useRef<HTMLDivElement>(null)
   const meterRef = React.useRef<HTMLSpanElement>(null)
+
+  // The controller writes raw scroll progress into this channel every frame and
+  // the indicator reads it through a spring. Not React state, for the same
+  // reason the meter was a direct DOM write before: a re-render per frame to
+  // move 2px of fill is a bill nobody should pay. Not a MotionValue either,
+  // because the Motion runtime lives in the indicator's own lazy chunk and must
+  // not be dragged back up here.
+  const [subscribeToProgress, publishProgress] = useProgressChannel()
+
   const { index, revealed } = useMobileScroll({
     listRef,
     meterRef,
     count: projects.length,
+    onProgress: publishProgress,
   })
 
   return (
@@ -97,10 +108,11 @@ export function MobileLanding({ projects }: { projects: Project[] }) {
         <MobileMenu />
       </header>
 
-      <Indicator
+      <MobileIndicator
         projects={projects}
         index={index}
         revealed={revealed}
+        subscribe={subscribeToProgress}
         meterRef={meterRef}
       />
 
@@ -183,91 +195,6 @@ export function MobileLanding({ projects }: { projects: Project[] }) {
       <footer className="px-4 pt-12 pb-4">
         <p className="text-xs text-muted-foreground">Updated Aug 16, 2026</p>
       </footer>
-    </div>
-  )
-}
-
-/* ----------------------------------------------------------------------------
-   The sticky indicator (Figma 20:605).
-
-   40 tall, 16 gutters, `background`: thumbnail 20 + name Subhead + year
-   Caption muted on the left, "n / 5" Caption muted on the right, both counters
-   in TABULAR numerals so the digits do not dance as they change. The bar's
-   bottom 2px is the meter: `border` track, `foreground` fill.
-
-   It is FIXED, not sticky, and it is not in the flow: showing and hiding it
-   must never move the cards it is describing (mobile-lab.html made the same
-   call). At rest it is absent — that is the design, not a missing state.
-
-   The name/year line uses the system's own text-swap recipe (`.label-swap`,
-   catalog ruling #4): every project's line is mounted, and which one is `on`
-   is what changes, so the crossfade needs no mount/unmount bookkeeping. Lines
-   above the active one leave upward, lines below arrive from below, in both
-   scroll directions. Deviation from mobile-lab.html: the lab travels 6px with
-   no blur, the system recipe travels 4px with the 2px garnish blur — the
-   system wins, flagged in the report.
-   ------------------------------------------------------------------------- */
-
-function Indicator({
-  projects,
-  index,
-  revealed,
-  meterRef,
-}: {
-  projects: Project[]
-  index: number
-  revealed: boolean
-  meterRef: React.RefObject<HTMLSpanElement | null>
-}) {
-  return (
-    <div
-      data-slot="mobile-indicator"
-      data-on={revealed}
-      className="mobile-indicator fixed inset-x-0 z-20 flex items-center gap-2 bg-background px-4"
-      style={{ top: TOPBAR_H, height: INDICATOR_H }}
-    >
-      <div className="relative h-[21px] min-w-0 flex-1">
-        {projects.map((project, i) => (
-          <span
-            key={project.id}
-            data-on={i === index}
-            data-dir={i < index ? "out" : "in"}
-            aria-hidden={i !== index}
-            className="label-swap absolute inset-0 flex items-center gap-2 whitespace-nowrap"
-          >
-            <ProjectIcon mark={project.mark} size={20} />
-            <span className="text-subhead text-foreground">{project.name}</span>
-            <span className="text-xs text-muted-foreground tabular-nums">
-              {project.year}
-            </span>
-          </span>
-        ))}
-      </div>
-
-      {/* The live region is the COUNTER alone. Every project's name line is
-          mounted at once (that is what makes the crossfade cheap), so putting
-          `aria-live` on the bar would read the whole stack out on every
-          change; "3 / 5" is the one honest announcement. */}
-      <span
-        aria-live="polite"
-        className="shrink-0 text-xs text-muted-foreground tabular-nums"
-      >
-        {index + 1} / {projects.length}
-      </span>
-
-      {/* the meter — the bar's bottom edge, not a border under it */}
-      <span
-        aria-hidden="true"
-        className="absolute inset-x-0 bottom-0 block h-0.5 bg-border"
-      >
-        <span
-          ref={meterRef}
-          data-slot="mobile-meter"
-          data-progress="0"
-          className="block h-full w-full origin-left bg-foreground"
-          style={{ transform: "scaleX(0)" }}
-        />
-      </span>
     </div>
   )
 }

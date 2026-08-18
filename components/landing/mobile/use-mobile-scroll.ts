@@ -31,6 +31,13 @@ import * as React from "react"
    The meter is written straight to the DOM, not to React state. It changes
    every frame you scroll, and a re-render per frame to move 2px of fill is a
    bill nobody should pay.
+
+   SINCE THE MOTION ADOPTION (2026-08-18) this hook no longer paints the meter's
+   transform. It publishes the raw number twice — to `data-progress` on the
+   meter element, which is the honest scroll readout the POR-22 probes assert
+   against, and to `onProgress`, which the indicator feeds into a Motion spring.
+   The fill you see is the spring; the number you can measure is this one. The
+   two must not both write `transform`, so this hook stopped.
    ========================================================================== */
 
 export const ACTIVE_LINE = 0.4
@@ -57,14 +64,26 @@ export function useMobileScroll({
   listRef,
   meterRef,
   count,
+  onProgress,
 }: {
   listRef: React.RefObject<HTMLElement | null>
   meterRef: React.RefObject<HTMLElement | null>
   count: number
+  /** Called with the raw 0..1 progress on every frame the scroll moves. */
+  onProgress?: (progress: number) => void
 }): MobileScroll {
   const [state, setState] = React.useState<MobileScroll>({
     index: 0,
     revealed: false,
+  })
+
+  // Held in a ref so a new closure from the caller never re-runs the effect —
+  // re-attaching the scroll listener mid-scroll drops a frame and re-measures
+  // for no reason. Synced in an effect, not during render: a ref written during
+  // render is the `react-hooks/refs` error, and this one has no reason to be.
+  const publish = React.useRef(onProgress)
+  React.useEffect(() => {
+    publish.current = onProgress
   })
 
   React.useEffect(() => {
@@ -105,9 +124,8 @@ export function useMobileScroll({
 
     const paintMeter = (progress: number) => {
       const el = meterRef.current
-      if (!el) return
-      el.style.transform = `scaleX(${progress})`
-      el.dataset.progress = progress.toFixed(3)
+      if (el) el.dataset.progress = progress.toFixed(3)
+      publish.current?.(progress)
     }
 
     const step = () => {
