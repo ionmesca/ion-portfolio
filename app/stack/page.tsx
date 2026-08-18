@@ -7,6 +7,7 @@ import { navFor, stackPage } from "@/content/collections"
 export const metadata: Metadata = {
   title: "Stack — Ion Mesca",
   description: "The tools Ion Mesca designs and builds with.",
+  alternates: { canonical: "/stack" },
 }
 
 /**

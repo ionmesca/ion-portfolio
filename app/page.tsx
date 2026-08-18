@@ -1,3 +1,5 @@
+import type { Metadata } from "next";
+
 import { ActiveProjectProvider } from "@/components/landing/active-project";
 import { CommandPalette } from "@/components/landing/command-palette";
 import { Intro } from "@/components/landing/intro";
@@ -6,6 +8,16 @@ import { MediaColumn } from "@/components/landing/media-column";
 import { MobileLanding } from "@/components/landing/mobile/mobile-landing";
 import { ProjectList } from "@/components/landing/project-list";
 import { projects } from "@/lib/projects";
+
+/**
+ * The landing takes its title, description and OG card from the root layout
+ * unchanged — it IS the page those defaults were written for. The only thing
+ * it adds is its own canonical, so `/` and any query-string or trailing-slash
+ * variant of it collapse to one address in a search index.
+ */
+export const metadata: Metadata = {
+  alternates: { canonical: "/" },
+};
 
 /**
  * Landing — desktop light.

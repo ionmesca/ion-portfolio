@@ -7,6 +7,7 @@ import { agentsPage, navFor } from "@/content/collections"
 export const metadata: Metadata = {
   title: "Agents & skills — Ion Mesca",
   description: "The agents and skills that do the work with Ion Mesca.",
+  alternates: { canonical: "/agents" },
 }
 
 /**
