@@ -1,0 +1,130 @@
+<!doctype html>
+<!--
+  THE OG CARD'S SOURCE. app/opengraph-image.png is a render of this file at
+  1200x630, and this is the only place its layout exists.
+
+  WHY A STATIC PNG AND NOT next/og's ImageResponse: satori, the renderer behind
+  ImageResponse, reads ttf, otf and woff. This repo ships Aeonik Pro as woff2
+  ONLY, and there is no woff2 decompressor in the toolchain — converting one
+  would mean adding a dependency to a lockfile three crews are sharing. A
+  headless Chrome render reads the real woff2, the real tokens and the real
+  identity-chip geometry, so the card is the site rather than an approximation
+  of it, and a prebuilt PNG costs nothing at request time.
+
+  TO REDRAW IT: open this file at a 1200x630 viewport, screenshot at 2x, and
+  downscale to 1200x630. Every colour below is copied from app/globals.css and
+  every chip measurement is components/landing/identity-chip.tsx at 2.5x.
+-->
+<meta charset="utf-8" />
+<style>
+  @font-face {
+    font-family: Aeonik;
+    src: url("../../public/fonts/AeonikPro-VF.woff2")
+      format("woff2");
+    font-weight: 100 900;
+    font-style: normal;
+  }
+  :root {
+    /* app/globals.css, light. Values copied, never redefined. */
+    --background: #ffffff;
+    --foreground: #0c0a09; /* stone-950 */
+    --card: #ffffff;
+    --muted-foreground: #79716b; /* stone-500 */
+    --elevation-subtle: 0 0.5px 0.5px 0 rgb(0 0 0 / 0.04),
+      0 1.5px 1px 0 rgb(0 0 0 / 0.03), 0 3px 1.5px 0 rgb(0 0 0 / 0.02),
+      0 5px 2px 0 rgb(0 0 0 / 0.01), 0 0 0 1px rgb(0 0 0 / 0.05);
+  }
+  * {
+    margin: 0;
+    box-sizing: border-box;
+  }
+  html,
+  body {
+    width: 1200px;
+    height: 630px;
+  }
+  body {
+    background: var(--background);
+    font-family: Aeonik, sans-serif;
+    color: var(--foreground);
+    -webkit-font-smoothing: antialiased;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 88px 96px;
+  }
+
+  /* The identity chip, at 2.5x its live size. Every ratio is the component's:
+     h-[42px] -> 105, avatar 32 -> 80 at radius 10 -> 25, gap-3 -> 30,
+     pl-1 -> 10, pr-3 -> 30, rounded-lg (15) -> 37.5, name at 15/500 -> 37.5. */
+  .top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .chip {
+    display: flex;
+    align-items: center;
+    gap: 30px;
+    height: 105px;
+    width: fit-content;
+    padding: 10px 30px 10px 10px;
+    border-radius: 37.5px;
+    background: var(--card);
+    box-shadow: var(--elevation-subtle);
+  }
+  .chip img {
+    width: 85px;
+    height: 85px;
+    border-radius: 25px;
+    object-fit: cover;
+    display: block;
+  }
+  .chip span {
+    font-size: 37.5px;
+    font-weight: 500;
+    letter-spacing: 0;
+  }
+  .url {
+    font-size: 28px;
+    color: var(--muted-foreground);
+  }
+
+  .say {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+  h1 {
+    font-size: 92px;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    line-height: 1.1;
+  }
+  p {
+    font-size: 34px;
+    line-height: 1.45;
+    color: var(--muted-foreground);
+    max-width: 880px;
+  }
+</style>
+<body>
+  <div class="top">
+    <div class="chip">
+      <img
+        src="../../public/ion-avatar.png"
+        alt=""
+      />
+      <span>Ion Mesca</span>
+    </div>
+    <div class="url">ionmesca.com</div>
+  </div>
+
+  <div class="say">
+    <h1>Software Designer</h1>
+    <p>
+      Curious generalist at heart, building AI native software and fintech
+      systems at Ledgy
+    </p>
+  </div>
+</body>
