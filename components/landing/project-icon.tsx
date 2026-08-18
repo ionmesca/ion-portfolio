@@ -3,27 +3,41 @@ import Image from "next/image"
 import type { ProjectMark } from "@/lib/projects"
 
 /**
- * ProjectIcon — the 24px mark on a project row.
+ * ProjectIcon — the mark on a project row (24px) or in the mobile indicator
+ * bar (20px).
  *
- * The 8px radius is a raw value, not a token step. Figma names the layer
- * "Icon (r8 raw — concentric 12 outer − 4 inset)": the row's radius is
- * `md` (12) and the icon is inset by the row's 4px padding, so 12 − 4 = 8.
- * Writing it as a token would break the concentric relationship.
+ * Both radii are raw values, not token steps, and both are concentric:
+ *   24 — "Icon (r8 raw — concentric 12 outer − 4 inset)". The desktop row's
+ *        radius is `md` (12) and the icon is inset by the row's 4px padding.
+ *   20 — "Thumb (r6 raw — concentric, documented allowance)", Figma 20:901.
+ * Writing either as a token would break the concentric relationship.
  *
  * #4920F5 is the Ledgy brand purple. Like the GitHub / X / LinkedIn glyphs it
  * is asset colour, not a system role, so it is not expected in globals.css.
  */
 
-const MARK_RADIUS = "rounded-[8px]"
+type MarkSize = 20 | 24
 
-function LedgyMark() {
+const MARK = {
+  // `art` is the wordmark's own box: the Figma vector is 24 x 17, and the 20px
+  // thumbnail scales it to Figma's own 20 x 14.17 (20:902). Written as explicit
+  // pixel dimensions rather than 100%, so the 24px mark rasterises exactly as
+  // it always has — a percentage changed its antialiasing by a few pixels.
+  24: { box: "size-6", radius: "rounded-[8px]", art: { w: 24, h: 17 } },
+  20: { box: "size-5", radius: "rounded-[6px]", art: { w: 20, h: 14.17 } },
+} as const satisfies Record<
+  MarkSize,
+  { box: string; radius: string; art: { w: number; h: number } }
+>
+
+function LedgyMark({ size }: { size: MarkSize }) {
   return (
     <div
-      className={`flex size-6 items-center justify-center bg-[#4920F5] ${MARK_RADIUS}`}
+      className={`flex items-center justify-center bg-[#4920F5] ${MARK[size].box} ${MARK[size].radius}`}
     >
       <svg
-        width="24"
-        height="17"
+        width={MARK[size].art.w}
+        height={MARK[size].art.h}
         viewBox="0 0 24 17"
         fill="none"
         aria-hidden="true"
@@ -46,8 +60,14 @@ const IMAGE_MARKS = {
   buna: "/projects/buna-mark.png",
 } as const
 
-export function ProjectIcon({ mark }: { mark: ProjectMark }) {
-  if (mark === "ledgy") return <LedgyMark />
+export function ProjectIcon({
+  mark,
+  size = 24,
+}: {
+  mark: ProjectMark
+  size?: MarkSize
+}) {
+  if (mark === "ledgy") return <LedgyMark size={size} />
 
   return (
     <Image
@@ -55,7 +75,7 @@ export function ProjectIcon({ mark }: { mark: ProjectMark }) {
       alt=""
       width={24}
       height={24}
-      className={`size-6 object-cover ${MARK_RADIUS}`}
+      className={`object-cover ${MARK[size].box} ${MARK[size].radius}`}
     />
   )
 }

@@ -33,6 +33,10 @@ export {
   ChevronRight,
   // The letter's "← Home" button (Figma 13:2943 draws lucide's arrow-left).
   ArrowLeft,
+  // The mobile top bar's trigger. Ion's call (pass 11 §B): the mobile trigger
+  // is for NAVIGATION, not search — lucide `menu`, never `search`. Search still
+  // exists, but only inside the sheet the menu opens.
+  Menu,
   // actions
   Search,
   ArrowUpRight,

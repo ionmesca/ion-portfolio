@@ -4,26 +4,13 @@ import * as React from "react"
 import Link from "next/link"
 
 import { Kbd } from "@/components/ui/kbd"
-import {
-  Check,
-  Copy,
-  ICON_STROKE,
-  Monitor,
-  Moon,
-  Search,
-  Sun,
-} from "@/lib/icons"
+import { Check, Copy, ICON_STROKE, Search, Sun } from "@/lib/icons"
 import { createMorph, type Morph, type MorphRect } from "@/lib/morph"
 import { playTick } from "@/lib/sound"
-import {
-  applyTheme,
-  readTheme,
-  subscribeSystemTheme,
-  type Theme,
-} from "@/lib/theme"
 import { cn } from "@/lib/utils"
 
 import { IdentityChip } from "./identity-chip"
+import { ThemeSegment, useTheme } from "./theme-segment"
 import {
   CONTACT_EMAIL,
   PALETTE_GROUPS,
@@ -121,7 +108,9 @@ export function CommandPalette() {
   const openRef = React.useRef(false)
   const [query, setQuery] = React.useState("")
   const [copied, setCopied] = React.useState(false)
-  const [theme, setTheme] = React.useState<Theme>("system")
+  /* Theme state + the OS-flip subscription live in `theme-segment.tsx` now:
+     the mobile menu sheet renders the same control and must stay in step. */
+  const { theme, pickTheme } = useTheme()
 
   /* --- filtering ---------------------------------------------------------- */
   const groups = React.useMemo(() => {
@@ -161,11 +150,19 @@ export function CommandPalette() {
      None of this exists on mobile — zero shortcuts there, and the mobile phase
      ships its own menu. Until the gate opens, the component renders exactly
      today's static chip and attaches nothing, which also keeps the server
-     render and the first client render identical. */
+     render and the first client render identical.
+
+     The width term is the mobile phase's one amendment to the original touch
+     gate. Below `lg` the whole desktop rail — this chip included — is
+     `display: none` and the mobile sheet is the menu, so a fine-pointer window
+     narrower than 1024 must not answer ⌘K with an invisible dialog. 1024px is
+     Tailwind's `lg`, which is the same number the layout split uses. */
   React.useEffect(() => {
     let mq: MediaQueryList
     try {
-      mq = window.matchMedia("(hover: hover) and (pointer: fine)")
+      mq = window.matchMedia(
+        "(hover: hover) and (pointer: fine) and (min-width: 1024px)"
+      )
     } catch {
       return
     }
@@ -355,22 +352,6 @@ export function CommandPalette() {
       morphRef.current = null
     }
   }, [enabled, measure, measureFace, openRect])
-
-  /* --- theme --------------------------------------------------------------- */
-  React.useEffect(() => {
-    setTheme(readTheme())
-  }, [])
-
-  React.useEffect(() => {
-    // Only `system` needs to keep listening; the other two are absolute.
-    if (theme !== "system") return
-    return subscribeSystemTheme(() => applyTheme("system"))
-  }, [theme])
-
-  const pickTheme = React.useCallback((next: Theme) => {
-    setTheme(next)
-    applyTheme(next)
-  }, [])
 
   /* --- open / close --------------------------------------------------------- */
 
@@ -907,80 +888,6 @@ function Row({
     <Link href={item.href ?? "#"} {...shared}>
       {inner}
     </Link>
-  )
-}
-
-const THEME_OPTIONS = [
-  { value: "light" as const, label: "Light", icon: Sun },
-  { value: "dark" as const, label: "Dark", icon: Moon },
-  { value: "system" as const, label: "System", icon: Monitor },
-]
-
-/** Segment item 32 wide + the 2px gap — the thumb's travel per step. */
-const SEGMENT_STEP = 34
-
-function ThemeSegment({
-  value,
-  onPick,
-}: {
-  value: Theme
-  onPick: (theme: Theme) => void
-}) {
-  const index = Math.max(
-    0,
-    THEME_OPTIONS.findIndex((o) => o.value === value)
-  )
-
-  const onKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return
-    e.preventDefault()
-    e.stopPropagation()
-    const delta = e.key === "ArrowRight" ? 1 : -1
-    const next =
-      (index + delta + THEME_OPTIONS.length) % THEME_OPTIONS.length
-    onPick(THEME_OPTIONS[next].value)
-  }
-
-  return (
-    <div
-      role="radiogroup"
-      aria-label="Theme"
-      onKeyDown={onKeyDown}
-      className="relative flex h-8 shrink-0 items-center gap-0.5 rounded-md bg-muted p-1"
-    >
-      <span
-        aria-hidden="true"
-        className="palette-thumb absolute top-1 left-1 h-6 w-8 rounded-[8px] bg-card"
-        style={{ transform: `translateX(${index * SEGMENT_STEP}px)` }}
-      />
-      {THEME_OPTIONS.map((option) => {
-        const Icon = option.icon
-        const selected = option.value === value
-        return (
-          <button
-            key={option.value}
-            type="button"
-            role="radio"
-            aria-checked={selected}
-            aria-label={option.label}
-            tabIndex={selected ? 0 : -1}
-            onClick={() => onPick(option.value)}
-            className={cn(
-              "relative z-10 grid h-6 w-8 place-items-center rounded-[8px]",
-              "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
-            )}
-          >
-            <Icon
-              className={cn(
-                "size-4",
-                selected ? "text-foreground" : "text-muted-foreground"
-              )}
-              strokeWidth={ICON_STROKE}
-            />
-          </button>
-        )
-      })}
-    </div>
   )
 }
 

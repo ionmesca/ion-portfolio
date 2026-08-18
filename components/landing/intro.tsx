@@ -2,7 +2,7 @@ import { buttonVariants } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { ArrowUpRight } from "@/lib/icons"
 
-import { GitHubGlyph, LinkedInGlyph, XGlyph } from "./brand-glyphs"
+import { SOCIALS } from "./socials"
 
 /**
  * Intro — the positioning block: headline, subline, and the actions row.
@@ -13,13 +13,10 @@ import { GitHubGlyph, LinkedInGlyph, XGlyph } from "./brand-glyphs"
  * outer edge.
  *
  * PLACEHOLDER COPY — verbatim from the Figma frame.
+ *
+ * The socials list now lives in `./socials` — the mobile hero renders the same
+ * three destinations at the same glyph sizes.
  */
-
-const SOCIALS = [
-  { label: "GitHub", href: "https://github.com/", Glyph: GitHubGlyph, size: "size-5" },
-  { label: "X", href: "https://x.com/", Glyph: XGlyph, size: "size-4" },
-  { label: "LinkedIn", href: "https://www.linkedin.com/", Glyph: LinkedInGlyph, size: "size-5" },
-] as const
 
 export function Intro() {
   return (
