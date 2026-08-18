@@ -7,21 +7,30 @@
 Issues, PRDs, and wayfinder maps live in the local Paperclip instance (company
 "Portfolio", `http://localhost:42862`). See `docs/agents/issue-tracker.md`.
 
-## Design System
+## Rebuild (rebuild/v2)
 
-Read `DESIGN.md` before visual, motion, responsive, or shadcn component work.
+This branch is a greenfield rebuild. The old landing UI, the Convex database,
+and the AI SDK chat agent were removed; they survive only in git history.
+`components/portfolio/` no longer exists.
 
-Source-of-truth hierarchy:
-1) `app/globals.css` owns exact token values.
-2) `DESIGN.md` owns semantics, usage rules, and handoff guidance.
-3) `app/page.tsx` and `components/portfolio/*` are the current landing-page visual source of truth.
+Source of truth, in order:
+
+1. `app/globals.css` — the ratified token contract. Do not change a value
+   without a ruling from Ion.
+2. `docs/design/token-contract.md` — what each token means and why.
+3. `docs/design/*.html` — the interaction labs (motion, popover, mobile,
+   collection, wheel). Behaviour is verified against these.
+4. `docs/design/reference/*.png` — Figma exports. Every screen is verified
+   against these.
+
+`DESIGN.md` and the older files in `docs/` describe the pre-rebuild system.
+They are superseded historical reference and will be replaced.
 
 Notes:
-- The gray page background behind the white landing shell is intentional.
-- The current accent token is provisional. Preserve existing uses, but do not expand it into new accent-heavy UI.
-- Mobile design is under development. Keep it functional and accessible, but do not treat the current mobile UI as final guidance.
-- Older docs, playground routes, and non-landing routes are reference only unless `DESIGN.md` says otherwise.
-- shadcn work should use semantic CSS variables and Tailwind token roles rather than raw hard-coded colors.
+- No animation library. Motion is vanilla CSS transitions plus
+  `requestAnimationFrame` where a transition cannot express it.
+- shadcn work should use semantic CSS variables and Tailwind token roles rather
+  than raw hard-coded colors.
 
 ## Browser Automation
 Use `agent-browser` for web automation (scraping, navigation, form fills, screenshots).

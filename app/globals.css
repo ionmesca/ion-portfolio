@@ -19,24 +19,14 @@
 @custom-variant dark (&:is(.dark *));
 
 /* ============================================================================
-   1. FONTS  (unchanged from v1)
+   1. FONTS
+
+   Aeonik Pro is loaded in `app/layout.tsx` through `next/font/local`, which
+   emits the @font-face rules itself (hashed filenames, preload, and a
+   metric-matched fallback so the swap does not shift the layout). It exposes
+   the family as the CSS variable `--font-aeonik`; section 4 wires that into
+   `--font-sans`. Do not re-declare @font-face here.
    ========================================================================== */
-
-@font-face {
-  font-family: "Aeonik Pro";
-  src: url("/fonts/AeonikPro-VF.ttf") format("truetype");
-  font-weight: 100 900;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: "Aeonik Pro";
-  src: url("/fonts/AeonikPro-Italic-VF.ttf") format("truetype");
-  font-weight: 100 900;
-  font-style: italic;
-  font-display: swap;
-}
 
 /* ============================================================================
    2. RAW TOKEN VALUES — LIGHT (default)
@@ -252,7 +242,7 @@
 
 @theme inline {
   /* -- font families ------------------------------------------------------- */
-  --font-sans: "Aeonik Pro", system-ui, -apple-system, sans-serif;
+  --font-sans: var(--font-aeonik), system-ui, -apple-system, sans-serif;
   --font-mono:
     ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
     "Liberation Mono", monospace;
