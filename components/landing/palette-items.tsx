@@ -14,8 +14,8 @@ import { GitHubGlyph, LinkedInGlyph, XGlyph } from "./brand-glyphs"
  * The ⌘K palette's rows, in Figma order (13:2673).
  *
  * Two groups of options — Navigate (5) and Actions (5). Preferences is NOT
- * here: its Theme row is a control, not a command, so it lives outside the
- * listbox and outside the ↑/↓ ring. See command-palette.tsx.
+ * here: its Theme and Sound rows are controls, not commands, so they live
+ * outside the listbox and outside the ↑/↓ ring. See command-palette.tsx.
  *
  * SHORTCUTS: only `⌘⇧C` is ever shown. Ion's edit hid every navigation
  * shortcut in the Figma component (the `Shortcut` frames are all `visible:

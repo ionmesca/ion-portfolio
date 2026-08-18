@@ -21,21 +21,83 @@ let AudioCtor: AudioContextCtor | null = null
 let actx: AudioContext | null = null
 
 /**
+ * Where the preference is remembered.
+ *
+ * Deliberately NOT `ion-theme`'s neighbour in spirit: the theme needs a
+ * blocking script in <head> because a wrong first PAINT is visible, and sound
+ * has no first paint to get wrong. So there is no init script here, no
+ * `<html>` class, and no SSR story at all — just a string and a lazy read.
+ *
+ * Stored as `on` / `off` rather than `true` / `false` because those are the two
+ * words the control shows, and a value you can read in devtools and understand
+ * without opening this file is worth two characters.
+ */
+export const SOUND_STORAGE_KEY = "ion-sound"
+
+/**
  * Master enable flag.
  *
  * Default ON. This is a ratified decision, not an oversight: the tick only ever
  * fires on a deliberate commit action on a desktop pointer device, which makes
- * it feedback rather than noise. The command palette's preferences surface will
- * own the user-facing toggle and call `setSoundEnabled` at boot — this module
+ * it feedback rather than noise. The command palette's Preferences group owns
+ * the user-facing toggle and calls `setSoundEnabled` at boot — this module
  * stays the mechanism and holds no opinion about the UI.
  */
 let soundEnabled = true
 
+/**
+ * Whether the flag above has been reconciled with storage yet.
+ *
+ * THE PALETTE IS NOT THE ONLY THING THAT TICKS. `useCopyToClipboard`
+ * (lib/use-copy.ts) is the tick's only call site, and the collection pages'
+ * install chip is one of its consumers — on `/stack` there is no command
+ * palette mounted, so nothing would ever have called `setSoundEnabled` and a
+ * reader who turned sound OFF would still hear the chip. The lazy read below
+ * closes that: whichever comes first — the palette's boot wiring or the first
+ * tick anywhere on the site — the flag ends up at the stored preference, and
+ * both derive it from `readSoundPreference()` so they cannot disagree.
+ */
+let prefRead = false
+
+/** The stored preference, or ON when nothing is stored or storage throws. */
+export function readSoundPreference(): boolean {
+  if (typeof window === "undefined") return true
+  try {
+    return localStorage.getItem(SOUND_STORAGE_KEY) !== "off"
+  } catch {
+    return true
+  }
+}
+
+function hydratePreference(): void {
+  if (prefRead) return
+  if (typeof window === "undefined") return
+  soundEnabled = readSoundPreference()
+  prefRead = true
+}
+
+/** Set the flag for this page. Does NOT remember it — see `applySound`. */
 export function setSoundEnabled(enabled: boolean): void {
   soundEnabled = enabled
+  prefRead = true
+}
+
+/**
+ * Set it AND remember it — the mirror of `applyTheme` in lib/theme.ts, down to
+ * the swallowed storage error: a session-only preference is better than a
+ * thrown one (Safari private mode throws on `localStorage`).
+ */
+export function applySound(enabled: boolean): void {
+  setSoundEnabled(enabled)
+  try {
+    localStorage.setItem(SOUND_STORAGE_KEY, enabled ? "on" : "off")
+  } catch {
+    /* a session-only preference is better than a thrown error */
+  }
 }
 
 export function isSoundEnabled(): boolean {
+  hydratePreference()
   return soundEnabled
 }
 
@@ -100,7 +162,7 @@ export function canPlayTick(): boolean {
  * land a frame after the call. Callers never await it.
  */
 export function playTick(): void {
-  if (!soundEnabled) return
+  if (!isSoundEnabled()) return
   if (!canPlayTick()) return
 
   const c = ctx()

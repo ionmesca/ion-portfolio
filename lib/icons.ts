@@ -74,6 +74,12 @@ export {
   Sun,
   Moon,
   Monitor,
+  // sound: the Preferences row's glyph and its two segment options. There is
+  // no Figma frame for this row — the Sound preference was ratified after the
+  // palette was drawn — so the pair is chosen to match the theme row's
+  // language exactly: one glyph that means the thing, and its negation.
+  Volume2,
+  VolumeOff,
 } from "lucide-react"
 
 export type { LucideIcon } from "lucide-react"

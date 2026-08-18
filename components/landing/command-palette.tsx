@@ -5,7 +5,7 @@ import Link from "next/link"
 
 import { IconSwap } from "@/components/ui/icon-swap"
 import { Kbd } from "@/components/ui/kbd"
-import { Check, Copy, ICON_STROKE, Sun } from "@/lib/icons"
+import { Check, Copy, ICON_STROKE, Sun, Volume2 } from "@/lib/icons"
 import { D_SLOW } from "@/lib/motion"
 import { createMorph, type Morph, type MorphRect } from "@/lib/morph"
 import { useHoverCorridor } from "@/lib/morph-preview"
@@ -13,6 +13,7 @@ import { useCopyToClipboard } from "@/lib/use-copy"
 import { cn } from "@/lib/utils"
 
 import { IdentityChip } from "./identity-chip"
+import { SoundSegment, useSound } from "./sound-segment"
 import { ThemeSegment, useTheme } from "./theme-segment"
 import {
   CONTACT_EMAIL,
@@ -77,8 +78,12 @@ import {
    the header — so it is reused once, where it is true, rather than three
    times, which would have made a 451px panel read as a table.
 
-     body      Navigate 176 · Actions 176 · rule 1 · Preferences 56  =  409
-     panel     42 header + 409  =  451
+     body      Navigate 176 · Actions 120 · rule 1 · Preferences 96  =  393
+     panel     42 header + 393  =  435
+
+   (Actions is 120 and not 176 because its three socials collapse into one
+   40px icon row — round 3. Preferences is 96 and not 56 because it holds TWO
+   control rows since 2026-08-18: Theme, and Sound.)
 
    BEHAVIOUR LAW — a FLIP container on one rAF lerp with a JS bezier glide
    solver, 400ms symmetric, no scrim. The content does not animate: it rides
@@ -226,6 +231,15 @@ export function CommandPalette() {
   /* Theme state + the OS-flip subscription live in `theme-segment.tsx` now:
      the mobile menu sheet renders the same control and must stay in step. */
   const { theme, pickTheme } = useTheme()
+
+  /* SOUND IS THE PALETTE'S ALONE. lib/sound.ts has always said the palette's
+     Preferences surface owns the user-facing toggle; this is that toggle, and
+     `useSound` is the boot wiring the module's comment promised — it reads
+     localStorage after mount and arms the mechanism. There is deliberately no
+     mobile twin: the tick is desktop-only at the source (a touch-primary
+     device gets silence whatever this says), so a switch in the mobile sheet
+     would be a control for something that cannot happen. */
+  const { sound, pickSound } = useSound()
 
   const [activeId, setActiveId] = React.useState<string | null>(
     OPTIONS[0]?.id ?? null
@@ -1039,6 +1053,30 @@ export function CommandPalette() {
                 </span>
                 <ThemeSegment value={theme} onPick={pickTheme} />
               </div>
+
+              {/* SOUND — the same row, one line down.
+
+                  No rule between them and no gap: they are the same KIND of
+                  thing (a control that states a preference), which is exactly
+                  the argument the seam note above makes for why Navigate and
+                  Actions sit together and Preferences does not. Two 40px lines
+                  with nothing between them read as one group, which is what
+                  they are.
+
+                  It is OUTSIDE the listbox and outside the ↑/↓ ring, like the
+                  Theme row: ↑/↓ still walk the commands even while this
+                  control holds focus, Tab reaches it, and ←/→ belong to its
+                  own two-cell ring. */}
+              <div className="flex h-10 items-center gap-2 rounded-md pr-3 pl-2">
+                <Volume2
+                  className="size-4 shrink-0 text-muted-foreground"
+                  strokeWidth={ICON_STROKE}
+                />
+                <span className="min-w-0 flex-1 truncate text-sm text-foreground">
+                  Sound
+                </span>
+                <SoundSegment value={sound} onPick={pickSound} />
+              </div>
             </div>
           </div>
         </div>
@@ -1254,8 +1292,9 @@ function Row({
  * `input` was the first selector; there is no input any more, and the LISTBOX
  * took its place in the ring — it is the element that holds focus and answers
  * the arrow keys. The rest is unchanged: rows are `tabIndex={-1}` pointer
- * targets reached by ↑/↓, so the ring is the listbox, the esc keycap and
- * whichever theme radio is currently selected.
+ * targets reached by ↑/↓, so the ring is the listbox, the esc keycap, the one
+ * parked icon in the compact row, and whichever radio is currently selected in
+ * each Preferences segment — Theme's and Sound's.
  */
 function focusableIn(root: HTMLElement | null): HTMLElement[] {
   if (!root) return []
