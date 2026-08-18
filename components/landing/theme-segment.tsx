@@ -3,6 +3,7 @@
 import * as React from "react"
 
 import { ICON_STROKE, Monitor, Moon, Sun } from "@/lib/icons"
+import { SPRING_CELL, useSpringStyle } from "@/lib/motion"
 import { applyTheme, readTheme, subscribeSystemTheme, type Theme } from "@/lib/theme"
 import { cn } from "@/lib/utils"
 
@@ -29,6 +30,12 @@ const THEME_OPTIONS = [
 /** Segment item 32 wide + the 2px gap — the thumb's travel per step. */
 const SEGMENT_STEP = 34
 
+/** How close to its cell counts as arrived, in px. The channel is 0–68px, not
+ *  0–1, so the spring's default 0.002 epsilon would keep a rAF alive for a
+ *  third of a second painting sub-pixel nothing. A twentieth of a pixel is
+ *  already below what a 2x display can show. */
+const THUMB_EPSILON = 0.05
+
 export function ThemeSegment({
   value,
   onPick,
@@ -39,6 +46,30 @@ export function ThemeSegment({
   const index = Math.max(
     0,
     THEME_OPTIONS.findIndex((o) => o.value === value)
+  )
+
+  /* THE THUMB IS ON A SPRING (Ion, 2026-08-18).
+     It used to tween `translateX` on `--duration-base` glide, set inline from
+     `index`. Two things were wrong with that. The glide is an expo-out, so the
+     thumb left fast and CREPT into its cell — at 34px of travel the last 3px
+     took a third of the transition. And a CSS transition restarts: light →
+     dark → light faster than 200ms threw the velocity away twice and the thumb
+     lagged behind the pointer that was driving it.
+
+     SPRING_CELL is interior.dev's own pill-indicator family, which is what
+     this thumb is. The spring keeps position AND velocity across a retarget,
+     so a fast reversal carries. The transform is written per frame straight to
+     the node — there is no inline `style` any more, which is also what keeps
+     React from fighting the spring for the same property on every re-render.
+     Server and first client render both emit no transform; the driver paints
+     the resting offset during the commit, before the first paint. */
+  const attachThumb = useSpringStyle<HTMLSpanElement>(
+    SPRING_CELL,
+    index * SEGMENT_STEP,
+    (el, x) => {
+      el.style.transform = `translateX(${x}px)`
+    },
+    THUMB_EPSILON
   )
 
   const onKeyDown = (e: React.KeyboardEvent) => {
@@ -58,9 +89,10 @@ export function ThemeSegment({
       className="relative flex h-8 shrink-0 items-center gap-0.5 rounded-md bg-muted p-1"
     >
       <span
+        ref={attachThumb}
         aria-hidden="true"
+        data-slot="theme-thumb"
         className="palette-thumb absolute top-1 left-1 h-6 w-8 rounded-[8px] bg-card"
-        style={{ transform: `translateX(${index * SEGMENT_STEP}px)` }}
       />
       {THEME_OPTIONS.map((option) => {
         const Icon = option.icon

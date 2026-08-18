@@ -583,23 +583,37 @@
     transition-duration: 0ms;
   }
 
-  /* copy → check, on the icon-swap recipe: scale .6↔1 with 4px blur, spring. */
+  /* -- copy → check, on a REAL spring ----------------------------------------
+     The recipe is unchanged: scale .6↔1 with a 4px blur. What changed on
+     2026-08-18 is the clock. It was `--ease-spring`, which is a bezier with
+     "spring" in its name — it cannot carry velocity, so a second copy 80ms
+     into the first restarted the curve and read as a stutter. Ion ruled it
+     onto the real thing.
+
+     `--swap-p` is a JS-owned 0→1 channel written per frame by SPRING_CELL
+     (lib/motion.ts) onto the cell that wraps the two glyphs — the same trick
+     as the morph's `--morph-p`, for the same reason: one clock, every lane
+     derived from it, nothing that can arrive late on a schedule of its own.
+
+     No `transition` here on purpose. A transition on top of a per-frame write
+     would be a second clock chasing the first. The 0 fallback is the resting
+     state, so a cell whose driver has not attached yet still shows the right
+     glyph rather than two half-glyphs. */
   .icon-swap {
-    transition-property: opacity, transform, filter;
-    transition-duration: var(--duration-base);
-    transition-timing-function: var(--ease-spring);
+    --p: var(--swap-p, 0);
+    transition-property: none;
   }
 
-  .icon-swap[data-on="false"] {
-    opacity: 0;
-    transform: scale(0.6);
-    filter: blur(4px);
+  .icon-swap[data-dir="out"] {
+    opacity: calc(1 - var(--p));
+    transform: scale(calc(1 - 0.4 * var(--p)));
+    filter: blur(calc(4px * var(--p)));
   }
 
-  .icon-swap[data-on="true"] {
-    opacity: 1;
-    transform: scale(1);
-    filter: blur(0);
+  .icon-swap[data-dir="in"] {
+    opacity: var(--p);
+    transform: scale(calc(0.6 + 0.4 * var(--p)));
+    filter: blur(calc(4px * (1 - var(--p))));
   }
 
   /* The row LABEL swaps with the icon — catalog ruling #4, "Copied" state
@@ -630,10 +644,15 @@
     transform: translateY(4px);
   }
 
+  /* The theme segment's thumb has NO transition and no resting transform: both
+     belong to the spring now (SPRING_CELL, lib/motion.ts), which writes
+     `translateX` per frame from `theme-segment.tsx`. It used to tween on
+     `--duration-base` glide, which is an expo-out — light → dark → light
+     faster than 200ms restarted the curve from a standstill each time and the
+     thumb crept behind the pointer instead of overtaking it. Left here as a
+     hook for the verifier and as the place this note lives. */
   .palette-thumb {
-    transition-property: transform;
-    transition-duration: var(--duration-base);
-    transition-timing-function: var(--ease-glide);
+    transition-property: none;
   }
 
   /* Reduced motion: no travel, no blur, no stagger — a 150ms opacity crossfade
@@ -678,8 +697,24 @@
       opacity: 1 !important;
     }
 
+    /* The icon swap's spring SNAPS under reduced motion (lib/motion.ts reads
+       the media query on every `set`), so `--swap-p` cuts 0→1 with no frames
+       in between and the derived opacity above would cut with it. Here it is
+       driven off `data-on` instead: a discrete attribute flip is the one input
+       a CSS transition is guaranteed to animate, and the ratified carve-out
+       for a state swap is a 150ms crossfade in place. */
+    .icon-swap[data-on="true"] {
+      opacity: 1 !important;
+    }
+
+    .icon-swap[data-on="false"] {
+      opacity: 0 !important;
+    }
+
+    /* Nothing left to shorten — the thumb's travel is the spring's, and the
+       spring snaps. Kept as an assertion rather than a rule. */
     .palette-thumb {
-      transition-duration: 0ms !important;
+      transition-property: none !important;
     }
   }
 

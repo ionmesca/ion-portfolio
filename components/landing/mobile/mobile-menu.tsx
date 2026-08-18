@@ -6,6 +6,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 
 import { Button } from "@/components/ui/button"
+import { IconSwap } from "@/components/ui/icon-swap"
 import {
   Sheet,
   SheetClose,
@@ -246,18 +247,7 @@ function MenuRow({
   const inner = (
     <>
       {item.action === "copy-email" ? (
-        <span className="relative size-4 shrink-0">
-          <Copy
-            data-on={!copied}
-            className="icon-swap absolute inset-0 size-4 text-muted-foreground"
-            strokeWidth={ICON_STROKE}
-          />
-          <Check
-            data-on={copied}
-            className="icon-swap absolute inset-0 size-4 text-muted-foreground"
-            strokeWidth={ICON_STROKE}
-          />
-        </span>
+        <IconSwap on={copied} from={Copy} to={Check} className="size-4" />
       ) : (
         <Icon className="size-4 shrink-0 text-muted-foreground" />
       )}

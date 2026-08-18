@@ -2,7 +2,8 @@
 
 import * as React from "react"
 
-import { Check, Copy, ICON_STROKE } from "@/lib/icons"
+import { IconSwap } from "@/components/ui/icon-swap"
+import { Check, Copy } from "@/lib/icons"
 import { useCopyToClipboard } from "@/lib/use-copy"
 
 /**
@@ -56,21 +57,17 @@ export function InstallChip({ name }: { name: string }) {
         "[transition-property:background-color]",
         "[transition-duration:var(--duration-fast)]",
         "[transition-timing-function:var(--motion-glide)]",
+        // U1, fixed 2026-08-18. The row snaps its own fill in on hover and
+        // eases it out (collection-row.tsx: `hover:[transition-duration:0ms]`),
+        // and the row's NAME does the same. The chip did not, so pointing at a
+        // row lit the row instantly and then watched the chip darken 150ms
+        // later — one hover arriving in two pieces. The chip now lands with
+        // its row and still eases out with it.
+        "group-hover:[transition-duration:0ms]",
         "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground",
       ].join(" ")}
     >
-      <span className="relative size-3.5 shrink-0">
-        <Copy
-          data-on={!copied}
-          className="icon-swap absolute inset-0 size-3.5 text-muted-foreground"
-          strokeWidth={ICON_STROKE}
-        />
-        <Check
-          data-on={copied}
-          className="icon-swap absolute inset-0 size-3.5 text-muted-foreground"
-          strokeWidth={ICON_STROKE}
-        />
-      </span>
+      <IconSwap on={copied} from={Copy} to={Check} className="size-3.5" />
 
       {/* Below `sm` the chip is the copy ICON alone. `npx skills add
           ionmesca/design-tokens` is 200px of text nobody can run on a phone,
