@@ -8,6 +8,7 @@ import { getArticlesPage } from "@/lib/articles"
 export const metadata: Metadata = {
   title: "Articles — Ion Mesca",
   description: "Notes from building things that ship.",
+  alternates: { canonical: "/articles" },
 }
 
 /**
