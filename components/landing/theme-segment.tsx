@@ -88,11 +88,34 @@ export function ThemeSegment({
       onKeyDown={onKeyDown}
       className="relative flex h-8 shrink-0 items-center gap-0.5 rounded-md bg-muted p-1"
     >
+      {/* THE THUMB NEEDS ITS RING BACK IN DARK (POR-34).
+          Figma gives the active segment `card` + Subtle. The fill was carried
+          across and the elevation was not, which is invisible in light — a
+          white thumb on a stone-100 track already reads as the raised one, and
+          Subtle's light ring is black at 5%.
+
+          In dark the same two fills INVERT: the thumb is `card` (stone-900) on
+          a `muted` track (stone-800), so the selected cell is DARKER than the
+          track it sits in and reads as a hole punched in the control rather
+          than the one cell that is lifted. Subtle's dark ring — white 18% — is
+          exactly the missing signal, so this restores the spec rather than
+          inventing a dark-only look.
+
+          Written as the raw custom property, not the `shadow-subtle` utility.
+          Tailwind composes every shadow utility as five slots, and section 6 of
+          globals.css documents at length what that cost the palette surface
+          when a transition interpolated them positionally. This element is
+          `.palette-thumb`, whose transitions are off (the spring owns its
+          transform), so a static box-shadow here cannot animate — but the raw
+          form keeps it a plain function of the box either way.
+
+          Dark only: light mode was ratified on 2026-08-18 and is not this
+          pass's to change. */}
       <span
         ref={attachThumb}
         aria-hidden="true"
         data-slot="theme-thumb"
-        className="palette-thumb absolute top-1 left-1 h-6 w-8 rounded-[8px] bg-card"
+        className="palette-thumb absolute top-1 left-1 h-6 w-8 rounded-[8px] bg-card dark:[box-shadow:var(--elevation-subtle)]"
       />
       {THEME_OPTIONS.map((option) => {
         const Icon = option.icon
