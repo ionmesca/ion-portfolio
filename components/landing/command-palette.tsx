@@ -53,9 +53,12 @@ import {
                footer 40  =  579
      rows      366 wide (inset 8), 32 tall, radius 12
 
-   BEHAVIOUR LAW — docs/design/popover-lab.html demo 1: FLIP container on one
-   rAF lerp with a JS bezier glide solver, 200ms in / 150ms out, content groups
-   fade + rise + 2px blur at +25ms each, no scrim.
+   BEHAVIOUR LAW — a FLIP container on one rAF lerp with a JS bezier glide
+   solver, 400ms symmetric, no scrim. The content does not animate: it rides
+   the container's own `p` channel through `--morph-p` and is revealed by the
+   growing clip. Feel reference: Colin Lienard's menu (Ion, "really smooth"),
+   which docs/design/popover-lab.html demo 1 no longer outranks on timing —
+   the lab's geometry law still stands unchanged.
    ========================================================================== */
 
 /** Figma 13:2673 panel width. The one hardcoded dimension: it is a design
@@ -74,9 +77,28 @@ const AVAIL_X = 194
 const VIEWPORT_MARGIN = 24
 const MIN_PANEL_H = 240
 
-/** Lab constants, verbatim: 200ms in, 150ms out. */
-const D_BASE = 200
-const D_FAST = 150
+/**
+ * The morph's clock — 400ms, symmetric.
+ *
+ * It was the lab's 200 in / 150 out. Measured on that build: `--ease-glide`
+ * is an expo-out, so 90% of the growth landed in the first 60ms and the eye
+ * read it as a panel appearing, not a box growing. 400ms on the same easing
+ * doubles the readable growth to ~120ms without touching the token, which is
+ * what Ion sanctioned after ratifying Colin Lienard's menu as the feel
+ * reference ("really smooth"). His is 400ms, and his close is the same
+ * transition reversed rather than a separate fast-out — so ours is symmetric
+ * too. `--duration-slow` is 400: this is a sanctioned step, not a new number.
+ *
+ * A long close is only tolerable because the engine retargets: pressing ⌘K
+ * during a close does not wait for it, it turns it around from where it is.
+ */
+const D_BASE = 400
+const D_FAST = 400
+
+/** The panel re-fitting itself as the list filters is not the morph — it is a
+ *  correction, and a correction that took the morph's 400ms would lag behind
+ *  the typing that caused it. `--duration-base`. */
+const D_REFIT = 200
 
 const OPTION_DOM_ID = (id: string) => `palette-option-${id}`
 
@@ -406,8 +428,17 @@ export function CommandPalette() {
     setOpen(true)
     measureFace()
     morphRef.current.move(openRect(), reduced() ? 0 : D_BASE)
+    // The trigger is about to become inert; drop its focus ring NOW rather than
+    // letting it stay painted until the input takes focus a frame later. It is
+    // a 42px black rounded rect sitting inside the growing panel, and after a
+    // keyboard close (which returns focus here, focus-visible and all) it
+    // flashed on every single reopen.
+    triggerRef.current?.blur()
     // After the state flush, so the face is no longer inert.
-    requestAnimationFrame(() => inputRef.current?.focus())
+    // `preventScroll` is the whole ballgame — see the surface's `overflow-clip`.
+    requestAnimationFrame(() =>
+      inputRef.current?.focus({ preventScroll: true })
+    )
   }, [measureFace, openRect, reduced])
 
   const closePalette = React.useCallback(() => {
@@ -416,7 +447,7 @@ export function CommandPalette() {
     setOpen(false)
     setQuery("")
     morphRef.current.move(closedRect(), reduced() ? 0 : D_FAST)
-    triggerRef.current?.focus()
+    triggerRef.current?.focus({ preventScroll: true })
   }, [closedRect, reduced])
 
   const toggle = React.useCallback(() => {
@@ -508,7 +539,7 @@ export function CommandPalette() {
     }
     if (!morphRef.current) return
     measureFace()
-    morphRef.current.move(openRect(), reduced() ? 0 : D_FAST)
+    morphRef.current.move(openRect(), reduced() ? 0 : D_REFIT)
   }, [groups, showPreferences, measureFace, open, openRect, reduced])
 
   /* --- listbox navigation --------------------------------------------------- */
@@ -625,6 +656,16 @@ export function CommandPalette() {
         aria-modal={open ? true : undefined}
         aria-label={open ? "Command palette" : undefined}
         onKeyDown={onSurfaceKeyDown}
+        // The surface must never scroll — see `pinScroll` in lib/morph.ts.
+        // `overflow-hidden` (not `clip`): `clip` is the semantically right
+        // answer, but it drops this box out of the slot's `z-40` stacking and
+        // the landing intro paints straight over the open panel. Measured, not
+        // assumed. So the box stays a scroll container and the engine holds
+        // its scroll at 0 instead.
+        onScroll={(e) => {
+          e.currentTarget.scrollLeft = 0
+          e.currentTarget.scrollTop = 0
+        }}
         className={cn(
           "palette-surface relative w-fit overflow-hidden rounded-lg text-left",
           // `popover` and `card` resolve to the same value in both themes, so
@@ -642,7 +683,7 @@ export function CommandPalette() {
           ref={availRef}
           data-slot="palette-availability"
           aria-hidden={!open}
-          className="palette-reveal pointer-events-none absolute top-0 flex items-center gap-1.5 whitespace-nowrap"
+          className="palette-availability pointer-events-none absolute top-0 flex items-center gap-1.5 whitespace-nowrap"
           style={{ left: AVAIL_X }}
         >
           <span className="grid size-2 place-items-center rounded-full bg-status-available/20">
@@ -695,7 +736,6 @@ export function CommandPalette() {
           {/* search — group 0 */}
           <div
             className="palette-group flex h-12 shrink-0 items-center gap-2 border-b border-border px-4"
-            style={{ "--i": 0 } as React.CSSProperties}
           >
             <Search
               className="size-4 shrink-0 text-muted-foreground"
@@ -729,7 +769,6 @@ export function CommandPalette() {
                   role="group"
                   aria-labelledby={`palette-group-${group.id}`}
                   className={cn("palette-group", index === 0 && "pt-2")}
-                  style={{ "--i": index + 1 } as React.CSSProperties}
                 >
                   <div
                     id={`palette-group-${group.id}`}
@@ -757,9 +796,6 @@ export function CommandPalette() {
               <section
                 aria-labelledby="palette-group-preferences"
                 className="palette-group"
-                style={
-                  { "--i": groups.length + 1 } as React.CSSProperties
-                }
               >
                 <div
                   id="palette-group-preferences"
@@ -792,9 +828,6 @@ export function CommandPalette() {
           {/* footer hints — last group */}
           <div
             className="palette-group flex h-10 shrink-0 items-center gap-3 border-t border-border px-3"
-            style={
-              { "--i": groups.length + 2 } as React.CSSProperties
-            }
             aria-hidden="true"
           >
             <Hint keys="↑↓" word="navigate" />

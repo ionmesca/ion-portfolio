@@ -96,11 +96,42 @@ export function createMorph(
   let raf = 0
   let done: (() => void) | null = null
 
+  /**
+   * Hold the morphing box's own scroll at the origin.
+   *
+   * A clipped box (`overflow: hidden`) is still a scroll container, and while
+   * it is mid-morph it is a SMALL scroll container wrapped around its own
+   * full-size content — a 220px-wide box around a 382px-wide panel. Anything
+   * that asks the browser to reveal a descendant then scrolls it: `focus()`,
+   * `scrollIntoView({block:"nearest"})`, a screen reader moving the virtual
+   * cursor. Measured on the ⌘K palette: focusing the search input set
+   * `scrollLeft` to 40, and as the box grew the offset decayed back to 0, so
+   * the entire panel — avatar, name, availability, every row — SLID in from
+   * the top-left while the container grew around it. That slide on top of the
+   * growth is what made the morph read as a dropdown.
+   *
+   * Callers should also pass `preventScroll` to their `focus()` calls; that
+   * states the intent. This states the invariant, every frame, for every
+   * cause. The reads are free — the layout is already dirty from the writes
+   * above — and the writes only happen when there is something to undo.
+   */
+  const pinScroll = () => {
+    if (el.scrollLeft !== 0) el.scrollLeft = 0
+    if (el.scrollTop !== 0) el.scrollTop = 0
+  }
+
   const paint = () => {
     el.style.transform = `translate3d(${cur.x}px,${cur.y}px,0)`
     el.style.width = `${cur.w}px`
     el.style.height = `${cur.h}px`
     el.style.borderRadius = `${cur.r}px`
+    // The `p` channel, published to CSS so a stylesheet can ride the SAME
+    // clock as the box instead of running a transition alongside it. This is
+    // the difference between content that is revealed by the growing surface
+    // and content that arrives on its own schedule after the surface has
+    // stopped — see the `.palette-*` block in app/globals.css.
+    el.style.setProperty("--morph-p", String(cur.p))
+    pinScroll()
     onPaint?.(cur)
   }
 

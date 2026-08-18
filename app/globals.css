@@ -529,39 +529,45 @@
     color: var(--color-foreground);
   }
 
-  /* The availability line and the header rule: they appear in space the panel
-     opened up, so they push on nothing that was already there. */
-  .palette-reveal {
-    opacity: 0;
-    transform: translateY(-3px);
-    filter: blur(var(--blur-garnish));
-    transition-property: opacity, transform, filter;
-    transition-duration: var(--duration-fast);
-    transition-timing-function: var(--ease-glide);
-  }
+  /* -- THE CONTENT RIDES THE CONTAINER'S OWN CLOCK ---------------------------
+     Ion, on Colin Lienard's menu: "really smooth". This is the part of his
+     recipe that makes it read as a morph rather than a dropdown, adapted.
 
-  .palette-surface[data-open="true"] .palette-reveal {
-    opacity: 1;
-    transform: translateY(0);
-    filter: blur(0);
-  }
+     `--morph-p` is the engine's free 0→1 channel (lib/morph.ts), written to
+     the surface on every painted frame. It is 0 closed, 1 open, and it is
+     DIRECTIONAL: the same number runs 1→0 on the close, so one declaration
+     covers both ways and an interrupted open cannot desynchronise from the
+     box it belongs to. Nothing here is a CSS transition, so nothing here has
+     a clock of its own that could still be arriving after the container has
+     stopped.
 
-  /* Content groups — fade + 4px rise + 2px blur, one group per 25ms. */
+     Colin's ramp, verbatim: `opacity = max(0, (t - 0.25) * 2)`. The first
+     quarter of the motion is PURE SURFACE GROWTH — no content at all — and
+     the content is fully opaque at three quarters, i.e. while the box is
+     still growing. That ordering is the whole trick. Content that finishes
+     after the box reads as a panel filling in; content that finishes before
+     it reads as a box opening over something already there.
+
+     What we dropped from the old recipe and why:
+       · the +25ms per-group stagger. Measured on the shipped build: the last
+         group finished 125ms AFTER the container stopped, so the panel sat
+         complete while text kept appearing on it. That is the "residual".
+       · the 4px rise per group. Content that travels on its own is content
+         that slides in. In Colin's menu nothing inside the panel moves.
+       · the 2px blur per group, which only existed to soften that travel. */
+  .palette-reveal,
   .palette-group {
-    opacity: 0;
-    transform: translateY(4px);
-    filter: blur(var(--blur-garnish));
-    transition-property: opacity, transform, filter;
-    transition-duration: var(--duration-fast);
-    transition-timing-function: var(--ease-glide);
-    transition-delay: 0ms;
+    opacity: clamp(0, (var(--morph-p, 0) - 0.25) * 2, 1);
   }
 
-  .palette-surface[data-open="true"] .palette-group {
-    opacity: 1;
-    transform: translateY(0);
-    filter: blur(0);
-    transition-delay: calc(var(--i, 0) * var(--stagger-group));
+  /* The availability line is the one exception, and the keycap is the reason.
+     ⌘K/esc travel from the chip's right edge to the panel's, which takes them
+     straight across this text; before this window they were legible on top of
+     each other for ~50ms. So it writes itself in only once the cell has
+     arrived — last thing in, which is also where a piece of new information
+     belongs. */
+  .palette-availability {
+    opacity: clamp(0, (var(--morph-p, 0) - 0.88) * 8.4, 1);
   }
 
   /* One highlight, not two: pointing at a row makes it the selection, so the
@@ -639,18 +645,37 @@
     .palette-keycap,
     .palette-reveal,
     .palette-group,
+    .palette-availability,
     .icon-swap,
     .label-swap {
+      transition-property: opacity, filter !important;
       transition-duration: var(--duration-fast) !important;
       transition-delay: 0ms !important;
     }
 
     .palette-reveal,
     .palette-group,
+    .palette-availability,
     .icon-swap,
     .label-swap {
       transform: none !important;
       filter: none !important;
+    }
+
+    /* The container's FLIP is skipped in JS (duration 0), so `--morph-p` cuts
+       from 0 to 1 with no frames in between and the ramp above would cut with
+       it. Under reduced motion the content goes back to being a plain state
+       crossfade off `data-open` — the ratified 150ms, no travel, no stagger. */
+    .palette-reveal,
+    .palette-group,
+    .palette-availability {
+      opacity: 0 !important;
+    }
+
+    .palette-surface[data-open="true"] .palette-reveal,
+    .palette-surface[data-open="true"] .palette-group,
+    .palette-surface[data-open="true"] .palette-availability {
+      opacity: 1 !important;
     }
 
     .palette-thumb {
