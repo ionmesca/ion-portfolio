@@ -2,6 +2,7 @@ import { buttonVariants } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { ArrowUpRight } from "@/lib/icons"
 
+import { Reveal } from "./intro-reveal"
 import { SOCIALS } from "./socials"
 
 /**
@@ -16,12 +17,16 @@ import { SOCIALS } from "./socials"
  *
  * The socials list now lives in `./socials` — the mobile hero renders the same
  * three destinations at the same glyph sizes.
+ *
+ * The two blocks are the second and third groups of the first-load entrance
+ * (intro-reveal.tsx). `Reveal` is a client wrapper, so the copy inside stays
+ * server-rendered — and stays visible — whether or not React ever hydrates.
  */
 
 export function Intro() {
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-col pl-1">
+      <Reveal group="hero" className="flex flex-col pl-1">
         <h1 className="text-lg text-foreground">Software Designer</h1>
         {/* 255px is the measured wrap width from Figma (259 hug − 4 indent).
             It is what breaks the line after "heart," and after "and". */}
@@ -29,9 +34,9 @@ export function Intro() {
           Curious generalist at heart, building AI native software and fintech
           systems at <span className="underline">Ledgy</span>
         </p>
-      </div>
+      </Reveal>
 
-      <div className="flex items-center gap-4 pl-1">
+      <Reveal group="actions" className="flex items-center gap-4 pl-1">
         {/* `buttonVariants` on a plain anchor rather than `<Button asChild>`:
             Button attaches an onClick for its inert/aria-disabled guard, and a
             function prop cannot cross a Server Component boundary — asChild
@@ -72,7 +77,7 @@ export function Intro() {
             </a>
           ))}
         </div>
-      </div>
+      </Reveal>
     </div>
   )
 }

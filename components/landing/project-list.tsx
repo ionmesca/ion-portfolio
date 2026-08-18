@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils"
 import type { Project } from "@/lib/projects"
 
 import { useActiveProject } from "./active-project"
+import { INTRO_DELAY, INTRO_ROW_STEP, useIntroReveal } from "./intro-reveal"
 import { ProjectIcon } from "./project-icon"
 import { useProjectWheel, type WheelRow } from "./use-wheel"
 
@@ -52,22 +53,27 @@ const HOVER_MOTION = [
  * the resting page is exactly the frame above. See use-wheel.ts for the
  * constants and their source lines in the prototype.
  *
+ * WHAT TURNS IT is the document scroll — the panel stack in the other column
+ * moving past a reference line. This list captures no wheel events and hijacks
+ * no scrolling; a click or an arrow key scrolls the document instead, which is
+ * the same signal by another name.
+ *
  * The year is now always in the DOM, at opacity 0 when the row is not active.
  * That is the prototype's rule (line 341: "The element always keeps its box,
  * so revealing it never reflows the name column") and it is what lets the date
  * fade and drift in with the settle instead of popping.
  */
 export function ProjectList({ projects }: { projects: Project[] }) {
-  const { activeIndex, setActiveIndex, count } = useActiveProject()
+  const { activeIndex, setActiveIndex, count, anchorsRef } = useActiveProject()
+  const intro = useIntroReveal()
 
-  const listRef = React.useRef<HTMLUListElement>(null)
   const rowsRef = React.useRef<(WheelRow | null)[]>([])
 
   const { goTo } = useProjectWheel({
     count,
     activeIndex,
     setActiveIndex,
-    regionRef: listRef,
+    anchorsRef,
     rowsRef,
   })
 
@@ -80,9 +86,11 @@ export function ProjectList({ projects }: { projects: Project[] }) {
   }
 
   /**
-   * Arrows are the wheel's accessible twin: one press steps the selection by
-   * one project, through the same physics, and carries focus with it so the
-   * keyboard user is never left pointing at a row that is no longer current.
+   * Arrows are the wheel's accessible twin: one press scrolls the document to
+   * the next project — the same move a click makes — and carries focus with it
+   * so the keyboard user is never left pointing at a row that is no longer
+   * current. `preventScroll` because the rail is sticky and already fully in
+   * view: letting focus scroll would fight the smooth scroll we just started.
    */
   const onKeyDown = (event: React.KeyboardEvent<HTMLUListElement>) => {
     let next: number | null = null
@@ -95,21 +103,22 @@ export function ProjectList({ projects }: { projects: Project[] }) {
     const target = Math.min(Math.max(next, 0), count - 1)
     event.preventDefault()
     goTo(target)
-    rowsRef.current[target]?.row?.focus()
+    rowsRef.current[target]?.row?.focus({ preventScroll: true })
   }
 
   return (
-    <ul
-      ref={listRef}
-      onKeyDown={onKeyDown}
-      className="flex flex-col gap-3"
-      aria-label="Projects"
-    >
+    <ul onKeyDown={onKeyDown} className="flex flex-col gap-3" aria-label="Projects">
       {projects.map((project, index) => {
         const isActive = index === activeIndex
 
         return (
-          <li key={project.id}>
+          /* The row group of the first-load choreography: rows enter 25ms
+             apart, after the actions row. See intro-reveal.tsx. */
+          <li
+            key={project.id}
+            className={intro.className()}
+            style={intro.style(INTRO_DELAY.rows + index * INTRO_ROW_STEP)}
+          >
             <button
               type="button"
               ref={(el) => {
