@@ -1,11 +1,26 @@
+/* ============================================================================
+   ion-portfolio — globals.css  v2 (PROPOSAL, not applied)
+   ----------------------------------------------------------------------------
+   Colour   : shadcn "stone" ramp, 19 semantic roles + 6 new roles. No brand accent.
+   Radius   : one knob (--radius: 15px), 8 derived steps.
+   Shadow   : 4 elevation steps, layered smooth-shadow formula. Light AND dark.
+   Type     : Aeonik Pro, 7 steps — 5 ride Tailwind's own text-* slots, 2 custom.
+   Spacing  : Tailwind defaults. Canonical subset is a documented convention,
+              not a token (see token-contract.md).
+   Motion   : 2 easings + 3 durations + stagger unit. Everything else is Tailwind's.
+
+   Mirrors Figma collections portfolio/color, portfolio/radius, portfolio/shadow,
+   portfolio/type. See token-contract.md for the places CSS and Figma cannot mirror.
+   ========================================================================== */
+
 @import "tailwindcss";
 @import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
 
-/* ========================================
-   FONTS
-   ======================================== */
+/* ============================================================================
+   1. FONTS  (unchanged from v1)
+   ========================================================================== */
 
 @font-face {
   font-family: "Aeonik Pro";
@@ -23,141 +38,377 @@
   font-display: swap;
 }
 
-/* ========================================
-   DESIGN TOKENS (via Tailwind @theme)
-   ======================================== */
-
-@theme inline {
-  /* Typography */
-  --font-sans: "Aeonik Pro", system-ui, sans-serif;
-  --font-mono: var(--font-geist-mono);
-
-  /* Motion - Easing */
-  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
-  --ease-snap: cubic-bezier(0.25, 0.1, 0.25, 1);
-  --ease-out: cubic-bezier(0, 0, 0.2, 1);
-  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
-
-  /* Motion - Duration */
-  --duration-fast: 100ms;
-  --duration-default: 150ms;
-  --duration-medium: 200ms;
-  --duration-slow: 300ms;
-  --duration-entrance: 400ms;
-  --stagger-delay: 50ms;
-
-  /* Dock sizing (mobile defaults) */
-  --dock-item-size: 2.5rem;
-  --dock-gap: 0.25rem;
-
-  /* Radius scale */
-  --radius-sm: 6px;
-  --radius-md: 8px;
-  --radius-lg: 10px;
-  --radius-xl: 12px;
-  --radius-2xl: 16px;
-  --radius-3xl: 24px;
-  --radius-full: 9999px;
-
-  /* ----------------------------------------
-     LIGHT THEME (default)
-     ---------------------------------------- */
-
-  /* Backgrounds */
-  --color-bg-base: #ffffff;
-  --color-bg-surface: #f5f5f5;
-  --color-bg-elevated: #f5f5f5;
-  --color-bg-glass: rgba(0, 0, 0, 0.02);
-
-  /* Text */
-  --color-text-primary: #171717;
-  --color-text-secondary: #525252;
-  --color-text-tertiary: #a3a3a3;
-  --color-text-muted: #d4d4d4;
-
-  /* Accent */
-  --color-accent: #ff9f6a;
-  --color-brand-ledgy: #5A1EFF;
-  --color-brand-beets: #C5475F;
-  --color-accent-soft: rgba(255, 159, 106, 0.1);
-  --color-accent-hover: #ff8c4a;
-
-  /* Borders */
-  --color-border-default: #e5e5e5;
-  --color-border-subtle: #f0f0f0;
-  --color-border-strong: #d4d4d4;
-  --color-text-subtitle: #404040;
-  --color-text-label: #737373;
-  --shadow-card: 0px 4px 16px rgba(0,0,0,0.04), 0px 1px 2px rgba(0,0,0,0.03);
-
-  /* Semantic (what Tailwind classes use) */
-  --color-background: var(--color-bg-base);
-  --color-foreground: var(--color-text-primary);
-  --color-muted: var(--color-bg-surface);
-  --color-muted-foreground: var(--color-text-secondary);
-  --color-border: var(--color-border-default);
-  --color-ring: var(--color-border-strong);
-  --color-input: var(--color-border-default);
-
-  /* Interactive states */
-  --color-primary: var(--color-text-primary);
-  --color-primary-foreground: var(--color-bg-base);
-  --color-secondary: var(--color-bg-surface);
-  --color-secondary-foreground: var(--color-text-primary);
-  --color-accent-foreground: var(--color-bg-base);
-
-  /* Semantic colors */
-  --color-success: #34d399;
-  --color-warning: #fbbf24;
-  --color-destructive: #f87171;
-
-  /* Cards & Popovers */
-  --color-card: var(--color-bg-base);
-  --color-card-foreground: var(--color-text-primary);
-  --color-popover: var(--color-bg-base);
-  --color-popover-foreground: var(--color-text-primary);
-
-  /* Shadows */
-  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.4);
-  --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.4), 0 2px 4px rgba(0, 0, 0, 0.3);
-  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5), 0 4px 8px rgba(0, 0, 0, 0.3);
-  --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.6), 0 8px 16px rgba(0, 0, 0, 0.4);
-  --shadow-glow-accent: 0 0 20px var(--color-accent-glow);
-  --shadow-glow-white: 0 0 20px rgba(255, 255, 255, 0.1);
-  --shadow-glass: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px var(--color-border-subtle);
-}
-
-/* ========================================
-   BASE STYLES
-   ======================================== */
+/* ============================================================================
+   2. RAW TOKEN VALUES — LIGHT (default)
+   These are the values. Section 4 maps them onto Tailwind utility namespaces.
+   ========================================================================== */
 
 :root {
   color-scheme: light;
-  --identity-panel-bg: var(--color-bg-base);
-  --identity-panel-fg: var(--color-text-primary);
-  --identity-panel-secondary: var(--color-text-secondary);
-  --identity-panel-muted: var(--color-text-tertiary);
-  --identity-panel-placeholder: var(--color-text-tertiary);
-  --identity-panel-border: var(--color-border-default);
-  --identity-panel-control: var(--color-bg-surface);
-  --identity-panel-control-hover: var(--color-bg-elevated);
-  --identity-panel-field: var(--color-bg-surface);
-  --identity-panel-field-hover: var(--color-bg-elevated);
-  --identity-panel-field-border: var(--color-border-default);
-  --identity-panel-row-hover: var(--color-bg-surface);
+
+  /* -- radius knob ------------------------------------------------------- */
+  --radius: 0.9375rem; /* 15px */
+
+  /* -- shadcn stone: the 19 standard semantic roles ----------------------- */
+  --background: oklch(1 0 0); /* #ffffff */
+  --foreground: oklch(0.147 0.004 49.25); /* stone-950 #0c0a09 */
+
+  --card: oklch(1 0 0); /* #ffffff */
+  --card-foreground: oklch(0.147 0.004 49.25); /* stone-950 */
+
+  --popover: oklch(1 0 0); /* #ffffff */
+  --popover-foreground: oklch(0.147 0.004 49.25); /* stone-950 */
+
+  --primary: oklch(0.216 0.006 56.043); /* stone-900 #1c1917 */
+  --primary-foreground: oklch(0.985 0.001 106.423); /* stone-50 #fafaf9 */
+
+  --secondary: oklch(0.97 0.001 106.424); /* stone-100 #f5f5f4 */
+  --secondary-foreground: oklch(0.216 0.006 56.043); /* stone-900 */
+
+  --muted: oklch(0.97 0.001 106.424); /* stone-100 #f5f5f4 */
+  --muted-foreground: oklch(0.553 0.013 58.071); /* stone-500 #79716b */
+
+  --accent: oklch(0.97 0.001 106.424); /* stone-100 — neutral, NOT a brand hue */
+  --accent-foreground: oklch(0.216 0.006 56.043); /* stone-900 */
+
+  --destructive: oklch(0.577 0.245 27.325); /* #e7000b */
+  --destructive-foreground: oklch(0.985 0.001 106.423); /* stone-50 */
+
+  --border: oklch(0.923 0.003 48.717); /* stone-200 #e7e5e4 */
+  --input: oklch(0.923 0.003 48.717); /* stone-200 */
+  --ring: oklch(0.709 0.01 56.259); /* stone-400 #a6a09b */
+
+  /* -- new roles: interaction states -------------------------------------- */
+  --primary-hover: oklch(0.374 0.01 67.558); /* stone-700 #44403b */
+  --secondary-hover: oklch(0.97 0.001 106.424); /* = muted, stone-100 */
+  --ghost-hover: oklch(0.97 0.001 106.424); /* = muted, stone-100 */
+
+  /* -- new role: de-emphasised mark on a primary (dark) surface ------------ */
+  --primary-foreground-muted: oklch(0.709 0.01 56.259); /* stone-400 #a6a09b */
+
+  /* -- new role: status ---------------------------------------------------- */
+  /* RATIFIED — muted, slightly warm green, tuned to sit next to stone.
+     Supersedes the mock's #22c55e, which is too electric against warm grey. */
+  --status-available: oklch(0.68 0.14 152); /* #48b06c */
+
+  /* -- new role: overlay dimming ------------------------------------------- */
+  /* RATIFIED — 20% in light, 50% in dark (see .dark below). */
+  --scrim: oklch(0 0 0 / 20%);
+
+  /* Keycap label — one step stronger than muted-foreground so keycaps pass
+     AA (6.8:1) on their muted fill. Ion ruling 2026-08-18; mirrors the Figma
+     semantic variable kbd-foreground. */
+  --kbd-foreground: oklch(0.444 0.011 73.639); /* stone-600 #57534e */
+
+  /* -- motion ---------------------------------------------------------------
+     Declared here, not in @theme, on purpose. Tailwind v4 has an --ease-*
+     theme namespace but NO --duration-* namespace, and @theme inline prunes
+     any variable no rule references. Keeping the source values in :root means
+     var(--duration-base) is always resolvable from component CSS. The easings
+     are re-exported as ease-* utilities in section 4. */
+  --motion-spring: cubic-bezier(0.34, 1.56, 0.64, 1); /* overshoot: press, pop */
+  --motion-glide: cubic-bezier(0.16, 1, 0.3, 1); /* strong decel: panels, reveals */
+
+  --duration-fast: 150ms; /* colour, opacity, hover feedback  == duration-150 */
+  --duration-base: 200ms; /* size, transform, panel state     == duration-200 */
+  --duration-slow: 400ms; /* entrances, scroll reveals        == duration-400 */
+
+  --stagger-delay: 50ms; /* one unit of list-entrance offset */
+
+  /* -- elevation ----------------------------------------------------------- */
+  /* Layered smooth shadow. Per step: size s, base intensity i.
+     y     = 0.125 / 0.375 / 0.75 / 1.25  x s
+     blur  = 0.125 / 0.25  / 0.375 / 0.5  x s
+     alpha = i / 0.75i / 0.5i / 0.25i
+
+     RATIFIED. y > blur on the outer layers is intentional, not a typo: the
+     source generator (github.com/flornkm/shadow-plugin) emits exactly
+     `0 1px 1px 4%, 0 3px 2px 3%, 0 6px 3px 2%, 0 10px 4px 1%` at size 8 /
+     intensity 4%, which is our Raised step byte for byte.
+
+     5th layer = 1px hairline ring. The ring is CONSTANT, not intensity-scaled:
+     black 5% in light, white 18% in dark. Same source. */
+
+  /* Subtle — s 4, i 4%. Controls: buttons, identity chip, inputs. */
+  --elevation-subtle:
+    0 0.5px 0.5px 0 rgb(0 0 0 / 0.04),
+    0 1.5px 1px 0 rgb(0 0 0 / 0.03),
+    0 3px 1.5px 0 rgb(0 0 0 / 0.02),
+    0 5px 2px 0 rgb(0 0 0 / 0.01),
+    0 0 0 1px rgb(0 0 0 / 0.05);
+
+  /* Raised — s 8, i 4%. Cards, project rows, media tiles. */
+  --elevation-raised:
+    0 1px 1px 0 rgb(0 0 0 / 0.04),
+    0 3px 2px 0 rgb(0 0 0 / 0.03),
+    0 6px 3px 0 rgb(0 0 0 / 0.02),
+    0 10px 4px 0 rgb(0 0 0 / 0.01),
+    0 0 0 1px rgb(0 0 0 / 0.05);
+
+  /* Overlay — s 16, i 5%. Popovers, dropdowns, tooltips, the identity panel. */
+  --elevation-overlay:
+    0 2px 2px 0 rgb(0 0 0 / 0.05),
+    0 6px 4px 0 rgb(0 0 0 / 0.0375),
+    0 12px 6px 0 rgb(0 0 0 / 0.025),
+    0 20px 8px 0 rgb(0 0 0 / 0.0125),
+    0 0 0 1px rgb(0 0 0 / 0.05);
+
+  /* Modal — s 32, i 6%. Dialogs, sheets, the command palette. */
+  --elevation-modal:
+    0 4px 4px 0 rgb(0 0 0 / 0.06),
+    0 12px 8px 0 rgb(0 0 0 / 0.045),
+    0 24px 12px 0 rgb(0 0 0 / 0.03),
+    0 40px 16px 0 rgb(0 0 0 / 0.015),
+    0 0 0 1px rgb(0 0 0 / 0.05);
 }
 
-/* Dock sizing responsive */
-@media (min-width: 768px) {
-  :root {
-    --dock-item-size: 3rem;
-    --dock-gap: 0.5rem;
-  }
+/* ============================================================================
+   3. RAW TOKEN VALUES — DARK
+   Standard shadcn stone dark mapping. Elevation IS overridden here: the four
+   black shadow layers are identical to light (shadow is still cast light),
+   only the 1px hairline ring flips to white 18% so an edge stays readable on
+   a near-black surface. Mirrors the Figma Dark/Subtle..Dark/Modal effect
+   styles. See token-contract.md.
+   ========================================================================== */
+
+.dark {
+  color-scheme: dark;
+
+  --background: oklch(0.147 0.004 49.25); /* stone-950 #0c0a09 */
+  --foreground: oklch(0.985 0.001 106.423); /* stone-50 #fafaf9 */
+
+  --card: oklch(0.216 0.006 56.043); /* stone-900 #1c1917 */
+  --card-foreground: oklch(0.985 0.001 106.423);
+
+  --popover: oklch(0.216 0.006 56.043); /* stone-900 */
+  --popover-foreground: oklch(0.985 0.001 106.423);
+
+  --primary: oklch(0.923 0.003 48.717); /* stone-200 #e7e5e4 */
+  --primary-foreground: oklch(0.216 0.006 56.043); /* stone-900 */
+
+  --secondary: oklch(0.268 0.007 34.298); /* stone-800 #292524 */
+  --secondary-foreground: oklch(0.985 0.001 106.423);
+
+  --muted: oklch(0.268 0.007 34.298); /* stone-800 */
+  --muted-foreground: oklch(0.709 0.01 56.259); /* stone-400 #a6a09b */
+
+  --accent: oklch(0.268 0.007 34.298); /* stone-800 */
+  --accent-foreground: oklch(0.985 0.001 106.423);
+
+  --destructive: oklch(0.704 0.191 22.216); /* #ff6467 */
+  --destructive-foreground: oklch(0.985 0.001 106.423);
+
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.553 0.013 58.071); /* stone-500 #79716b */
+
+  /* new roles — dark counterparts */
+  --primary-hover: oklch(0.869 0.005 56.366); /* stone-300 #d6d3d1 */
+  --secondary-hover: oklch(0.268 0.007 34.298); /* = muted, stone-800 */
+  --ghost-hover: oklch(0.268 0.007 34.298); /* = muted, stone-800 */
+  --primary-foreground-muted: oklch(0.553 0.013 58.071); /* stone-500 */
+  --status-available: oklch(0.72 0.15 152); /* #4dbf74 */
+  --scrim: oklch(0 0 0 / 50%);
+  --kbd-foreground: oklch(0.869 0.005 56.366); /* stone-300 #d6d3d1 */
+
+  /* -- elevation — dark ------------------------------------------------------
+     Same four black layers as light. Only the 5th layer, the hairline ring,
+     changes: white 18% instead of black 5%. */
+
+  --elevation-subtle:
+    0 0.5px 0.5px 0 rgb(0 0 0 / 0.04),
+    0 1.5px 1px 0 rgb(0 0 0 / 0.03),
+    0 3px 1.5px 0 rgb(0 0 0 / 0.02),
+    0 5px 2px 0 rgb(0 0 0 / 0.01),
+    0 0 0 1px rgb(255 255 255 / 0.18);
+
+  --elevation-raised:
+    0 1px 1px 0 rgb(0 0 0 / 0.04),
+    0 3px 2px 0 rgb(0 0 0 / 0.03),
+    0 6px 3px 0 rgb(0 0 0 / 0.02),
+    0 10px 4px 0 rgb(0 0 0 / 0.01),
+    0 0 0 1px rgb(255 255 255 / 0.18);
+
+  --elevation-overlay:
+    0 2px 2px 0 rgb(0 0 0 / 0.05),
+    0 6px 4px 0 rgb(0 0 0 / 0.0375),
+    0 12px 6px 0 rgb(0 0 0 / 0.025),
+    0 20px 8px 0 rgb(0 0 0 / 0.0125),
+    0 0 0 1px rgb(255 255 255 / 0.18);
+
+  --elevation-modal:
+    0 4px 4px 0 rgb(0 0 0 / 0.06),
+    0 12px 8px 0 rgb(0 0 0 / 0.045),
+    0 24px 12px 0 rgb(0 0 0 / 0.03),
+    0 40px 16px 0 rgb(0 0 0 / 0.015),
+    0 0 0 1px rgb(255 255 255 / 0.18);
 }
 
-/* body background and color set via Tailwind classes on <body> in layout.tsx */
+/* ============================================================================
+   4. THEME MAPPING — raw values onto Tailwind v4 utility namespaces
+   `inline` keeps the var() indirection, which is what lets .dark re-theme
+   every utility without regenerating classes.
+   ========================================================================== */
+
+@theme inline {
+  /* -- font families ------------------------------------------------------- */
+  --font-sans: "Aeonik Pro", system-ui, -apple-system, sans-serif;
+  --font-mono:
+    ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
+    "Liberation Mono", monospace;
+
+  /* -- colour: 19 shadcn roles --------------------------------------------- */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  /* -- colour: 6 new roles -------------------------------------------------- */
+  --color-primary-hover: var(--primary-hover);
+  --color-secondary-hover: var(--secondary-hover);
+  --color-ghost-hover: var(--ghost-hover);
+  --color-primary-foreground-muted: var(--primary-foreground-muted);
+  --color-status-available: var(--status-available);
+  --color-scrim: var(--scrim);
+  --color-kbd-foreground: var(--kbd-foreground);
+
+  /* -- radius: one knob, 8 derived steps ------------------------------------ */
+  /* Controls are never `full`. The identity chip (lg) is the only near-pill.
+     Concentric nesting: inner radius = outer radius - gap. */
+  --radius-sm: calc(var(--radius) * 0.6); /* 9px  */
+  --radius-md: calc(var(--radius) * 0.8); /* 12px */
+  --radius-lg: var(--radius); /* 15px */
+  --radius-xl: calc(var(--radius) * 1.4); /* 21px */
+  --radius-2xl: calc(var(--radius) * 1.8); /* 27px */
+  --radius-3xl: calc(var(--radius) * 2.2); /* 33px */
+  --radius-4xl: calc(var(--radius) * 2.6); /* 39px */
+  --radius-full: 9999px;
+
+  /* -- elevation: 4 semantic steps ------------------------------------------ */
+  --shadow-subtle: var(--elevation-subtle);
+  --shadow-raised: var(--elevation-raised);
+  --shadow-overlay: var(--elevation-overlay);
+  --shadow-modal: var(--elevation-modal);
+
+  /* Tailwind's own shadow names are aliased onto the same four steps so that
+     stock shadcn components (which ship shadow-xs / shadow-sm / shadow-lg)
+     inherit the system instead of escaping it. */
+  --shadow-2xs: var(--elevation-subtle);
+  --shadow-xs: var(--elevation-subtle);
+  --shadow-sm: var(--elevation-subtle);
+  --shadow-md: var(--elevation-raised);
+  --shadow-lg: var(--elevation-overlay);
+  --shadow-xl: var(--elevation-modal);
+  --shadow-2xl: var(--elevation-modal);
+
+  /* -- type: 7 steps, listed smallest first --------------------------------- */
+  /* Each step carries size + leading + weight + tracking in ONE utility.
+     No uppercase step exists, by design.
+
+     Five steps OVERRIDE Tailwind's own text-* slots (xs / sm / base / lg /
+     2xl) rather than inventing new names. Ion's call: the default names are
+     the ones people already reach for, so stock shadcn components inherit our
+     type system instead of escaping it — the same trick as the shadow-name
+     aliasing above. Two sizes (13 and 15) have no Tailwind slot, so they keep
+     custom names that match their Figma text styles exactly: Small, Subhead.
+
+     ⚠️ FOOTGUN — `text-sm` and `text-small` are NOT the same thing:
+        text-sm    = 14px, Tailwind's slot, our Body step.
+        text-small = 13px, ours, the Figma "Small" style.
+     Nearest-name collision, one keystroke apart, both valid classes. If a
+     label looks one notch off, this is why. */
+
+  /* Caption — 12 / Regular / 140% */
+  --text-xs: 0.75rem;
+  --text-xs--line-height: 1.4;
+  --text-xs--font-weight: 400;
+  --text-xs--letter-spacing: 0em;
+
+  /* Small — 13 / Regular / 145% — no Tailwind slot at 13px, stays custom. */
+  --text-small: 0.8125rem;
+  --text-small--line-height: 1.45;
+  --text-small--font-weight: 400;
+  --text-small--letter-spacing: 0em;
+
+  /* Body — 14 / Regular / 150% */
+  --text-sm: 0.875rem;
+  --text-sm--line-height: 1.5;
+  --text-sm--font-weight: 400;
+  --text-sm--letter-spacing: 0em;
+
+  /* Subhead — 15 / Medium / 135% — no Tailwind slot at 15px, stays custom. */
+  --text-subhead: 0.9375rem;
+  --text-subhead--line-height: 1.35;
+  --text-subhead--font-weight: 500;
+  --text-subhead--letter-spacing: 0em;
+
+  /* Prose — 16 / Regular / 170% — long-form MDX only. RATIFIED. */
+  --text-base: 1rem;
+  --text-base--line-height: 1.7;
+  --text-base--font-weight: 400;
+  --text-base--letter-spacing: 0em;
+
+  /* Heading — 18 / Medium / 130% / -1% */
+  --text-lg: 1.125rem;
+  --text-lg--line-height: 1.3;
+  --text-lg--font-weight: 500;
+  --text-lg--letter-spacing: -0.01em;
+
+  /* text-xl (20px) is left exactly as Tailwind ships it. The system has no
+     20px step, so nothing here should use it. Listed only so the gap between
+     lg and 2xl is not read as an oversight. */
+
+  /* Title — 24 / Medium / 125% / -1% */
+  --text-2xl: 1.5rem;
+  --text-2xl--line-height: 1.25;
+  --text-2xl--font-weight: 500;
+  --text-2xl--letter-spacing: -0.01em;
+
+  /* -- motion: easing utilities ---------------------------------------------
+     Two custom easings only. Tailwind already ships linear / ease-in /
+     ease-out / ease-in-out and the numeric duration-* utilities; the old
+     --ease-out and --ease-in-out were byte-identical redefinitions of
+     Tailwind's own defaults and are gone. Durations live in :root (section 2)
+     because Tailwind v4 has no --duration-* theme namespace. */
+  --ease-spring: var(--motion-spring);
+  --ease-glide: var(--motion-glide);
+}
+
+/* ============================================================================
+   5. BASE
+   ========================================================================== */
 
 @layer base {
+  * {
+    border-color: var(--color-border);
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+  }
+
+  /* Anchored sections clear the fixed header. */
+  [id] {
+    scroll-margin-top: 96px;
+  }
+
   :where(
     a[href],
     button:not(:disabled),
@@ -178,153 +429,32 @@
   }
 }
 
-/* ========================================
-   DARK MODE OVERRIDE
-   ======================================== */
-
-.dark {
-  color-scheme: dark;
-
-  --color-bg-base: #000000;
-  --color-bg-surface: #0a0a0a;
-  --color-bg-elevated: #141414;
-  --color-bg-glass: rgba(255, 255, 255, 0.03);
-  --color-text-primary: #ffffff;
-  --color-text-secondary: #a0a0a0;
-  --color-text-tertiary: #666666;
-  --color-text-muted: #404040;
-  --color-accent: #ff9f6a;
-  --color-accent-soft: rgba(255, 159, 106, 0.2);
-  --color-accent-hover: #ffb88a;
-  --color-border-default: #1a1a1a;
-  --color-border-subtle: #111111;
-  --color-border-strong: #333333;
-  --color-text-subtitle: #a0a0a0;
-  --color-text-label: #737373;
-  --shadow-card: 0px 4px 16px rgba(0,0,0,0.2), 0px 1px 2px rgba(0,0,0,0.15);
-}
-
-/* ========================================
-   TYPOGRAPHY UTILITIES
-   ======================================== */
+/* ============================================================================
+   6. COMPONENT UTILITIES
+   Only the ones with live call sites survive from v1. Everything here now reads
+   from the semantic roles above; there is no private alias layer any more.
+   ========================================================================== */
 
 @layer utilities {
-  /* Display - hero headlines */
-  .typo-display {
-    font-size: 3rem; /* 48px */
-    font-weight: 300;
-    line-height: 1.1;
-    letter-spacing: -0.02em;
-  }
-
-  /* H1 - page titles */
-  .typo-h1 {
-    font-size: 2.25rem; /* 36px */
-    font-weight: 600;
-    line-height: 1.2;
-    letter-spacing: -0.02em;
-  }
-
-  /* H2 - section headers */
-  .typo-h2 {
-    font-size: 1.5rem; /* 24px */
-    font-weight: 500;
-    line-height: 1.3;
-    letter-spacing: -0.01em;
-  }
-
-  /* H3 - card titles */
-  .typo-h3 {
-    font-size: 1.25rem; /* 20px */
-    font-weight: 500;
-    line-height: 1.4;
-  }
-
-  /* Body */
-  .typo-body {
-    font-size: 1rem; /* 16px */
-    font-weight: 400;
-    line-height: 1.6;
-  }
-
-  /* Body small */
-  .typo-body-sm {
-    font-size: 0.875rem; /* 14px */
-    font-weight: 400;
-    line-height: 1.5;
-  }
-
-  /* Caption */
-  .typo-caption {
-    font-size: 0.75rem; /* 12px */
-    font-weight: 400;
-    line-height: 1.4;
-    letter-spacing: 0.01em;
-  }
-
-  /* Section label */
-  .typo-label {
-    font-size: 0.6875rem; /* 11px */
-    font-weight: 500;
-    line-height: 1.2;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-  }
-}
-
-/* ========================================
-   ANIMATION UTILITIES
-   ======================================== */
-
-@layer utilities {
-  @keyframes identity-label-in {
-    from {
-      opacity: 0;
-      transform: translateY(4px);
-    }
-
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  @keyframes identity-label-out {
-    from {
-      opacity: 1;
-      transform: translateY(0);
-    }
-
-    to {
-      opacity: 0;
-      transform: translateY(-3px);
-    }
-  }
+  /* -- identity panel -------------------------------------------------------
+     The hover-expanding chip on the landing page. Blur is allowed here as a
+     state transition; it is not a general card style. */
 
   .identity-panel-surface {
-    color: var(--identity-panel-fg);
-  }
-
-  .identity-panel-surface {
-    will-change: width, height, box-shadow;
-  }
-
-  .identity-panel-surface[data-state="closed"] {
+    color: var(--color-popover-foreground);
     background-color: transparent;
     border-color: transparent;
     box-shadow: none;
+    will-change: width, height, box-shadow;
   }
 
   .identity-root:hover .identity-panel-surface[data-state="closed"],
   .identity-panel-surface[data-state="open"] {
-    background-color: var(--identity-panel-bg);
-    border-color: var(--identity-panel-border);
+    background-color: var(--color-popover);
+    border-color: var(--color-border);
+    box-shadow: var(--shadow-overlay);
     height: min(560px, calc(100vh - 96px));
     width: min(520px, calc(100vw - 40px));
-  }
-
-  .identity-root:hover .identity-panel-surface[data-state="closed"] {
-    box-shadow: var(--shadow-card);
   }
 
   .identity-root:hover .identity-overlay {
@@ -339,59 +469,16 @@
     transition-delay: 100ms;
   }
 
-  .identity-panel-secondary {
-    color: var(--identity-panel-secondary);
-  }
-
-  .identity-panel-muted {
-    color: var(--identity-panel-muted);
-  }
-
-  .identity-panel-control {
-    background-color: var(--identity-panel-control);
-    color: var(--identity-panel-fg);
-  }
-
-  .identity-panel-control:hover {
-    background-color: var(--identity-panel-control-hover);
-  }
-
-  .identity-panel-field {
-    background-color: var(--identity-panel-field);
-    border-color: var(--identity-panel-field-border);
-    color: var(--identity-panel-fg);
-  }
-
-  .identity-panel-field::placeholder {
-    color: var(--identity-panel-placeholder);
-  }
-
-  .identity-panel-field:hover,
-  .identity-panel-field:focus {
-    background-color: var(--identity-panel-field-hover);
-  }
-
-  .identity-panel-divider {
-    border-color: var(--identity-panel-border);
-  }
-
-  .identity-panel-row {
-    color: var(--identity-panel-secondary);
-  }
-
-  .identity-panel-row:hover {
-    background-color: var(--identity-panel-row-hover);
-    color: var(--identity-panel-fg);
-  }
+  /* -- capability tooltip (timeline) ---------------------------------------- */
 
   .ledgy-capability-tooltip {
     opacity: 0;
     filter: blur(8px);
     transform: translateY(4px);
     transition:
-      opacity var(--duration-default) cubic-bezier(0.25, 1, 0.5, 1),
-      filter var(--duration-default) cubic-bezier(0.25, 1, 0.5, 1),
-      transform var(--duration-default) cubic-bezier(0.25, 1, 0.5, 1);
+      opacity var(--duration-fast) var(--ease-glide),
+      filter var(--duration-fast) var(--ease-glide),
+      transform var(--duration-fast) var(--ease-glide);
     will-change: opacity, filter, transform;
   }
 
@@ -402,13 +489,14 @@
     transform: translateY(0);
   }
 
-  /* Reveal animation base */
+  /* -- scroll reveal --------------------------------------------------------- */
+
   .reveal {
     opacity: 0;
     transform: translateY(20px);
     transition:
-      opacity var(--duration-entrance) var(--ease-out),
-      transform var(--duration-entrance) var(--ease-out);
+      opacity var(--duration-slow) var(--ease-glide),
+      transform var(--duration-slow) var(--ease-glide);
   }
 
   .reveal.visible {
@@ -416,7 +504,6 @@
     transform: translateY(0);
   }
 
-  /* Stagger delays */
   .stagger-1 { transition-delay: calc(var(--stagger-delay) * 1); }
   .stagger-2 { transition-delay: calc(var(--stagger-delay) * 2); }
   .stagger-3 { transition-delay: calc(var(--stagger-delay) * 3); }
@@ -424,18 +511,16 @@
   .stagger-5 { transition-delay: calc(var(--stagger-delay) * 5); }
 }
 
-/* ========================================
-   SCROLLBAR (desktop only)
-   ======================================== */
+/* ============================================================================
+   7. SCROLLBAR (pointer devices only)
+   ========================================================================== */
 
 @media (min-width: 768px) {
-  /* Firefox */
   * {
     scrollbar-width: thin;
-    scrollbar-color: var(--color-border-default) transparent;
+    scrollbar-color: var(--color-border) transparent;
   }
 
-  /* Webkit (Chrome, Safari, Edge) */
   ::-webkit-scrollbar {
     width: 6px;
     height: 6px;
@@ -446,15 +531,15 @@
   }
 
   ::-webkit-scrollbar-thumb {
-    background: var(--color-border-default);
+    background: var(--color-border);
     border-radius: 3px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: var(--color-border-strong);
+    background: var(--color-ring);
   }
 
-  /* Hide scrollbar until hover on scrollable containers */
+  /* Hide until the container is hovered. */
   .overflow-y-auto,
   .overflow-x-auto {
     scrollbar-color: transparent transparent;
@@ -462,7 +547,7 @@
 
   .overflow-y-auto:hover,
   .overflow-x-auto:hover {
-    scrollbar-color: var(--color-border-default) transparent;
+    scrollbar-color: var(--color-border) transparent;
   }
 
   .overflow-y-auto::-webkit-scrollbar-thumb,
@@ -472,13 +557,13 @@
 
   .overflow-y-auto:hover::-webkit-scrollbar-thumb,
   .overflow-x-auto:hover::-webkit-scrollbar-thumb {
-    background: var(--color-border-default);
+    background: var(--color-border);
   }
 }
 
-/* ========================================
-   REDUCED MOTION
-   ======================================== */
+/* ============================================================================
+   8. REDUCED MOTION
+   ========================================================================== */
 
 @media (prefers-reduced-motion: reduce) {
   *,
@@ -493,20 +578,5 @@
   .reveal {
     opacity: 1;
     transform: none;
-  }
-}
-
-/* ========================================
-   BASE ELEMENT STYLES
-   ======================================== */
-
-@layer base {
-  * {
-    border-color: var(--color-border);
-  }
-
-  /* Scroll margin for anchored sections */
-  [id] {
-    scroll-margin-top: 96px;
   }
 }

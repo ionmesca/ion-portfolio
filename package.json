@@ -6,9 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint",
-    "seed:corpus": "bun scripts/seed-corpus.ts",
-    "validate:corpus": "bun scripts/validate-corpus.ts"
+    "lint": "eslint"
   },
   "dependencies": {
     "@ai-sdk/react": "^4",

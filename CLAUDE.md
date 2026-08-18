@@ -9,6 +9,24 @@ Ion Mesca's portfolio. Design engineer targeting AI companies.
 Issues, PRDs, and wayfinder maps live in the local Paperclip instance (company
 "Portfolio", http://localhost:42862). See `docs/agents/issue-tracker.md`.
 
+## Rebuild (rebuild/v2)
+
+This branch is a greenfield rebuild. The old landing UI, the Convex database,
+and the AI SDK chat agent were removed; they survive only in git history.
+
+Source of truth, in order:
+
+1. `app/globals.css` — the ratified token contract. Do not change a value
+   without a ruling from Ion.
+2. `docs/design/token-contract.md` — what each token means and why.
+3. `docs/design/*.html` — the interaction labs (motion, popover, mobile,
+   collection, wheel). Behaviour is verified against these.
+4. `docs/design/reference/*.png` — Figma exports. Every screen is verified
+   against these.
+
+`DESIGN.md` and the older files in `docs/` describe the pre-rebuild system.
+They are historical reference and will be replaced.
+
 ## Tech Stack
 
 | Tech | Purpose |
@@ -17,25 +35,24 @@ Issues, PRDs, and wayfinder maps live in the local Paperclip instance (company
 | React 19 | UI |
 | Tailwind CSS 4 | Styling (inline @theme, no config file) |
 | shadcn/ui | Component primitives (extend, don't modify ui/) |
-| Convex | Database (stack, collections) |
-| AI SDK 7 | Chat agent on /agent (model via AI Gateway) |
 | MDX | Case studies, articles |
 | Aeonik Pro | Typography (variable font in public/fonts/) |
+
+No animation library. Motion is vanilla CSS transitions plus
+`requestAnimationFrame` where a transition cannot express it.
 
 ## Structure
 
 - `app/` — Routes
 - `components/ui/` — shadcn primitives and project variants
-- `components/portfolio/` — Current landing-page source-of-truth components
-- `content/` — MDX files
-- `convex/` — Database
+- `content/work/` — MDX case studies
+- `docs/design/` — Token contract, motion spec, labs, Figma reference shots
 - `public/fonts/` — Aeonik Pro
 
 ## Commands
 
 ```bash
 bun dev              # Dev server
-bunx convex dev      # Convex (separate terminal)
 bunx shadcn@latest add [name]  # Add component
 ```
 
@@ -46,7 +63,11 @@ bunx shadcn@latest add [name]  # Add component
 - Extend shadcn via semantic CSS variables + variants
 - Server Components by default, "use client" only when needed
 
-## Design System Handoff
+## Design System Handoff (pre-rebuild — superseded)
+
+> Everything below describes the system as it stood before `rebuild/v2`. The
+> "Rebuild" section above wins wherever the two disagree. `components/portfolio/`
+> no longer exists.
 
 Read `DESIGN.md` before making visual, interaction, motion, shadcn, or responsive layout changes.
 

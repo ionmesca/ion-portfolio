@@ -1,11 +1,10 @@
 import type { Metadata } from "next";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
-import { ThemeProvider } from "./providers/theme-provider";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Ion Mesca — Design Engineer",
+  title: "Ion Mesca",
   description: "Design engineer building interfaces for AI products",
 };
 
@@ -15,13 +14,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className="font-sans antialiased bg-bg-surface text-text-primary flex flex-col h-screen" suppressHydrationWarning>
-        <ThemeProvider>
-          {children}
-          <Analytics />
-          <SpeedInsights />
-        </ThemeProvider>
+    <html lang="en">
+      <body className="font-sans antialiased">
+        {children}
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );
