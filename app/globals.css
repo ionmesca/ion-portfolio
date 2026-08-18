@@ -649,6 +649,31 @@
     }
   }
 
+  /* -- mobile indicator bar --------------------------------------------------
+     Option B's one piece of chrome (POR-22). It is fixed over the page rather
+     than in the flow, so appearing and disappearing never moves the cards it
+     describes; all it does is fade and drop 6px into place.
+
+     Split clocks, straight from mobile-lab.html: opacity on `--duration-fast`
+     LINEAR (a bar that eases its own opacity reads as a flicker), travel on
+     `--duration-base` glide. Written here rather than as utilities because the
+     two lanes need different durations AND different easings. */
+
+  .mobile-indicator {
+    opacity: 0;
+    transform: translateY(-6px);
+    pointer-events: none;
+    transition:
+      opacity var(--duration-fast) linear,
+      transform var(--duration-base) var(--ease-glide);
+  }
+
+  .mobile-indicator[data-on="true"] {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+  }
+
   /* -- capability tooltip (timeline) ---------------------------------------- */
 
   .ledgy-capability-tooltip {
