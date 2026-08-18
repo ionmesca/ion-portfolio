@@ -34,15 +34,24 @@ function lens(distance: number) {
   return LENS[Math.min(distance, LENS.length - 1)]
 }
 
-export type LetterNavItem = { id: string; nav: string }
+export type SectionNavItem = { id: string; nav: string }
 
 /**
  * The left rail — "Home", the section wheel, and the scroll hint.
  *
- * Figma "Letter — light" → "Left rail" (13:2942). The rail box is 263 wide in
- * the frame but its contents are 200, and it sits 272px to the left of the
- * centred 640 column; `app/letter/page.tsx` reproduces that with a symmetric
- * 272/640/272 grid. What lives here is only what is inside the rail:
+ * ONE rail, four pages. It was built for the letter (Figma "Letter — light" →
+ * "Left rail" 13:2942) and the three collection frames redraw it byte for byte
+ * — "Stack — desktop light" 20:1034, "Agents & skills" 20:1294, "Articles"
+ * 20:1364 all repeat the same 85x32 Home button, the same 112px gap, the same
+ * 200x32 wheel rows at 12px pitch, the same 16px gap and the same "scroll →".
+ * Only the labels differ (letter headings / categories / years), so the rail
+ * was moved here and generalised rather than forked. `sections` is whatever
+ * the page's wheel lists; `label` names the nav for a screen reader.
+ *
+ * The rail box is 263 wide in the frames but its contents are 200, and it sits
+ * 272px to the left of the centred 640 column; the letter and collection pages
+ * reproduce that with a symmetric 272/640/272 grid. What lives here is only
+ * what is inside the rail:
  *
  *   Button "Home"   85x32 secondary, ArrowLeft 16 — the Button primitive's
  *                   `secondary` + `default` size is this component byte for byte.
@@ -58,7 +67,14 @@ export type LetterNavItem = { id: string; nav: string }
  * click still jumps to the section, and `globals.css` gives every `[id]` the
  * 96px scroll clearance either way.
  */
-export function LetterRail({ sections }: { sections: LetterNavItem[] }) {
+export function SectionRail({
+  sections,
+  label,
+}: {
+  sections: SectionNavItem[]
+  /** `aria-label` for the wheel — "Letter sections", "Stack sections", … */
+  label: string
+}) {
   const [active, setActive] = React.useState(0)
 
   /* A wheel click is a statement about where the reader is, and it outranks the
@@ -156,10 +172,7 @@ export function LetterRail({ sections }: { sections: LetterNavItem[] }) {
           frame has no mobile letter yet. Below xl the page falls back to the
           document's own heading order, and "Home" stays. Flagged in the report
           as a judgement call, not a rule inferred from the frame. */}
-      <nav
-        aria-label="Letter sections"
-        className="mt-28 hidden flex-col gap-3 xl:flex"
-      >
+      <nav aria-label={label} className="mt-28 hidden flex-col gap-3 xl:flex">
         {sections.map((section, i) => {
           const isActive = i === active
           return (

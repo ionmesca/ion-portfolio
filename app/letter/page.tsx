@@ -1,6 +1,6 @@
 import type { Metadata } from "next"
 
-import { LetterRail } from "@/components/letter/letter-rail"
+import { SectionRail } from "@/components/nav/section-rail"
 import {
   Footnote,
   Section,
@@ -51,7 +51,7 @@ export default function LetterPage() {
   return (
     <main className="min-h-dvh bg-background">
       <div className="mx-auto grid max-w-[1184px] grid-cols-1 gap-10 px-6 py-16 xl:grid-cols-[272px_640px_272px] xl:gap-0 xl:px-0 xl:py-34">
-        <LetterRail sections={letterNav} />
+        <SectionRail sections={letterNav} label="Letter sections" />
 
         <article className="flex min-w-0 flex-col gap-12">
           <TitleBlock title={letterMeta.title} date={letterMeta.date} />

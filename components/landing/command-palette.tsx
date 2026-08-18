@@ -6,7 +6,7 @@ import Link from "next/link"
 import { Kbd } from "@/components/ui/kbd"
 import { Check, Copy, ICON_STROKE, Search, Sun } from "@/lib/icons"
 import { createMorph, type Morph, type MorphRect } from "@/lib/morph"
-import { playTick } from "@/lib/sound"
+import { useCopyToClipboard } from "@/lib/use-copy"
 import { cn } from "@/lib/utils"
 
 import { IdentityChip } from "./identity-chip"
@@ -107,7 +107,6 @@ export function CommandPalette() {
   const [open, setOpen] = React.useState(false)
   const openRef = React.useRef(false)
   const [query, setQuery] = React.useState("")
-  const [copied, setCopied] = React.useState(false)
   /* Theme state + the OS-flip subscription live in `theme-segment.tsx` now:
      the mobile menu sheet renders the same control and must stay in step. */
   const { theme, pickTheme } = useTheme()
@@ -384,37 +383,21 @@ export function CommandPalette() {
      one place catalog ruling #4's text swap is adopted. The row's icon becomes
      a check and its label becomes "Copied" for the same 1.5s window.
 
+     The clipboard write, the tick, the 1.5s clock and the legacy fallback all
+     live in `useCopyToClipboard` (lib/use-copy.ts) — the collection pages'
+     install chip is the second consumer of exactly this moment.
+
      ⌘⇧C works with the palette CLOSED, where there is no surface to show any
      of that — the tick alone is the feedback. RULING: the `copied` state is
      still set, and its clock starts at the copy, so reopening inside the
      window shows the Copied state mid-flight and it reverts on the original
      schedule. It is true (you did just copy) and it needs no extra state to
      suppress. A second copy restarts the 1.5s. */
-  const copyTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null)
+  const { copied, copy } = useCopyToClipboard()
 
-  const copyEmail = React.useCallback(async () => {
-    let ok = false
-    try {
-      await navigator.clipboard.writeText(CONTACT_EMAIL)
-      ok = true
-    } catch {
-      // Clipboard API needs a secure context and a permission; the textarea
-      // trick needs neither and is still the only path in some embeddings.
-      ok = legacyCopy(CONTACT_EMAIL)
-    }
-    if (!ok) return
-
-    playTick()
-    setCopied(true)
-    if (copyTimer.current) clearTimeout(copyTimer.current)
-    copyTimer.current = setTimeout(() => setCopied(false), 1500)
-  }, [])
-
-  React.useEffect(
-    () => () => {
-      if (copyTimer.current) clearTimeout(copyTimer.current)
-    },
-    []
+  const copyEmail = React.useCallback(
+    () => copy(CONTACT_EMAIL),
+    [copy]
   )
 
   /* --- global keyboard ------------------------------------------------------ */
@@ -800,12 +783,12 @@ function Row({
               motion contract's copy→check recipe */}
           <Copy
             data-on={!copied}
-            className="palette-icon absolute inset-0 size-4 text-muted-foreground"
+            className="icon-swap absolute inset-0 size-4 text-muted-foreground"
             strokeWidth={ICON_STROKE}
           />
           <Check
             data-on={copied}
-            className="palette-icon absolute inset-0 size-4 text-muted-foreground"
+            className="icon-swap absolute inset-0 size-4 text-muted-foreground"
             strokeWidth={ICON_STROKE}
           />
         </span>
@@ -824,7 +807,7 @@ function Row({
             data-on={!copied}
             data-dir="out"
             aria-hidden={copied}
-            className="palette-label block truncate"
+            className="label-swap block truncate"
           >
             {item.label}
           </span>
@@ -832,7 +815,7 @@ function Row({
             data-on={copied}
             data-dir="in"
             aria-hidden={!copied}
-            className="palette-label absolute inset-0 block truncate"
+            className="label-swap absolute inset-0 block truncate"
           >
             Copied
           </span>
@@ -913,21 +896,3 @@ function focusableIn(root: HTMLElement | null): HTMLElement[] {
   ).filter((el) => el.tabIndex !== -1 && !el.hasAttribute("inert"))
 }
 
-/** execCommand is deprecated, not gone — and it is the only copy path that
- *  works without a secure context or a clipboard permission. */
-function legacyCopy(text: string): boolean {
-  try {
-    const area = document.createElement("textarea")
-    area.value = text
-    area.setAttribute("readonly", "")
-    area.style.position = "fixed"
-    area.style.opacity = "0"
-    document.body.appendChild(area)
-    area.select()
-    const ok = document.execCommand("copy")
-    document.body.removeChild(area)
-    return ok
-  } catch {
-    return false
-  }
-}
