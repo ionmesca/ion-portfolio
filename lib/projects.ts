@@ -1,53 +1,34 @@
-import fs from "fs";
-import path from "path";
-import matter from "gray-matter";
-import type { ProjectMeta } from "./types";
+/**
+ * Projects — the landing rail's list.
+ *
+ * PLACEHOLDER CONTENT. Every name, year and mark below is copied verbatim from
+ * the Figma frame "Landing v3 — desktop light" (node 11:1665). None of it is
+ * final copy; do not "improve" it here. When the real case studies land this
+ * array is what they replace.
+ *
+ * `mark` selects the 24px project glyph:
+ *   "ledgy"       — the flat Ledgy wordmark on solid #4920F5, drawn inline
+ *                   (components/landing/project-icon.tsx).
+ *   "ledgy-agent" — the gradient composition variant, exported from Figma.
+ *   "buna"        — the green Buna mark, exported from Figma.
+ *
+ * `year` is rendered only on the active row — see project-list.tsx.
+ */
 
-const CONTENT_DIR = path.join(process.cwd(), "content/work");
+export type ProjectMark = "ledgy" | "ledgy-agent" | "buna"
 
-export function getAllProjects(): ProjectMeta[] {
-  const slugs = fs
-    .readdirSync(CONTENT_DIR)
-    .filter((name) => {
-      const fullPath = path.join(CONTENT_DIR, name);
-      return fs.statSync(fullPath).isDirectory();
-    });
-
-  const projects = slugs.flatMap((slug) => {
-    const filePath = path.join(CONTENT_DIR, slug, "index.mdx");
-    if (!fs.existsSync(filePath)) return [];
-
-    const raw = fs.readFileSync(filePath, "utf-8");
-    const { data } = matter(raw);
-    if (data.published === false) return [];
-
-    return [{ ...data, slug } as ProjectMeta];
-  });
-
-  return projects.sort((a, b) => a.order - b.order);
+export type Project = {
+  /** Stable key. Also the value written to the media panel's data-project. */
+  id: string
+  name: string
+  year: string
+  mark: ProjectMark
 }
 
-export function getProjectBySlug(slug: string): {
-  meta: ProjectMeta;
-  content: string;
-} | null {
-  const filePath = path.join(CONTENT_DIR, slug, "index.mdx");
-  if (!fs.existsSync(filePath)) return null;
-
-  const raw = fs.readFileSync(filePath, "utf-8");
-  const { data, content } = matter(raw);
-  if (data.published === false) return null;
-
-  return { meta: { ...data, slug } as ProjectMeta, content };
-}
-
-export function getAdjacentProjects(
-  slug: string
-): { prev: ProjectMeta | null; next: ProjectMeta | null } {
-  const projects = getAllProjects();
-  const index = projects.findIndex((p) => p.slug === slug);
-  return {
-    prev: index > 0 ? projects[index - 1] : null,
-    next: index < projects.length - 1 ? projects[index + 1] : null,
-  };
-}
+export const projects: Project[] = [
+  { id: "ledgy-agent", name: "Ledgy Agent", year: "2026", mark: "ledgy-agent" },
+  { id: "hey-buna-app", name: "Hey Buna App", year: "2025", mark: "buna" },
+  { id: "equity-dashboard", name: "Equity Dashboard", year: "2025", mark: "ledgy" },
+  { id: "ripple-agent", name: "Ripple Agent", year: "2024", mark: "ledgy" },
+  { id: "vesting-builder", name: "Vesting builder", year: "2024", mark: "ledgy" },
+]
