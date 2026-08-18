@@ -1,274 +1,502 @@
----
-name: Ion Portfolio
-description: Handoff design system guidance for Ion Mesca's portfolio landing experience.
-colors:
-  app-surface: "#f5f5f5"
-  panel-base: "#ffffff"
-  panel-surface: "#f5f5f5"
-  panel-elevated: "#f5f5f5"
-  text-primary: "#171717"
-  text-secondary: "#525252"
-  text-tertiary: "#a3a3a3"
-  text-muted: "#d4d4d4"
-  border-default: "#e5e5e5"
-  border-subtle: "#f0f0f0"
-  border-strong: "#d4d4d4"
-  accent-provisional: "#ff9f6a"
-  dark-bg-base: "#000000"
-  dark-bg-surface: "#0a0a0a"
-  dark-bg-elevated: "#141414"
-typography:
-  display:
-    fontFamily: "Aeonik Pro, system-ui, sans-serif"
-    fontSize: "3rem"
-    fontWeight: 300
-    lineHeight: 1.1
-    letterSpacing: "-0.02em"
-  headline:
-    fontFamily: "Aeonik Pro, system-ui, sans-serif"
-    fontSize: "2.25rem"
-    fontWeight: 600
-    lineHeight: 1.2
-    letterSpacing: "-0.02em"
-  title:
-    fontFamily: "Aeonik Pro, system-ui, sans-serif"
-    fontSize: "1.5rem"
-    fontWeight: 500
-    lineHeight: 1.3
-    letterSpacing: "-0.01em"
-  body:
-    fontFamily: "Aeonik Pro, system-ui, sans-serif"
-    fontSize: "1rem"
-    fontWeight: 400
-    lineHeight: 1.6
-  label:
-    fontFamily: "Aeonik Pro, system-ui, sans-serif"
-    fontSize: "0.6875rem"
-    fontWeight: 500
-    lineHeight: 1.2
-    letterSpacing: "0.08em"
-rounded:
-  sm: "6px"
-  md: "8px"
-  lg: "10px"
-  xl: "12px"
-  2xl: "16px"
-  3xl: "24px"
-  full: "9999px"
-spacing:
-  rail-padding-x: "16px"
-  rail-padding-top: "24px"
-  content-gap: "16px"
-  project-row-padding: "8px"
-components:
-  landing-shell:
-    backgroundColor: "{colors.panel-base}"
-    rounded: "{rounded.3xl}"
-  project-row-active:
-    backgroundColor: "{colors.panel-elevated}"
-    rounded: "{rounded.xl}"
-  shadcn-button-default:
-    backgroundColor: "{colors.text-primary}"
-    textColor: "{colors.panel-base}"
-    rounded: "{rounded.md}"
-    height: "36px"
-  card-default:
-    backgroundColor: "{colors.panel-base}"
-    textColor: "{colors.text-primary}"
-    rounded: "{rounded.2xl}"
-    padding: "24px"
+# DESIGN.md — the rebuilt system
+
+The working map of what exists on `rebuild/v2` today. It is written for agents
+and engineers picking the codebase up cold: where authority lives, what the
+tokens are for, how motion is built, what every component is, and which traps
+have already been paid for.
+
+It is a map, not a specification. It restates no token value — values rot when
+copied. Every section points at the file that owns the thing.
+
+Superseded: this file previously described the pre-rebuild landing system
+(`components/portfolio/*`, a gray-app-surface shell, a provisional orange
+accent, an 8px radius ladder). None of that exists. It survives in git history.
+
 ---
 
-# Design System: Ion Portfolio
+## 1. Source of truth
 
-## 1. Overview
+### The hierarchy
 
-**Creative North Star: "Quiet Proof of Work"**
+1. **`app/globals.css`** — the ratified token contract. The actual values, in
+   eight numbered sections: fonts, light values, dark values, the Tailwind v4
+   `@theme inline` mapping, base layer, component utilities, scrollbar, reduced
+   motion.
+2. **`docs/design/token-contract.md`** — what each token means, which were
+   deleted, and where CSS and Figma cannot mirror each other.
+3. **`docs/design/*.html`** — the interaction labs. Behaviour is verified
+   against these, and ported constants cite their line numbers.
+   - `motion-lab.html` — the recipe catalog (icon swap, press, copy→check).
+   - `popover-lab.html` — the container morph and the hover corridor.
+   - `mobile-lab.html` — the mobile scroll controller, Option B.
+   - `collection-lab.html` — the collection row rulebook.
+   - `wheel-prototype.html` — the wheel physics, variant `calm`.
+   - `motion-system-spec.md` — the seven motion principles, in prose.
+4. **`docs/design/reference/*.png`** — Figma exports. Screens are verified
+   against these.
 
-This design system documents how to apply the current portfolio landing experience consistently. It is a handoff and decision guide, not the source of exact token values. The source of truth for token values is `app/globals.css`, especially the Tailwind v4 `@theme inline` block and the `.dark` override. This document explains what those tokens mean, when to use them, and what patterns future agents should preserve.
+### The law: values ratified, behaviour editable
 
-The current source-of-truth surface is the landing page: `app/page.tsx`, `components/portfolio/*`, `app/layout.tsx`, and `app/globals.css`. Legacy routes, older docs, playground screens, and unused component experiments may be useful context, but they are not design authority unless this file explicitly promotes them.
+A **value** in `globals.css` — a colour, a radius, a shadow layer, a type step,
+a duration — is ratified. It does not change without a ruling from Ion. Only a
+crew whose brief explicitly grants `globals.css` may edit it; everyone else
+flags the need.
 
-The landing experience is light-first: the browser page is a soft gray app surface, and the primary framed portfolio shell is white. This creates a product-like workspace: calm background, clear work area, subtle dividers, and highly legible project evidence. Dark mode is structurally supported through semantic tokens, but light landing behavior is the validated baseline today.
+**Behaviour** is editable under review: how a surface moves, when a preview
+opens, which spring a control rides. The constants those behaviours use still
+come off the shelves (`lib/motion.ts`, `lib/morph-preview.ts`,
+`lib/wheel-engine.ts`), never out of a component.
 
-Mobile is under development. Preserve mobile functionality and accessibility, but do not infer final mobile visual rules from the current implementation. New mobile design decisions should be documented here after the mobile system is intentionally finalized.
+The practical rule: a raw `400` or a raw `#hex` inside a component is a bug.
+The shelves exist to stop it.
 
-**Source Of Truth Rules:**
-- Exact color, radius, shadow, typography, and motion token values live in `app/globals.css`.
-- `DESIGN.md` defines semantics, intent, constraints, and usage rules.
-- shadcn components should consume semantic Tailwind token classes such as `bg-background`, `text-foreground`, `bg-card`, `text-muted-foreground`, `border-border`, and project tokens such as `bg-bg-base`, `bg-bg-surface`, `text-text-secondary`.
-- When retheming shadcn, use shadcn-compatible semantic CSS variables plus Tailwind neutral scales. Do not hard-code one-off colors inside components when a token can express the role.
+### Provenance style
 
-## 2. Colors
+Ported constants carry their source in a comment — the lab file and line, the
+Figma node id, or the measurement that decided them. Aliases (`SPRING_PRESS =
+SPRING_CELL`) are kept as the *record of a decision*, not collapsed. When you
+port a number, port the reason with it.
 
-The palette is neutral and architectural: gray page chrome, white content panels, restrained borders, and one accent lane that is currently provisional.
+---
 
-### Primary
+## 2. Tokens
 
-- **Panel Base** (`--color-bg-base`, currently `#ffffff` in light mode): the primary content shell and identity panel surface. Use for the landing card/panel itself, not for the outer page.
-- **Text Primary** (`--color-text-primary`, currently `#171717` in light mode): headings, project names, selected labels, and high-emphasis interface text.
+Values: `app/globals.css`. Semantics: `docs/design/token-contract.md`.
+Specimen page: `/dev` (`app/dev/page.tsx`) renders every step in both themes.
 
-### Secondary
+| Family | Shape | Owner |
+|---|---|---|
+| Colour | shadcn **stone** ramp — the 19 standard semantic roles, plus 7 project roles | globals.css §2 (light), §3 (dark) |
+| Radius | one knob `--radius`, 8 derived steps (`sm`…`4xl`, `full`) | globals.css §2, §4 |
+| Shadow | 4 elevation steps: subtle / raised / overlay / modal | globals.css §2, §3 |
+| Type | 7 steps, Aeonik Pro | globals.css §4 |
+| Motion | 2 easings, 3 durations, 2 stagger units, 2 blur garnishes | globals.css §2 |
+| Spacing | **no tokens** — Tailwind defaults, canonical subset is a convention | token-contract.md 3.8 |
+| Icons | system facts, not CSS | `lib/icons.ts`, token-contract.md 3.9 |
 
-- **App Surface** (`--color-bg-surface`, currently `#f5f5f5` in light mode): the page background behind the landing shell. This is the gray visible outside the white card in the landing screenshot. It is correct and should remain a neutral surface role, not an error.
-- **Elevated Neutral** (`--color-bg-elevated`, currently `#f5f5f5` in light mode): active rows, hover zones, and quiet grouped affordances inside the white shell.
-- **Border Subtle / Default / Strong** (`--color-border-subtle`, `--color-border-default`, `--color-border-strong`): dividers, shell rings, field borders, resize rails, and focus-adjacent structure.
+**Colour.** There is no brand accent. `--accent` is stone-100 (light) /
+stone-800 (dark) — neutral by ruling. The 7 project roles beyond shadcn's 19
+are `--primary-hover`, `--secondary-hover`, `--ghost-hover`,
+`--primary-foreground-muted`, `--status-available`, `--scrim`,
+`--kbd-foreground`. Asset colour — the Ledgy purple in `project-icon.tsx`, the
+filled GitHub/X/LinkedIn glyphs — is deliberately *not* a token and is not
+expected in globals.css.
 
-### Tertiary
+**Radius.** Every step is `calc(var(--radius) * n)`. Concentric radii inside a
+token step (a 32px avatar at 10px inside a 15px chip, a 24px icon at 8px inside
+a 12px row) stay raw on purpose: writing them as tokens breaks the concentric
+relationship. Those raw values are documented at their call sites.
 
-- **Accent Provisional** (`--color-accent`, currently `#ff9f6a`): this token exists in code but is not accepted as the final brand accent. Until corrected, do not expand its use, build new accent-heavy patterns, or document it as the finished brand color. Use it only where the current code already requires an accent role, such as focus rings or legacy accent badges.
-- **Status Colors** (`--color-success`, `--color-warning`, `--color-destructive`): semantic status only. Avoid raw `emerald-*`, `amber-*`, or `red-*` classes in new handoff-quality components.
+**Shadow.** Each step is five layers: four black shadow layers on a
+`y > blur` layered-smooth formula, plus a constant 1px hairline ring. Dark mode
+keeps the four black layers and flips only the ring. Both the semantic names
+(`shadow-subtle` … `shadow-modal`) and Tailwind's own scale (`shadow-2xs` …
+`shadow-2xl`) resolve to the same four steps.
 
-### Neutral
+**Type.** Seven steps. Five ride Tailwind's own slots (`text-xs`, `text-sm`,
+`text-base`, `text-lg`, `text-2xl`); two are custom (`text-small` 13,
+`text-subhead` 15). Every step carries its own line-height, weight and
+letter-spacing, so a step is one class and never a stack of them. Aeonik Pro is
+loaded through `next/font/local` in `app/layout.tsx` — never re-declare
+`@font-face` in CSS.
 
-- **Text Secondary** (`--color-text-secondary`): body copy and explanatory text.
-- **Text Label** (`--color-text-label`): sidebar subtitles, lower-emphasis headings, and section labels.
-- **Text Tertiary** (`--color-text-tertiary`): metadata, placeholder-adjacent text, and quiet icons.
-- **Text Muted** (`--color-text-muted`): disabled, resize affordance, or lowest-emphasis UI only.
+**Motion tokens.** `--motion-spring` (overshoot: press, pop) and
+`--motion-glide` (strong decel: panels, reveals), re-exported as the
+`ease-spring` / `ease-glide` utilities. `--duration-fast` / `-base` / `-slow`.
+`--stagger-delay` (one row) and `--stagger-group` (half a unit, for groups).
+`--blur-garnish` and the deeper `--blur-icon` for the icon-swap recipe. The
+durations live in `:root` and not in `@theme` because Tailwind v4 has no
+`--duration-*` namespace and `@theme inline` prunes unreferenced variables.
 
-### Named Rules
+---
 
-**The Shell Rule.** The full browser canvas may be gray, but the landing portfolio shell should read as a white work surface with subtle borders and rounded corners.
+## 3. Motion
 
-**The Accent Pause Rule.** The current accent token is provisional. Agents should preserve existing uses but avoid inventing new accent-led UI until the accent is corrected in `app/globals.css`.
+Principles: `docs/design/motion-system-spec.md`. Constants: `lib/motion.ts`.
+Ruling of record: CLAUDE.md, 2026-08-18.
 
-**The Theme Rule.** Build light and dark from the same semantic classes. Avoid per-component raw `dark:` overrides unless maintaining an upstream shadcn primitive requires it.
+### The spring shelf — `lib/motion.ts`
 
-## 3. Typography
+Three families, lifted from interior.dev's snap-carousel registry payload
+(reference only; it never entered the build path):
 
-**Display Font:** Aeonik Pro with `system-ui, sans-serif` fallback  
-**Body Font:** Aeonik Pro with `system-ui, sans-serif` fallback  
-**Mono Font:** `var(--font-geist-mono)` where available
+- `SPRING_CELL` — the **readout** spring. Snaps and settles.
+- `SPRING_CROSSFADE` — the **content** spring. Slower, for text that swaps.
+- `SPRING_WALL` — recorded, currently unused. Nothing here rubber-bands.
 
-**Character:** Precise, compact, and product-native. Typography should feel like a high-trust interface, not a marketing poster.
+`SPRING_PRESS` and `SPRING_POP` are aliases of `SPRING_CELL`. The aliases exist
+so the *argument* for reusing it survives: a button press and a hover-preview
+card are both readouts — they answer a question and get out of the way — and
+CELL lands on the ratified duration ladder where CROSSFADE does not.
 
-### Hierarchy
+### The duration ladder, twice
 
-- **Display** (`.typo-display`, 300, 48px, 1.1): reserved for true hero or editorial moments. Avoid in dense rails and compact panels.
-- **Headline** (`.typo-h1`, 600, 36px, 1.2): page-level titles when a route needs a title hierarchy.
-- **Title** (`.typo-h2`, 500, 24px, 1.3): section headings and larger content group labels.
-- **Card Title** (`.typo-h3`, 500, 20px, 1.4): project cards, content cards, and medium-density modules.
-- **Body** (`.typo-body`, 400, 16px, 1.6): paragraphs and readable explanations. Cap long-form lines around 65 to 75 characters.
-- **Body Small** (`.typo-body-sm`, 400, 14px, 1.5): sidebar details, helper text, compact descriptions.
-- **Caption** (`.typo-caption`, 400, 12px, 1.4): metadata and low-emphasis notes.
-- **Label** (`.typo-label`, 500, 11px, uppercase, 0.08em tracking): sparse structural labels only.
+`globals.css` owns the ladder; `lib/motion.ts` mirrors it as `D_FAST`,
+`D_BASE`, `D_SLOW`. The duplication is deliberate: a custom property cannot be
+read synchronously, and `getComputedStyle` inside a rAF tick or a pointer
+handler forces an unbudgeted style recalculation. **Those three constants are
+the only place JS may spell those numbers.** Derived timings on the shelf —
+`SWAP_EXIT_MS` (95% of CELL's travel), `ENTRANCE_TEARDOWN` (`D_SLOW + 300`),
+`REDUCED_CROSSFADE` (seconds, for the motion package) — are written as
+expressions off the ladder, not as literals.
 
-### Named Rules
+### The rAF integrator vs the `motion` package
 
-**The Compact Confidence Rule.** On the landing view, use smaller interface-scale type and weight contrast instead of oversized hero type.
+The `motion` package is sanctioned for **micro-interactions only**, and only
+behind a *proven* split point: `LazyMotion` + `m.` components, `strict` on, and
+the feature bundle reached through a dynamic `import()`.
 
-**The One Lead Rule.** Do not let multiple large headings compete in the same viewport. The landing rail currently uses one strong statement and then quiet project structure.
+- `components/ui/motion-provider.tsx` — the only place the runtime is switched
+  on. `features` is a function, so the engine is fetched after hydration.
+- `components/ui/motion-features.ts` — `domAnimation` alone in its own module,
+  purely so the bundler has an edge to split on. **Import it statically from
+  anywhere and the guarantee is gone.**
+- `components/landing/mobile/mobile-indicator-lazy.tsx` — the one proven split
+  point on the site: `next/dynamic` behind a mobile gate, so the chunk never
+  reaches the desktop landing route.
 
-## 4. Elevation
+Everything else uses **`createSpring`** in `lib/motion.ts` — the same constants,
+our own integrator. Semi-implicit (symplectic) Euler on a fixed 1/240s
+sub-step, with a `SPRING_MAX_FRAME` ceiling that discards anything longer than
+four frames rather than integrating a gap. **Velocity is never reset on
+`set()`** — that is the whole point: a reversal carries its speed through
+instead of restarting from a standstill, which a CSS transition cannot do.
+`snap()` is the reduced-motion, first-paint and unmount-safe path.
 
-The system is mostly tonal and bordered, with shadow used sparingly to separate floating or framed surfaces. The primary light-mode landing effect is a white shell on a soft gray page, not heavy card depth.
+`useSpringStyle` returns a **callback ref**, writes `element.style` directly and
+re-renders nothing. The first target is always snapped: a control must not
+animate into existence on mount.
 
-### Shadow Vocabulary
+Measured cost of pulling `motion/react` into a desktop-critical route: ~41–43KB
+gzipped. The rAF path costs ~3KB gz at most. That is the whole reason the
+escape hatch exists.
 
-- **Card Shadow** (`--shadow-card`): subtle structural lift for the landing shell and identity panel. Use when a surface floats above page chrome or needs clear separation.
-- **Dark Shadows** (`--shadow-sm`, `--shadow-md`, `--shadow-lg`, `--shadow-xl`): legacy or dark-mode-capable shadow tokens. Do not apply these to light landing surfaces without checking the visual result.
-- **Glass Shadow** (`--shadow-glass`): reserved for floating UI only. Do not use glass styling on regular content cards.
+### The channel pattern
 
-### Named Rules
+A JS-driven visual is one JS-owned `0 → 1` number written to a custom property;
+every visual lane is derived from it in CSS. Lanes cannot then desynchronise
+from each other or from an interruption.
 
-**The Tonal First Rule.** Prefer background role, border, and spacing before adding shadow.
+| Channel | Owner | Reader |
+|---|---|---|
+| `--morph-p` | `lib/morph.ts` | `.palette-surface`, `.hover-pop` in globals.css §6 |
+| `--pop-p` (`POP_CHANNEL`) | `lib/motion.ts` spring | `.hover-pop-inner` |
+| `--swap-p` (`SWAP_CHANNEL`) | `lib/motion.ts` spring | `.icon-swap`, `.label-swap` |
 
-**The No Stacked Effects Rule.** Do not combine glass, glow, heavy shadow, and saturated accent on the same element.
+### The big vanilla systems
 
-## 5. Components
+These stay hand-written. Do not rewrite them onto the motion package.
 
-### Landing Shell
+- **⌘K zero-jump morph** — `components/landing/command-palette.tsx` on
+  `lib/morph.ts`. The identity chip *is* the palette: one surface, absolutely
+  positioned inside a slot that holds its place in flow, so growing it never
+  reflows the page. The avatar, name and keycap exist once and are placed once,
+  measured from the live DOM. A FLIP container on one rAF lerp with a JS bezier
+  solver (a CSS timing function cannot be sampled from script), 400ms
+  symmetric, no scrim. 400 and not the preview family's 200 because duration
+  scales with the distance the surface travels.
+- **Landing document-scroll wheel** — `components/landing/use-wheel.ts` with
+  `components/landing/media-column.tsx`. The panel stack *is* the input:
+  nothing is hijacked, no wheel listener, no `preventDefault`. Selection is read
+  off the document scroll.
+- **Section wheel** — `components/nav/section-rail.tsx` on
+  `lib/wheel-engine.ts`, which carries the shared physics (`WHEEL`, `LENS`,
+  `lensOpacity` / `lensTransform` / `lensBlur` / `lensFill`, `smoothstep`,
+  `documentTop`). Same physics as the home wheel by ruling.
+- **Hover-preview engine** — `lib/morph-preview.ts` (+ `lib/morph.ts`). One
+  container morphing anchor-to-anchor, an intent/grace pointer corridor, a
+  desktop gate, and a reduced-motion mode. Three consumers share it:
+  `components/collections/preview-popover.tsx`,
+  `components/landing/social-previews.tsx`,
+  `components/landing/ledgy-preview.tsx`.
+- **Hover token ladder** — plain CSS. Hover states **snap in (0ms) and ease out
+  (150ms)**, done by zeroing `transition-duration` on `:hover` so only the
+  out-transition reads from the base rule. `components/ui/button.tsx` refines
+  this: the duration is a four-value list matched 1:1 to the property list, so
+  the colour lanes snap while `scale` keeps its spring in both directions.
 
-- **Shape:** large rounded shell, currently `rounded-3xl`, with clipped overflow.
-- **Background:** `bg-bg-base` inside the shell, with `bg-bg-surface` on the body behind it.
-- **Border / Ring:** subtle one-pixel framing. Use border/ring values from global tokens.
-- **Behavior:** the shell is an app workspace, not a decorative card grid. It frames navigation, project list, and project media.
+### Reduced motion
 
-### Project Rows
+`globals.css` §8 collapses every CSS animation and transition to `0.01ms`.
+JS-driven motion must make the same promise itself — call
+`prefersReducedMotion()` and `snap()`. Read it per `set`, never cache it: the
+OS setting can change while the page is open.
 
-- **Shape:** compact rounded rows, usually `rounded-xl`.
-- **Default:** transparent on white shell.
-- **Active / Hover:** use `bg-bg-elevated` or a low-opacity elevated token, not a colored accent.
-- **Typography:** project title uses primary text and medium/semibold weight; subtitle and year use label/secondary text.
-- **Icon:** project-specific icon backgrounds can come from project metadata, but they should not redefine the system accent.
+---
 
-### Identity Panel
+## 4. Component inventory
 
-- **Closed State:** avatar, name, and chevron in a compact pill-like trigger.
-- **Open State:** expands into a white panel with subtle border, shadow, form field, and quick links.
-- **Motion:** expansion uses width, height, opacity, blur, and translate. The blur is intentional here as a state transition, not as decorative glass.
-- **Focus:** use semantic focus rings and keep keyboard escape behavior.
+### `components/ui/` — primitives
 
-### Command Palette (⌘K Morph)
+| File | What |
+|---|---|
+| `button.tsx` | The button primitive. CVA variants, the hover-snap duration list, `active:scale-[0.97]` as the no-JS fallback. |
+| `sheet.tsx` | Radix Dialog restyled onto the tokens (the shipped shadcn file's raw values are all gone). The mobile menu's bottom sheet. |
+| `kbd.tsx` | Inline keycap. `muted` fill, `kbd-foreground` label, `rounded-sm`. |
+| `icon-swap.tsx` | The catalog's icon-swap recipe as one element: two glyphs stacked, scale .6↔1 + blur crossfade, driven off `--swap-p`. |
+| `press-spring.tsx` | Puts a control's press and release on `SPRING_PRESS` via `createSpring`. |
+| `text-effect.tsx` | The hero resolving out of blur, unit by unit. A rebuild of motion-primitives' `TextEffect`, not an import — the original pulls `motion/react` onto `/`. |
+| `motion-provider.tsx` | `LazyMotion`, strict, features-as-function. |
+| `motion-features.ts` | `domAnimation`, isolated so it splits. |
 
-Ratified in POR-32; behaviour law is `docs/design/popover-lab.html` demo 1, geometry law is Figma 13:2673.
+### `components/landing/`
 
-- **One Surface:** the identity chip IS the palette. It is not a chip that opens a panel; it is a container that grows from 171x42 into 382x621 and back. There is no scrim — the page stays visible, and clicking it dismisses.
-- **Zero Jump:** avatar, name, and keycap are measured once from the live flex layout and then frozen. They must not move by a pixel when the panel opens. The keycap is the one exception and it travels on x only, to the panel's right edge, crossfading ⌘K into `esc`.
-- **Radius:** static at 15 in both states. It never animates — chip and panel share the `lg` step.
-- **Timing:** 200ms in, 150ms out, both on `--ease-glide`, driven by a rAF lerp (`lib/morph.ts`) because the keycap has to ride the container's own clock. Content enters as groups: fade + 4px rise + 2px blur, `--stagger-group` (25ms) apart.
-- **Reduced Motion:** the container snaps; content crossfades over 150ms with no travel and no blur. This is the one documented exception to the blanket transition kill in globals.css section 8.
-- **Desktop Only:** gated on `(hover: hover) and (pointer: fine)`. On touch the component renders the static chip and attaches nothing; mobile ships its own menu.
-- **Sound:** the commit tick fires on Copy email and nowhere else. Never on open.
+Desktop rail and media column, plus the shared data.
 
-### Buttons
+- `command-palette.tsx` — the ⌘K morph palette (see §3). Hover opens it on the
+  preview family's own corridor. The lean panel: no search row, no group
+  caption rows, no footer hint bar.
+- `palette-items.tsx` — the palette's rows, in Figma order.
+- `identity-chip.tsx` — **frozen geometry.** The morph grows out of this chip,
+  so its internal offsets cannot move.
+- `intro.tsx` — headline, subline, actions row.
+- `intro-reveal.tsx` — the landing's entrance choreography (`Reveal`,
+  `useIntroReveal`, `INTRO_DELAY`, `INTRO_ROW_STEP`). Groups: chip 0 → hero 50
+  → actions 100 → rows 150 (+25 each) → media 250, finished inside 400ms.
+- `project-list.tsx` / `project-icon.tsx` — the rail's rows and their marks.
+  Hover is a *layer*, not the row: the row's own opacity and transform are
+  written per frame by the wheel and must not be caught by a transition.
+- `media-column.tsx` — the panel stack the document scrolls through.
+- `use-wheel.ts` — the wheel physics controller.
+- `active-project.tsx` — the shared selection index, in a provider because the
+  list and the panels live in different columns.
+- `social-previews.tsx`, `ledgy-preview.tsx`, `socials.ts`, `brand-glyphs.tsx`
+  — the social cluster and its hover previews. Brand glyphs are filled marks,
+  deliberately outside `lib/icons.ts`.
+- `theme-segment.tsx`, `sound-segment.tsx` — the Preferences controls. Siblings,
+  not a shared generic: `ThemeSegment` closes over its own options, value type,
+  track width and label, and it is ratified. The *language* is reused.
 
-- **shadcn Base:** use `Button` for standard actions and keep shadcn composition patterns.
-- **Theme Direction:** variants should move toward semantic token classes. New work should prefer `bg-primary text-primary-foreground`, `border-border`, `bg-secondary text-secondary-foreground`, and `text-muted-foreground`.
-- **Do Not:** add new raw `bg-white`, `text-black`, `text-white`, or dark-only glass variants unless the component is explicitly scoped to a dark surface.
-- **Icons:** use the project's lucide icon library and let component styles control icon sizing unless the local component already has a documented exception.
+### `components/landing/mobile/`
 
-### Cards / Containers
+- `mobile-landing.tsx` — the whole mobile tree: sticky top bar, the absent-at-
+  rest indicator, hero, one card per project, footer. **The cards are the page.**
+- `use-mobile-scroll.ts` — the controller. Native scroll is the only input
+  (Option B, "scroll as control"). `ACTIVE_LINE` 0.40 matches the desktop wheel.
+- `mobile-indicator.tsx` / `mobile-indicator-lazy.tsx` — the sticky indicator
+  and its code split. The bar's own arrive/leave stays in CSS; the three moving
+  parts inside it ride the Motion springs.
+- `progress-channel.ts` — a ref mailbox between the controller and the split
+  indicator, so progress can be published before its consumer exists.
+- `mobile-menu.tsx` — the bottom-sheet menu.
 
-- **Default:** white or semantic base on the landing page; subtle borders; moderate radius.
-- **Nested Cards:** avoid. Use layout, dividers, or tonal rows instead.
-- **Interactive Cards:** use hover through border, background, opacity, or overlay, not large jumps or colored borders.
-- **Media Cards:** project hero cards use image surfaces with rounded corners and overlay metadata. The overlay may use black translucency over media only.
+### `components/collections/`
 
-### Badges
+- `collection-shell.tsx` — the chassis. `RailShell` plus the collections' one
+  difference from the letter: a 16px narrow-screen gutter, not 24.
+- `collection-list.tsx` — the 640 column: title block, grouped rows, footer
+  caption. Exports `CollectionList` and `ArticleList`.
+- `collection-row.tsx` — the row (see §5). Exports `CollectionRow` and
+  `ArticleRow`.
+- `preview-popover.tsx` — the hover preview's collection-specific faces on the
+  shared engine.
+- `install-chip.tsx` — the one place a row holds a click target that is not the
+  row. Those rows have no `href`, and the chip stops the click.
 
-- **Accent Badge:** allowed only where a semantic accent role already exists. The accent color is provisional.
-- **Status Badges:** should map to semantic status tokens rather than raw Tailwind color classes in new work.
-- **Shape:** rounded-full, compact, low emphasis.
+### `components/nav/`
 
-### Rails And Panels
+- `rail-shell.tsx` — one grid, four pages (letter + three collections).
+- `section-rail.tsx` — the back button and the conditional section wheel.
 
-- **Resizable Rail:** preserve keyboard resizing, visible affordance on hover/focus, and semantic borders.
-- **Detail Panel:** should feel like part of the workspace, not a modal. Use inline progressive disclosure before overlays.
-- **Mobile:** under development. Do not use current mobile layout as final design authority yet.
+### `components/letter/`
 
-### Navigation
+- `prose.tsx` — the reading column's renderers (`TitleBlock`, `Section`,
+  `Photo`, `PhotoRow`, `Footnote`, `Signature`). Server Components. Every type
+  step maps onto the contract; there is not one arbitrary font size in it.
 
-- **Desktop:** identity on left, social links on right, quiet top chrome.
-- **Sidebar / Rail:** project list and section structure should be scannable, with active state carried by neutral background and type emphasis.
-- **Mobile:** considered provisional. Keep touch targets accessible, but final mobile patterns need a future design pass.
+### `lib/`
 
-### Motion
+| File | What |
+|---|---|
+| `motion.ts` | The spring shelf, the JS duration ladder, `createSpring`, `useSpringStyle`. |
+| `morph.ts` | The container FLIP engine + the JS cubic-bezier solver + `GLIDE`. |
+| `morph-preview.ts` | The hover-preview engine: media gate, placement solver, hover corridor, morph controller. |
+| `wheel-engine.ts` | Wheel physics shared by both wheels. |
+| `utils.ts` | `cn`, with the custom token groups registered on tailwind-merge (see §6). |
+| `icons.ts` | The lucide barrel and the icon convention. |
+| `theme.ts` | Hand-rolled light/dark/system. No `next-themes`. Exports the blocking `THEME_INIT_SCRIPT`. |
+| `sound.ts` | One synthesised tick, no assets. Commit actions only, desktop only, optional. |
+| `use-copy.ts` | Clipboard + the tick's only call site. |
+| `projects.ts`, `articles.ts`, `article-slug.ts`, `types.ts` | Data and the file-based article index (server only). |
 
-- **Core Easing:** use the motion tokens from `app/globals.css`. Favor ease-out curves for entering, revealing, and state resolution.
-- **Durations:** quick UI feedback around 100 to 200ms, panel transitions around 300ms, entrance/reveal around 400ms.
-- **Blur:** allowed for identity panel and tooltip-like state transitions where it clarifies reveal or dismissal. Avoid blurred content cards or default glassmorphism.
-- **Motion Library:** `motion/react` is acceptable for state transitions like panel expansion, crossfades, and detail entry.
-- **Reduced Motion:** new motion must degrade through `prefers-reduced-motion` and must not hide essential information.
+### shadcn policy
 
-## 6. Do's and Don'ts
+`components.json` is configured (`new-york`, RSC, lucide). Its `baseColor` is
+still `zinc` while the ratified palette is **stone**, so a fresh pull's
+generated CSS variables will not match — take the component, drop the
+variables. Extend primitives
+through semantic tokens and variants; do not fork `components/ui/` upstream
+files beyond retheming. Most shadcn primitives were **deleted** in the rebuild —
+if you need one back, re-pull it with `bunx shadcn@latest add [name]` and
+retheme it onto the tokens rather than writing it by hand. Expect a fresh pull
+to arrive with raw values (`bg-black/50`, hardcoded durations, `border-t`);
+`sheet.tsx` is the worked example of what converting one looks like.
 
-### Do:
+---
 
-- **Do** treat `app/globals.css` as the exact token source and `DESIGN.md` as the semantic usage guide.
-- **Do** preserve the current background relationship: gray app surface behind a white landing shell.
-- **Do** use shadcn-compatible semantic variables and Tailwind neutral scales when correcting component themes.
-- **Do** keep components light/dark capable by using semantic classes rather than raw color utilities.
-- **Do** mark mobile decisions as provisional until the mobile system is intentionally designed.
-- **Do** use blur sparingly for state transitions, especially identity panel and tooltip reveals.
-- **Do** keep project rows and rails compact, scannable, and neutral.
+## 5. Page anatomy
 
-### Don't:
+### Routes
 
-- **Don't** treat older docs, playground pages, or non-landing routes as source of truth over the current landing code.
-- **Don't** treat the current `--color-accent` value as final brand direction.
-- **Don't** create new accent-heavy UI until the accent token is corrected in `app/globals.css`.
-- **Don't** hard-code raw whites, blacks, or status colors in new shadcn variants when semantic tokens exist.
-- **Don't** use glassmorphism for content cards. Reserve glass-like treatments for floating UI only.
-- **Don't** stack glow, blur, heavy shadow, and accent on one element.
-- **Don't** infer final mobile design rules from the current mobile implementation.
+| Route | File | Notes |
+|---|---|---|
+| `/` | `app/page.tsx` | Landing. Desktop rail + media column; mobile tree below `lg`. |
+| `/letter` | `app/letter/page.tsx` | The letter. |
+| `/stack` | `app/stack/page.tsx` | Collection flavour 1 — tools, site previews. |
+| `/agents` | `app/agents/page.tsx` | Collection flavour 2 — adds credit line, "How I use it", install chip. |
+| `/articles` | `app/articles/page.tsx` | Collection flavour 3 — iconless rows, wheel of years. |
+| `/articles/[slug]` | `app/articles/[slug]/page.tsx` | Article detail. The letter's chassis with one word changed. |
+| `/dev` | `app/dev/page.tsx` | **Dev-only specimen. `noindex`, unlinked, delete before cutover.** |
+
+`app/layout.tsx` loads Aeonik through `next/font/local`, inlines the blocking
+theme script (`suppressHydrationWarning` on `<html>` is deliberate and covers
+exactly that one attribute), sets `metadataBase` to `https://ionmesca.com`, and
+mounts Vercel Analytics + Speed Insights.
+
+`app/template.tsx` adds `.page-enter` and removes it after
+`ENTRANCE_TEARDOWN`. It is a **template and not a layout** because a layout's
+DOM is reused across navigations and an entrance written there plays once. The
+re-creation *is* the replay mechanism — there is no "have I played?" flag. The
+landing is exempt and gets no wrapper at all: it has its own choreography
+(`intro-reveal.tsx`), and its sticky rail and measured media column should not
+have to reason about an extra element.
+
+### Landing
+
+Flat `background`; there is no shell or chassis behind it. At 1512 the frame
+reads 164 gutter / 263 rail / 48 gap / right column / 24 gutter, top offset 136.
+**The page scrolls and the rail does not.** The right column stacks two media
+panels per project, so the document is long and the rail's selection is read off
+the column's position — one project per pair of panels.
+
+### Letter, collections, article detail — `RailShell`
+
+One grid, four pages. At 1512: `164 │ 272 rail │ 640 reading │ 272 tail │ 164`.
+The tail is empty; it is what keeps the reading column centred.
+
+Above 1024 there is **one fluid range and no steps** — only whitespace moves:
+
+```
+left gutter = clamp(32px, (100vw − 912px) × 164 / 600, 164px)
+```
+
+912 is the fixed structure (272 rail + 640 text); 600 is the frame's slack;
+164/600 is the left gutter's share of it. The right gutter uses the same
+expression and the tail is `1fr`. **The reading column never gives** — it is 640
+at every width. Below `lg` the grid collapses to one column, the wheel hides,
+and the back button stays.
+
+### The conditional wheel
+
+`SectionRail` renders a destination-labelled back button (letter and
+collections → Home; an article → its index) and, when it qualifies, the section
+wheel.
+
+The wheel qualifies only if the reading column is at least `WHEEL_MIN_RATIO`
+(1.5) viewports tall. It is in the DOM from the server render and stays in
+flow; only `opacity` changes, and the measurement runs in a **layout** effect so
+a qualifying page never paints a frame in the wrong state. A wheel that has not
+qualified is `inert` and `aria-hidden` — dropped in every sense a reader can
+perceive — but keeps its 200px of rail column so the geometry cannot move.
+
+### Row signatures
+
+- **Collection row** — h48, radius `md`, pad-x 12, gap 12. Icon 20 (raw r6),
+  name at `text-subhead`, one-liner at `text-base` muted and **truncating**,
+  ↗ 16 muted at the far right. One line per item is a rule: a collection row
+  never wraps and never grows. Everything else lives in the preview.
+- **Article row** — the iconless flavour: title + date, grouped by year, with an
+  excerpt-card preview.
+- **Install chip** — pad 4/8, gap 6, `muted` fill, 1px `border`, `rounded-sm`.
+  On Ion's own skills only.
+- **Project row (landing)** — 24px mark at a raw concentric r8; the year renders
+  only on the active row. Hover is ignored on the active row *physically*: the
+  active fill is an opaque `muted` rectangle painted over the hover tint.
+
+### Hover previews
+
+Desktop pointer only, by ruling — there is no hover to intend with on touch, and
+the media query also excludes narrow desktop windows where the card has nowhere
+to go. The corridor is `INTENT` in / `GRACE` out; placement respects `GAP` and
+`EDGE`; the anchor-to-anchor morph runs on `MORPH_MS`. All of those are
+`lib/morph-preview.ts` constants, all carried from `popover-lab.html`.
+
+### Content
+
+`content/letter.ts`, `content/collections.ts`, `lib/projects.ts` are
+**placeholder copy transcribed verbatim from the Figma frames.** Do not
+"improve" it — Ion curates the real lists after the build. `content/articles/
+*.mdx` is live: one file per slug, three frontmatter fields (`title`, quoted
+`date`, `summary`), indexed at build time by `lib/articles.ts` and rendered
+through `mdx-components.tsx` onto the letter's prose steps. `next.config.ts`
+wires `@next/mdx` with `remark-frontmatter` only; articles are *imported*, not
+routes, so `pageExtensions` is deliberately not extended.
+
+`content/work/*.mdx` is pre-rebuild case-study content with **no route and no
+importer**. Treat it as historical until a `/work` surface is ruled.
+
+---
+
+## 6. Working culture
+
+### Verification is right-sized
+
+This is a portfolio, not production. Verify what a visitor sees and feels:
+build, lint, screenshots or frame strips of the surface you touched, plus
+whatever single suite your brief names. No new test ceremony, no byte-identity
+proofs, no deep a11y sweeps. No shortcuts on anything visible.
+
+### Trap: the class-drop teardown
+
+An entrance holds a `backwards` fill so late groups stay hidden through their
+delay — and **a filling animation keeps its element a stacking context for as
+long as it is applied.** A stacked project row paints over the open ⌘K panel; a
+stacked reading column paints over the collections' hover previews. So the
+animation classes come off once the show is over, at `ENTRANCE_TEARDOWN`. The
+final frame is the settled page, so the drop is invisible.
+
+That constant lives in `lib/motion.ts` and not next to either choreography, for
+bytes: `app/template.tsx` is loaded by every route, and importing the constant
+from `intro-reveal.tsx` dragged `cn` (clsx + tailwind-merge, ~8.6KB gz) onto
+routes with no client JavaScript at all. A shared constant belongs in the leaf
+both sides can reach.
+
+### Trap: tailwind-merge and custom tokens
+
+tailwind-merge classifies a bare class **by name**, and its guess for `x-word`
+is usually "that is a colour" — which files the class in the wrong conflict
+group, so merging silently keeps both. This has been paid for twice:
+
+- `text-small` / `text-subhead` were read as text *colours*, so
+  `cn("text-small", "text-kbd-foreground")` dropped the colour.
+- The four elevation steps were read as shadow *colours*, so `shadow-none` — a
+  shadow *size* — did not override them.
+
+Both are fixed at the root in `lib/utils.ts`, which registers the custom groups
+on `extendTailwindMerge`. **Any new custom token namespace must be registered
+there**, or the trap re-springs in a new component.
+
+### Trap: rAF under headless capture
+
+The rAF clock stops when the page is not being rendered, and a headless capture
+that reaches beyond the viewport fires a resize — either one snaps a morph
+mid-flight and produces a frame that never happens in a real browser. Take
+**viewport-only** captures. `createSpring`'s `SPRING_MAX_FRAME` guards the same
+hazard from the other side: a tab that comes back after two seconds must not
+integrate a two-second step.
+
+### Trap: the motion bundle
+
+Importing `motion/react` into a desktop-critical route costs ~41–43KB gz —
+measured twice. `components/ui/motion-features.ts` is the only edge in the graph
+that pulls the animation engine, and it is reached by dynamic `import()`. A
+single static import of that module silently un-splits the bundle. If you add a
+Motion consumer, prove the split point and report the first-load JS delta.
+
+### Local rules
+
+- `bun`, always. Work on `rebuild/v2`.
+- Never touch `main` or another worktree. Never bind port 3000 — that is the
+  live dev server. Verify against your own throwaway server on a throwaway port.
+- Parallel crews share this worktree with disjoint file surfaces. On an
+  `index.lock` failure, wait and retry. Never `rm -rf .next`.
