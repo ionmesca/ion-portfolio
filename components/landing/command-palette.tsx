@@ -6,6 +6,7 @@ import Link from "next/link"
 import { IconSwap } from "@/components/ui/icon-swap"
 import { Kbd } from "@/components/ui/kbd"
 import { Check, Copy, ICON_STROKE, Sun } from "@/lib/icons"
+import { D_SLOW } from "@/lib/motion"
 import { createMorph, type Morph, type MorphRect } from "@/lib/morph"
 import { useHoverCorridor } from "@/lib/morph-preview"
 import { useCopyToClipboard } from "@/lib/use-copy"
@@ -130,9 +131,14 @@ const MIN_PANEL_H = 240
  *
  * A long close is only tolerable because the engine retargets: pressing ⌘K
  * during a close does not wait for it, it turns it around from where it is.
+ *
+ * BOTH RUNGS ARE `D_SLOW` (lib/motion.ts), which is the JS mirror of
+ * `--duration-slow`. Two names for one number, and they stay two names because
+ * the open clock and the close clock are separate rulings that happen to agree
+ * — the symmetry is the decision, not an accident to be collapsed.
  */
-const D_BASE = 400
-const D_FAST = 400
+const OPEN_MS = D_SLOW
+const CLOSE_MS = D_SLOW
 
 const OPTION_DOM_ID = (id: string) => `palette-option-${id}`
 
@@ -454,7 +460,7 @@ export function CommandPalette() {
       pinnedRef.current = pin
       setOpen(true)
       measureFace()
-      morphRef.current.move(openRect(), reduced() ? 0 : D_BASE)
+      morphRef.current.move(openRect(), reduced() ? 0 : OPEN_MS)
       // The trigger is about to become inert; drop its focus ring NOW rather
       // than letting it stay painted until the list takes focus a frame later.
       // It is a 42px black rounded rect sitting inside the growing panel, and
@@ -480,7 +486,7 @@ export function CommandPalette() {
     openRef.current = false
     pinnedRef.current = false
     setOpen(false)
-    morphRef.current.move(closedRect(), reduced() ? 0 : D_FAST)
+    morphRef.current.move(closedRect(), reduced() ? 0 : CLOSE_MS)
     // Only take focus back if we still hold it. A hover-close is not a
     // keyboard event and must not move the caret out of wherever the reader
     // actually is; an Escape close is, and has to hand the ring back to the

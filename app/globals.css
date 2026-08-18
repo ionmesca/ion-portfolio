@@ -826,30 +826,48 @@
     pointer-events: auto;
   }
 
+  /* THE SURFACE'S ENTRANCE IS A SPRING (Ion, 2026-08-18).
+
+     It was a 200ms-in / 150ms-out glide on `opacity` and `transform`. Crossing
+     the social row fast — enter, leave, enter — restarted that curve from a
+     standstill on each reversal, so the card stuttered instead of turning
+     around. `--pop-p` is a JS-owned 0→1 channel written per frame by
+     SPRING_POP (lib/motion.ts) onto this surface, and every lane below is
+     derived from it. Same trick as `--swap-p` above and the morph's
+     `--morph-p`, for the same reason: one clock, so the lanes cannot
+     desynchronise and an interruption CARRIES its velocity.
+
+     The recipe itself is unchanged — scale .98 → 1, a 4px rise, a fade. Only
+     its clock moved.
+
+     DIRECTION-SYMMETRIC, deliberately. A spring has one set of constants and
+     runs the same physics whichever way it is pointed, so the family's usual
+     "out is faster than in" split is gone here. That was the point: the
+     asymmetry is what made a reversal look like two different animations
+     fighting.
+
+     ONLY THE SURFACE. The container's rect — the anchor-to-anchor morph — is
+     still `lib/morph.ts`, untouched.
+
+     No `transition` on purpose: a transition on top of a per-frame write would
+     be a second clock chasing the first. The 0 fallback is the closed state,
+     so a container whose driver has not attached yet is invisible rather than
+     half-drawn. */
   .hover-pop-inner {
+    --p: var(--pop-p, 0);
     position: absolute;
     inset: 0;
     overflow: hidden;
     border-radius: var(--radius-lg);
     background-color: var(--color-popover);
     box-shadow: var(--shadow-overlay);
-    opacity: 0;
-    transform: scale(0.98) translateY(4px);
+    opacity: var(--p);
+    transform: scale(calc(0.98 + 0.02 * var(--p)))
+      translateY(calc(4px * (1 - var(--p))));
     transform-origin: 50% 100%;
-    transition:
-      opacity var(--duration-base) var(--ease-glide),
-      transform var(--duration-base) var(--ease-glide);
+    transition-property: none;
   }
 
-  .hover-pop[data-open="true"] .hover-pop-inner {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-  }
-
-  /* Out is faster than in — the popover family's rule everywhere. */
-  .hover-pop[data-open="false"] .hover-pop-inner {
-    transition-duration: var(--duration-fast);
-  }
 
   .hover-pop-face {
     position: absolute;
@@ -889,8 +907,19 @@
       filter: none !important;
     }
 
+    /* The surface's spring SNAPS under reduced motion (lib/motion.ts reads the
+       media query on every `set`), so `--pop-p` would cut 0→1 with no frames
+       in between and the derived opacity above would cut with it. Here the
+       fade is driven off `data-open` instead — a discrete attribute flip is
+       the one input a CSS transition is guaranteed to animate — which is the
+       same carve-out `.icon-swap` takes in section 6. */
     .hover-pop-inner {
       transform: none !important;
+      opacity: 0 !important;
+    }
+
+    .hover-pop[data-open="true"] .hover-pop-inner {
+      opacity: 1 !important;
     }
   }
 

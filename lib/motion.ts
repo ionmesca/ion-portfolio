@@ -86,18 +86,97 @@ export const SPRING_WALL = {
  */
 export const SPRING_PRESS = SPRING_CELL
 
+/**
+ * The hover-preview card's entrance and exit spring.
+ *
+ * IT IS `SPRING_CROSSFADE`, NOT A NEW FAMILY, and — like `SPRING_PRESS` above
+ * — the alias is the record of the decision rather than a shortcut.
+ *
+ * Ion ruled on 2026-08-18 that the preview family's INNER SURFACE moves onto
+ * the spring shelf. The surface animates scale and opacity together (0.98 → 1
+ * plus a 4px rise plus a fade). That is exactly the channel interior.dev puts
+ * on CROSSFADE — "its slide scale/opacity", the CONTENT half of the carousel's
+ * two-part split, as opposed to the READOUT half CELL drives. A preview card
+ * is content: it is the thing being shown, not the control reporting a state.
+ * So it takes the content family, unchanged.
+ *
+ *   ω      = √(k/m)     = √(260 / 0.8)  = 18.0 rad/s
+ *   c_crit = 2√(km)     = 2√(260 × 0.8) = 28.8
+ *   ζ      = c / c_crit = 34 / 28.8     = 1.18
+ *
+ * ζ above 1 is overdamped: the card never overshoots its resting size, which
+ * matters because this surface carries readable text and a logo. A card that
+ * grew past 100% and settled back would read as a wobble.
+ *
+ * WHAT THE SPRING BUYS OVER THE 200ms GLIDE IT REPLACES is the same thing it
+ * bought the button press: the interruption. Crossing a row of social icons
+ * fast — enter, leave, enter — used to restart the CSS curve from a standstill
+ * on each reversal, so the card stuttered rather than turned around. The
+ * integrator below never resets velocity on `set`, so the surface carries its
+ * speed through every reversal.
+ *
+ * ONLY THE SURFACE. The container's anchor-to-anchor rect morph stays on
+ * `lib/morph-preview.ts` / `lib/morph.ts` exactly as ratified — CLAUDE.md
+ * keeps that system vanilla, and this ruling did not touch it.
+ */
+export const SPRING_POP = SPRING_CROSSFADE
+
+/** The channel `.hover-pop-inner` reads. Same trick as `--swap-p` and the
+ *  morph's `--morph-p`: one JS-owned 0→1 number, every visual lane derived
+ *  from it in CSS, so the lanes cannot desynchronise from each other or from
+ *  an interruption. See the `.hover-pop-inner` block in app/globals.css. */
+export const POP_CHANNEL = "--pop-p"
+
 /** The pressed scale. Matches `active:scale-[0.97]` in components/ui/button.tsx,
  *  which stays in the markup as the no-JS fallback and must not disagree with
  *  the spring about where "pressed" is. */
 export const PRESS_SCALE = 0.97
+
+/* ============================================================================
+   THE DURATION LADDER, IN JAVASCRIPT.
+
+   `app/globals.css` owns the ratified ladder as custom properties:
+
+     --duration-fast   150ms   colour, opacity, hover feedback
+     --duration-base   200ms   size, transform, panel state
+     --duration-slow   400ms   entrances, scroll reveals
+
+   THESE ARE THE SAME THREE RUNGS, SPELLED FOR JS, AND THEY EXIST BECAUSE A
+   CUSTOM PROPERTY CANNOT BE READ SYNCHRONOUSLY. `getComputedStyle` is a layout
+   read: calling it inside a rAF tick or a pointer handler — which is where
+   every one of these numbers is needed — forces a style recalculation the
+   frame did not budget for, and on a cold first open there may be no attached
+   element to read it off at all. So the ladder is duplicated here rather than
+   derived, and the duplication is deliberate.
+
+   THE RULE FOR KEEPING THEM IN STEP: globals.css is the source of truth. These
+   are its mirror, and the three numbers below are the ONLY place JS is allowed
+   to spell them. A raw `400` in a component is what this shelf exists to stop.
+
+   Values are in MILLISECONDS, because every consumer is a `setTimeout`, a
+   `Morph.move()` or a rAF ramp. The one exception is `REDUCED_CROSSFADE`
+   below, which is handed to `motion/react` and therefore has to be seconds —
+   it divides, so there is still only one 150 on this shelf.
+   ========================================================================== */
+
+/** ms. `--duration-fast`. Colour, opacity, hover feedback. */
+export const D_FAST = 150
+/** ms. `--duration-base`. Size, transform, panel state. */
+export const D_BASE = 200
+/** ms. `--duration-slow`. Entrances, scroll reveals. */
+export const D_SLOW = 400
 
 /**
  * The reduced-motion transition. Section 8 of globals.css collapses every CSS
  * transition on the page to 0.01ms; JS-driven motion has to make the same
  * promise itself. The ratified carve-out for a state swap is a 150ms opacity
  * crossfade in place — `--duration-fast`, no travel, no blur, no spring.
+ *
+ * SECONDS, not ms: this object is handed straight to `motion/react`. It is the
+ * one place the ladder is divided rather than read, so `D_FAST` stays the only
+ * spelling of 150 on the shelf.
  */
-export const REDUCED_CROSSFADE = { duration: 0.15, ease: "linear" } as const
+export const REDUCED_CROSSFADE = { duration: D_FAST / 1000, ease: "linear" } as const
 
 /** Travel for a label swap, in px. See mobile-indicator.tsx for why it is 6. */
 export const SWAP_TRAVEL = 6
@@ -118,6 +197,8 @@ export const SWAP_BLUR = 2
  *
  * The number is the ceiling plus slack: every entrance on this site ends at
  * `--duration-slow` (400ms), and 300ms of slack covers a busy main thread.
+ * Written as that sum rather than as `700`, so the sentence above and the
+ * expression below cannot drift apart.
  *
  * IT LIVES HERE, not next to either choreography, for a reason that is about
  * BYTES and not about tidiness. `app/template.tsx` is the one client component
@@ -127,7 +208,7 @@ export const SWAP_BLUR = 2
  * Measured, not assumed. A shared constant belongs in the leaf both sides can
  * reach, and the motion shelf is that leaf.
  */
-export const ENTRANCE_TEARDOWN = 700
+export const ENTRANCE_TEARDOWN = D_SLOW + 300
 
 /* ============================================================================
    THE SAME SPRINGS, WITHOUT THE LIBRARY.

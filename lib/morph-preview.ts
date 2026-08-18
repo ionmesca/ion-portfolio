@@ -3,6 +3,14 @@
 import * as React from "react"
 
 import { createMorph, type Morph, type MorphRect } from "./morph"
+import {
+  createSpring,
+  D_BASE,
+  D_FAST,
+  POP_CHANNEL,
+  SPRING_POP,
+  type SpringDriver,
+} from "./motion"
 
 /* ============================================================================
    THE HOVER-PREVIEW ENGINE — shared by every member of the popover family.
@@ -40,8 +48,11 @@ import { createMorph, type Morph, type MorphRect } from "./morph"
      RADIUS    15   `--radius-lg`. The family's ruling: "Radius by size: 15 for
                     cards and previews, 21 for panels."
 
-   The OUT duration (150) and the entrance (scale .98 → 1 + fade + 4px rise on
-   the glide) are CSS, not JS — see the `.hover-pop*` block in app/globals.css.
+   The SURFACE's entrance (scale .98 → 1 + fade + 4px rise) is no longer on a
+   CSS glide: Ion moved it onto the rAF spring shelf on 2026-08-18. It is
+   driven from this file — see `attachInner` and SPRING_POP (lib/motion.ts).
+   The recipe stays in CSS, derived from the `--pop-p` channel; see the
+   `.hover-pop-inner` block in app/globals.css.
 
    ── THE TWO RULES THAT ARE EASY TO BREAK ──────────────────────────────────
    1. ONE CONTAINER PER ANCHOR GROUP. Moving between siblings morphs it; it
@@ -49,20 +60,31 @@ import { createMorph, type Morph, type MorphRect } from "./morph"
       when something is already open — re-serving it there is exactly what
       would turn a morph back into a close-and-reopen.
    2. THE ENTRANCE DOES THE GROWING, NOT THE BOX. The first open SNAPS the
-      container to its final rect and lets the CSS entrance grow it. Only a
-      sibling move tweens the rect. Animating both at once reads as a shove.
+      container to its final rect and lets the surface's entrance grow it. Only
+      a sibling move tweens the rect. Animating both at once reads as a shove.
    ========================================================================= */
 
-/** ms. Hover intent before a first open. */
-export const INTENT = 150
-/** ms. Leave grace, and the pointer corridor into the card. */
+/** ms. Hover intent before a first open.
+ *
+ *  Spelled as the ladder's fast rung and not as a bare `150` because the site
+ *  should contain exactly one 150. The two facts behind it are separate and
+ *  both are recorded above: the LAB says 150 (line 1583), and `--duration-fast`
+ *  is also 150. They agree today. If the ratified ladder ever moves, this pins
+ *  back to a literal 150 — the lab is the law here, not the token. */
+export const INTENT = D_FAST
+/** ms. Leave grace, and the pointer corridor into the card.
+ *
+ *  NOT on the ladder, and it is the one number in this file that is not: 140
+ *  is the bottom of the family's 140–300ms band (lab line 1588), and there is
+ *  no token equal to it. It stays a literal with its provenance attached
+ *  rather than being rounded onto a rung it does not belong to. */
 export const GRACE = 140
 /** px. Anchor → card, and the corridor's width. */
 export const GAP = 8
 /** px. Minimum clearance from the placement bounds. */
 export const EDGE = 8
 /** ms. `--duration-base`. Anchor → adjacent anchor. */
-export const MORPH_MS = 200
+export const MORPH_MS = D_BASE
 /** px. `--radius-lg`. */
 export const PREVIEW_RADIUS = 15
 
@@ -377,9 +399,37 @@ export function useMorphPreview<K extends string>({
     popRef.current = el
     setPopNode(el)
   }, [])
+  /**
+   * The surface's entrance/exit spring.
+   *
+   * BUILT IN THE CALLBACK REF, never in an effect, and the callback is stable
+   * — the trap `components/ui/press-spring.tsx` documents at length. React
+   * treats a NEW ref function as a new ref: it detaches the old driver and
+   * attaches a fresh one at velocity zero. This surface re-renders on every
+   * open and every anchor change (`active` and `shown` are state), so a
+   * per-render ref here would rebuild the spring at exactly the moments the
+   * spring exists to survive, and a fast enter-leave-enter would stop dead
+   * instead of turning around.
+   */
+  const innerSpringRef = React.useRef<SpringDriver | null>(null)
+
   const attachInner = React.useCallback((el: HTMLDivElement | null) => {
     innerRef.current = el
+    innerSpringRef.current?.stop()
+    innerSpringRef.current = null
+    if (!el) return
+    const driver = createSpring(SPRING_POP, (p) => {
+      el.style.setProperty(POP_CHANNEL, String(p))
+    })
+    innerSpringRef.current = driver
+    // Snapped closed, never sprung: a card must not animate into existence on
+    // mount. It also writes `--pop-p` in the commit before the first paint, so
+    // the surface is invisible from frame one rather than relying on the CSS
+    // fallback for a frame.
+    driver.snap(0)
   }, [])
+
+  React.useEffect(() => () => innerSpringRef.current?.stop(), [])
 
   const [active, setActive] = React.useState<K | null>(null)
   const [shown, setShown] = React.useState<K | null>(null)
@@ -424,11 +474,18 @@ export function useMorphPreview<K extends string>({
       setOrigin(target.below)
 
       if (!openRef.current) {
-        // First open: placed at its FINAL rect. The CSS entrance does the
+        // First open: placed at its FINAL rect. The surface's spring does the
         // growing; the box itself never animates on the way in.
         morph.snap(target)
         openRef.current = true
         pop.setAttribute("data-open", "true")
+        // `set`, not `snap` — and it is `set` even when the previous close is
+        // still fading, because that is the reversal the spring is here for:
+        // the surface turns around from wherever it is, carrying its speed.
+        // Under reduced motion it snaps, and the stylesheet's carve-out turns
+        // the entrance back into a 150ms opacity crossfade off `data-open`.
+        if (reducedRef.current) innerSpringRef.current?.snap(1)
+        else innerSpringRef.current?.set(1)
       } else {
         // Sibling anchor: the one container morphs. Reduced motion collapses
         // the travel to zero and leaves the content crossfade to carry it.
@@ -447,9 +504,11 @@ export function useMorphPreview<K extends string>({
     if (!openRef.current) return
     openRef.current = false
     popRef.current?.setAttribute("data-open", "false")
+    if (reducedRef.current) innerSpringRef.current?.snap(0)
+    else innerSpringRef.current?.set(0)
     setActive(null)
     // `shown` is deliberately kept — see its doc comment.
-  }, [corridor])
+  }, [corridor, reducedRef])
 
   const reposition = React.useCallback(
     (force = false) => {

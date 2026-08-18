@@ -2,6 +2,8 @@
 
 import * as React from "react"
 
+import { D_FAST } from "@/lib/motion"
+
 /* ============================================================================
    Project wheel — the physics controller.
 
@@ -102,8 +104,10 @@ const LENS_EPS = 0.002
    clock: sharing the position lerp meant the lens only STARTED fading after
    `f` had crawled inside 0.0004 of its target, so the rows sat in a motion
    treatment for ~2s after the page stopped. `--duration-fast` (globals.css
-   line 102) is the motion system's own number for an opacity settle. */
-const LENS_FADE_MS = 150
+   line 102) is the motion system's own number for an opacity settle, and
+   `D_FAST` (lib/motion.ts) is its JS mirror — a custom property cannot be read
+   synchronously inside a rAF tick, which is where this number is spent. */
+const LENS_FADE_MS = D_FAST
 
 const clamp = (v: number, lo: number, hi: number) => (v < lo ? lo : v > hi ? hi : v)
 
