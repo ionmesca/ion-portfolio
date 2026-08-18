@@ -1,0 +1,1719 @@
+<!doctype html>
+<html lang="en" data-reduced="false" data-sound="on">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Popovers — one family</title>
+<style>
+/* ============================================================
+   POPOVER LAB — one file, no dependencies, no network, no
+   storage, no history/URL APIs. Tokens are lifted verbatim from
+   motion-lab.html (which lifted them from globals.v2.css).
+   ============================================================ */
+:root{
+  /* --- motion tokens (authoritative) --- */
+  --motion-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --motion-glide:  cubic-bezier(0.16, 1, 0.3, 1);
+  --duration-fast: 150ms;
+  --duration-base: 200ms;
+  --duration-slow: 400ms;
+  --stagger-delay: 50ms;
+  --stagger-group: 25ms;      /* half of --stagger-delay; groups, not rows */
+
+  /* --- stone palette (light) --- */
+  --stone-50:#fafaf9;  --stone-100:#f5f5f4; --stone-200:#e7e5e4;
+  --stone-300:#d6d3d1; --stone-400:#a8a29e; --stone-500:#78716c;
+  --stone-600:#57534e; --stone-700:#44403c; --stone-800:#292524;
+  --stone-900:#1c1917;
+
+  --bg:var(--stone-100);
+  --surface:#ffffff;
+  --popover:#ffffff;
+  --fg:var(--stone-900);
+  --muted-fg:var(--stone-500);
+  --ring:rgb(0 0 0 / 0.06);
+  --ring-strong:rgb(0 0 0 / 0.12);
+
+  /* --- radii --- */
+  --radius:15px;
+  --radius-md:calc(var(--radius) * 0.8);  /* 12px */
+  --radius-lg:var(--radius);              /* 15px */
+  --radius-xl:calc(var(--radius) * 1.4);  /* 21px */
+  --radius-2xl:calc(var(--radius) * 1.8); /* 27px — the landing shell */
+
+  /* --- elevations, verbatim (the 1px ring is the last layer of
+         each stack, not a separate declaration) --- */
+  --shadow-subtle:
+    0 0.5px 0.5px 0 rgb(0 0 0 / 0.04),
+    0 1.5px 1px 0 rgb(0 0 0 / 0.03),
+    0 3px 1.5px 0 rgb(0 0 0 / 0.02),
+    0 5px 2px 0 rgb(0 0 0 / 0.01),
+    0 0 0 1px rgb(0 0 0 / 0.05);
+  --shadow-raised:
+    0 1px 1px 0 rgb(0 0 0 / 0.04),
+    0 3px 2px 0 rgb(0 0 0 / 0.03),
+    0 6px 3px 0 rgb(0 0 0 / 0.02),
+    0 10px 4px 0 rgb(0 0 0 / 0.01),
+    0 0 0 1px rgb(0 0 0 / 0.05);
+  /* "Overlay" in the popover family = the modal stack. Same values,
+     named for the role it plays here. */
+  --shadow-overlay:
+    0 4px 4px 0 rgb(0 0 0 / 0.06),
+    0 12px 8px 0 rgb(0 0 0 / 0.045),
+    0 24px 12px 0 rgb(0 0 0 / 0.03),
+    0 40px 16px 0 rgb(0 0 0 / 0.015),
+    0 0 0 1px rgb(0 0 0 / 0.05);
+
+  --blur-garnish: 2px;   /* transition garnish, never a resting style */
+
+  /* --- the palette's own geometry, shared by all three surfaces --- */
+  --panel-w: 380px;
+  /* 69 header + 44 search + 297 list + 34 footer. The header is the
+     chip's own 42px row, frozen, plus a 26px availability line and the
+     1px rule. One Actions row was dropped to keep the panel compact. */
+  --panel-h: 444px;
+  --head-h: 69px;        /* 42 chip row + 26 availability line + 1px rule */
+  --chip-h: 42px;
+
+  --status: #16a34a;     /* the availability dot — the one non-stone hue */
+}
+
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg);
+  color:var(--fg);
+  font-family:ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Helvetica,Arial,sans-serif;
+  font-size:14px;
+  line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+}
+h1,h2,h3,h4,p,ul,ol,figure{margin:0}
+ul{padding:0;list-style:none}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+a{color:inherit;text-decoration:none}
+svg{display:block}
+code,.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px}
+
+/* ---------- shell ---------- */
+.wrap{max-width:1000px;margin:0 auto;padding:28px 20px 64px}
+
+/* ---------- header ---------- */
+.masthead{
+  background:var(--surface);
+  border-radius:var(--radius-xl);
+  box-shadow:var(--shadow-raised);
+  padding:20px 22px;
+  display:flex;flex-wrap:wrap;gap:18px;align-items:center;justify-content:space-between;
+  position:sticky;top:12px;z-index:80;
+}
+.masthead h1{font-size:20px;letter-spacing:-.02em;font-weight:600}
+.thesis{color:var(--muted-fg);font-size:13px;margin-top:2px}
+.controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+
+/* ---------- switch ---------- */
+.switch{
+  display:inline-flex;align-items:center;gap:8px;
+  height:32px;padding:0 12px 0 10px;
+  background:var(--surface);
+  border-radius:var(--radius-md);
+  box-shadow:var(--shadow-subtle);
+  font-size:13px;color:var(--stone-700);
+  transition:box-shadow var(--duration-fast) var(--motion-glide);
+}
+.switch:hover{transition-duration:0ms;box-shadow:0 0 0 1px var(--ring-strong), var(--shadow-subtle)}
+.switch[aria-disabled="true"]{opacity:.5;cursor:default}
+.switch .track{
+  width:28px;height:16px;border-radius:999px;background:var(--stone-300);
+  position:relative;flex:none;
+  transition:background-color var(--duration-fast) var(--motion-glide);
+}
+.switch .knob{
+  position:absolute;top:2px;left:2px;width:12px;height:12px;border-radius:999px;background:#fff;
+  box-shadow:var(--shadow-subtle);
+  transition:transform var(--duration-base) var(--motion-spring);
+}
+.switch[aria-pressed="true"] .track{background:var(--stone-900)}
+.switch[aria-pressed="true"] .knob{transform:translateX(12px)}
+
+/* ---------- prose furniture ---------- */
+.section-title{font-size:12px;letter-spacing:.02em;color:var(--muted-fg);margin:34px 2px 12px;font-weight:500}
+.panel{
+  background:var(--surface);
+  border-radius:var(--radius-xl);
+  box-shadow:var(--shadow-raised);
+  padding:22px;
+}
+.panel + .panel{margin-top:14px}
+.lede{font-size:15px;line-height:1.6;max-width:64ch}
+.lede b{font-weight:600}
+.where{font-size:13px;color:var(--stone-600);line-height:1.55;max-width:74ch}
+.where b{font-weight:600;color:var(--stone-800)}
+.recipe{
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  font-size:11.5px;color:var(--muted-fg);line-height:1.6;
+  padding-top:10px;margin-top:14px;border-top:1px solid var(--stone-200);
+}
+.footnote{color:var(--muted-fg);font-size:12.5px;line-height:1.6;margin-top:16px;max-width:74ch}
+.demo-head{display:flex;align-items:baseline;gap:9px;margin-bottom:8px}
+.demo-head h3{font-size:14px;font-weight:600;letter-spacing:-.01em}
+.demo-head .idx{
+  font-size:11px;color:var(--muted-fg);
+  min-width:18px;height:18px;border-radius:6px;background:var(--stone-100);
+  box-shadow:inset 0 0 0 1px var(--ring);
+  display:inline-grid;place-items:center;position:relative;top:-1px;
+}
+.demos{display:grid;gap:14px}
+@media (min-width:820px){ .demos{grid-template-columns:1fr 1fr} .demos .panel.wide{grid-column:1 / -1} }
+.demos .panel + .panel{margin-top:0}
+
+/* ---------- segment control ---------- */
+.segment{
+  position:relative;display:inline-flex;padding:3px;gap:2px;
+  background:var(--stone-100);border-radius:var(--radius-md);
+  box-shadow:inset 0 0 0 1px var(--ring);
+}
+.segment .thumb{
+  position:absolute;top:3px;left:3px;bottom:3px;width:calc((100% - 6px)/2);
+  background:var(--surface);border-radius:10px;box-shadow:var(--shadow-subtle);
+  transform:translateX(0);
+  transition:transform var(--duration-base) var(--motion-glide);
+}
+.segment button{
+  position:relative;z-index:1;height:26px;padding:0 12px;border-radius:10px;
+  display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  font-size:12px;color:var(--muted-fg);white-space:nowrap;
+  transition:color var(--duration-fast) var(--motion-glide);
+}
+.segment button:hover{transition-duration:0ms;color:var(--stone-700)}
+.segment button[aria-pressed="true"]{color:var(--fg)}
+.ctl-row{display:flex;gap:18px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+.ctl{display:flex;gap:9px;align-items:center}
+.ctl > .lbl{font-size:11.5px;color:var(--muted-fg)}
+.check{
+  display:inline-flex;align-items:center;gap:7px;
+  font-size:11.5px;color:var(--muted-fg);
+  height:26px;padding:0 9px;border-radius:8px;
+  transition:background-color var(--duration-fast) var(--motion-glide),
+             color var(--duration-fast) var(--motion-glide);
+}
+.check:hover{transition-duration:0ms;background:var(--stone-100);color:var(--stone-700)}
+.check .box{
+  width:11px;height:11px;border-radius:3px;flex:none;
+  box-shadow:inset 0 0 0 1px var(--ring-strong);
+  transition:background-color var(--duration-fast) var(--motion-glide);
+}
+.check[aria-pressed="true"]{color:var(--stone-700)}
+.check[aria-pressed="true"] .box{background:var(--stone-400)}
+
+/* ============================================================
+   THE STAGE — a mock landing hero.
+   Stone-100 page ground (the body), one white shell card.
+   #stage is the positioning context for every popover that is
+   not anchored to the chip; the shell may be overflowed, because
+   a popover floats above the page, it does not live inside it.
+   ============================================================ */
+#stage{position:relative}
+.shell{
+  position:relative;
+  background:var(--surface);
+  border-radius:var(--radius-2xl);
+  box-shadow:var(--shadow-raised);
+  padding:28px;
+  min-height:556px;   /* the tallest surface (drop panel at y=50, h=444) fits inside the page */
+  display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:28px;align-items:stretch;
+}
+@media (max-width:860px){ .shell{grid-template-columns:minmax(0,1fr)} .media{display:none} }
+.hero-col{display:flex;flex-direction:column;align-items:flex-start;gap:20px;min-width:0}
+
+/* --- the barely-there page dim (a checkbox, so it can be compared
+       against nothing at all) --- */
+.dim{
+  position:absolute;inset:0;border-radius:var(--radius-2xl);
+  background:rgba(28,25,23,.04);
+  opacity:0;pointer-events:none;z-index:5;
+  transition:opacity var(--duration-base) var(--motion-glide);
+}
+#stage[data-dim="on"][data-palette="open"] .dim{opacity:1}
+
+/* --- identity chip / palette surface ------------------------
+   ONE element. At rest it is the chip. Open, it IS the panel.
+   It is absolutely positioned inside a slot that holds its place
+   in the flow, so growing it never reflows the page.
+   ---------------------------------------------------------- */
+/* the slot carries a sane default size so the surface has a
+   containing block to lay the chip face out in; JS corrects it
+   to the measured value on the first frame. */
+.chip-slot{position:relative;width:168px;height:42px;z-index:40}
+.surface{
+  position:absolute;left:0;top:0;z-index:1;
+  width:100%;height:100%;
+  background:var(--popover);
+  border-radius:var(--radius-lg);
+  box-shadow:var(--shadow-subtle);
+  overflow:hidden;
+  transform:translate3d(0,0,0);
+  will-change:transform,width,height;
+  text-align:left;
+  transition:box-shadow var(--duration-fast) var(--motion-glide);
+}
+.surface[data-open="true"]{box-shadow:var(--shadow-overlay)}
+/* LIFT affordance — click-mode hover on the chip is elevation and
+   nothing else. No preview, no motion, no opening. In the
+   "regular popover" surface the chip stays lifted while open,
+   because it is still there and still the thing you pressed. */
+#stage[data-trigger="click"] .surface[data-open="false"]:hover,
+#stage[data-surface="popover"][data-palette="open"] .surface{box-shadow:var(--shadow-raised)}
+#stage[data-trigger="click"] .surface[data-open="false"]:hover .k-cmd,
+#stage[data-surface="popover"][data-palette="open"] .k-cmd{color:var(--fg)}
+
+/* the chip's click target: the chip rect only, and inert once the
+   surface has become the panel */
+.chip-hit{position:absolute;left:0;top:0;height:var(--chip-h);z-index:3;border-radius:var(--radius-lg)}
+.surface[data-open="true"] .chip-hit{pointer-events:none}
+
+/* --- the frozen header anatomy -------------------------------
+   ZERO JUMP is the rule here. The avatar, the name and the kbd chip
+   exist ONCE, are placed ONCE, and never move or resize again — the
+   panel's header is not a new header, it is the chip's own row left
+   exactly where it was. The container grows right and down around it.
+   The only header animation is opacity: ⌘K crossfades into esc in
+   place, and the availability line fades in below the row, where it
+   displaces nothing.
+   Accepted consequence: the esc chip sits at the CHIP's right edge,
+   not the panel's. That asymmetry is the price of zero jump.
+   ---------------------------------------------------------- */
+.atom{position:absolute;left:0;top:0;white-space:nowrap;z-index:2;will-change:transform}
+.avatar{
+  width:24px;height:24px;flex:none;border-radius:999px;
+  background:linear-gradient(140deg,var(--stone-300),var(--stone-500));
+  box-shadow:inset 0 0 0 1px rgb(0 0 0 / .06);
+}
+.who{font-size:14px;font-weight:500;letter-spacing:-.01em;line-height:20px}
+.avail{
+  font-size:11px;line-height:14px;color:var(--muted-fg);
+  display:inline-flex;align-items:center;gap:6px;
+}
+.avail .dot{
+  width:6px;height:6px;border-radius:999px;background:var(--status);
+  box-shadow:0 0 0 2px rgb(22 163 74 / .16);flex:none;
+}
+.a-avail > .in{
+  display:inline-flex;opacity:0;transform:translateY(-3px);filter:blur(var(--blur-garnish));
+  transition:opacity var(--duration-fast) var(--motion-glide),
+             transform var(--duration-fast) var(--motion-glide),
+             filter var(--duration-fast) var(--motion-glide);
+}
+.surface[data-open="true"] .a-avail > .in{opacity:1;transform:translateY(0);filter:blur(0)}
+.kbd{
+  display:inline-flex;align-items:center;justify-content:center;height:22px;padding:0 7px;
+  border-radius:7px;
+  box-shadow:inset 0 0 0 1px var(--ring-strong);  /* ring only, no elevation */
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  font-size:11px;color:var(--muted-fg);
+  transition:color var(--duration-fast) var(--motion-glide);
+}
+/* ⌘K and esc share one cell and crossfade — the one pair whose
+   travel would not be convincing, so it is a straight 150ms swap */
+.kbdslot{display:inline-grid;justify-items:end;pointer-events:none}
+/* once the chip has become the header, its kbd chip is the dismiss */
+.surface[data-open="true"] .k-esc{pointer-events:auto;cursor:pointer}
+.surface[data-open="true"] .k-esc:hover{transition-duration:0ms;color:var(--fg);box-shadow:inset 0 0 0 1px var(--stone-400)}
+.kbdslot > .kbd{
+  grid-area:1/1;
+  transition:opacity var(--duration-fast) var(--motion-glide),
+             filter var(--duration-fast) var(--motion-glide),
+             color var(--duration-fast) var(--motion-glide);
+}
+.surface[data-open="false"] .k-esc,
+.surface[data-open="true"]  .k-cmd{opacity:0;filter:blur(var(--blur-garnish))}
+.head-rule{
+  position:absolute;left:0;top:calc(var(--head-h) - 1px);width:100%;height:1px;
+  background:var(--stone-200);opacity:0;z-index:1;
+  transition:opacity var(--duration-fast) var(--motion-glide);
+}
+.surface[data-open="true"] .head-rule{opacity:1}
+
+.face{
+  position:absolute;left:0;top:0;
+  transition:opacity var(--duration-fast) var(--motion-glide),
+             filter var(--duration-fast) var(--motion-glide);
+}
+.face[data-on="false"]{opacity:0;filter:blur(var(--blur-garnish));pointer-events:none}
+.face[data-on="true"]{opacity:1;filter:blur(0)}
+.face-palette{top:var(--head-h);width:var(--panel-w);height:calc(var(--panel-h) - var(--head-h))}
+
+/* --- the palette body, shared by all three surfaces ---------- */
+.pal{display:flex;flex-direction:column}
+.pal .grp{
+  opacity:0;transform:translateY(6px);filter:blur(var(--blur-garnish));
+  transition:opacity var(--duration-fast) var(--motion-glide),
+             transform var(--duration-fast) var(--motion-glide),
+             filter var(--duration-fast) var(--motion-glide);
+  transition-delay:0ms;
+}
+.pal[data-on="true"] .grp{
+  opacity:1;transform:translateY(0);filter:blur(0);
+  transition-delay:calc(var(--i) * var(--stagger-group));
+}
+
+/* ============================================================
+   SURFACE 2 — "regular popover": the chip stays, a panel drops
+   in below it. The conventional alternative, built so the two
+   can be compared on identical content.
+   ============================================================ */
+.drop{
+  position:absolute;left:0;width:var(--panel-w);height:var(--panel-h);
+  z-index:2;
+  display:flex;flex-direction:column;
+  background:var(--popover);
+  border-radius:var(--radius-xl);
+  box-shadow:var(--shadow-overlay);
+  overflow:hidden;
+  transform-origin:0 0;
+  opacity:0;transform:scale(.98) translateY(4px);pointer-events:none;
+  transition:opacity var(--duration-fast) var(--motion-glide),
+             transform var(--duration-fast) var(--motion-glide);
+}
+#stage[data-surface="popover"][data-palette="open"] .drop{
+  opacity:1;transform:scale(1) translateY(0);pointer-events:auto;
+  transition-duration:var(--duration-base);
+}
+.drop-head{
+  height:var(--head-h);flex:none;
+  display:flex;align-items:center;gap:11px;padding:0 14px;
+  border-bottom:1px solid var(--stone-200);
+}
+.dh-text{display:flex;flex-direction:column;flex:1;min-width:0}
+.pal-search{
+  height:44px;flex:none;display:flex;align-items:center;gap:9px;padding:0 13px;
+  border-bottom:1px solid var(--stone-200);color:var(--muted-fg);font-size:13px;
+}
+.pal-search .spacer{flex:1}
+.pal-esc{cursor:pointer}
+.pal-esc:hover{transition-duration:0ms;color:var(--fg);box-shadow:inset 0 0 0 1px var(--stone-400)}
+.pal-body{padding:6px;flex:1 1 auto;min-height:0}
+.pal-label{
+  font-size:11px;color:var(--muted-fg);padding:9px 10px 5px;letter-spacing:.01em;
+}
+.prow{
+  display:flex;align-items:center;gap:10px;
+  height:32px;padding:0 10px;border-radius:9px;
+  color:var(--stone-700);font-size:13px;text-align:left;width:100%;
+  transition:background-color var(--duration-fast) var(--motion-glide),
+             color var(--duration-fast) var(--motion-glide);
+}
+.prow:hover{transition-duration:0ms;background:var(--stone-100);color:var(--fg)}
+.prow .ico{color:var(--stone-400);flex:none;display:flex}
+.prow:hover .ico{color:var(--stone-600)}
+.prow .grow{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pal-foot{
+  flex:none;height:34px;display:flex;align-items:center;gap:14px;padding:0 13px;
+  border-top:1px solid var(--stone-200);
+  font-size:11px;color:var(--stone-400);
+}
+.pal-foot .k{
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  color:var(--muted-fg);
+}
+
+/* the invisible bridge that makes hover-mode judgeable rather
+   than instantly broken: it spans the chip's old rect and the 8px
+   gap, so the pointer can reach a panel that moved away from it. */
+.corridor{position:absolute;left:0;top:0;display:none;z-index:0}
+#stage[data-trigger="hover"][data-palette="open"] .corridor{display:block}
+
+/* --- hero body --- */
+.intro{font-size:15px;line-height:1.6;max-width:46ch;color:var(--stone-700)}
+.u{
+  color:var(--fg);
+  text-decoration:underline;
+  text-decoration-color:var(--stone-300);
+  text-underline-offset:3px;
+  text-decoration-thickness:1px;
+  cursor:pointer;
+  transition:text-decoration-color var(--duration-fast) var(--motion-glide);
+}
+.u:hover,.u:focus-visible{transition-duration:0ms;text-decoration-color:currentColor}
+.actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.btn{
+  height:32px;padding:0 14px;border-radius:var(--radius-md);
+  display:inline-flex;align-items:center;justify-content:center;gap:7px;
+  font-size:13px;font-weight:500;white-space:nowrap;
+  transform:scale(1);
+  transition:transform var(--duration-fast) var(--motion-spring),
+             box-shadow var(--duration-fast) var(--motion-glide),
+             background-color var(--duration-fast) var(--motion-glide);
+}
+.btn:active{transform:scale(.97)}
+.btn-primary{background:var(--stone-900);color:#fff;box-shadow:var(--shadow-subtle)}
+.btn-primary:hover{transition-duration:0ms;background:var(--stone-800)}
+.social{
+  width:32px;height:32px;flex:none;border-radius:var(--radius-md);
+  display:inline-flex;align-items:center;justify-content:center;
+  background:var(--surface);color:var(--muted-fg);
+  box-shadow:var(--shadow-subtle);
+  transform:scale(1);
+  transition:color var(--duration-fast) var(--motion-glide),
+             transform var(--duration-fast) var(--motion-spring);
+}
+/* tint muted -> foreground. Snap in, ease out — the ratified
+   hover convention, applied to colour. */
+.social:hover,.social[data-active="true"]{transition-duration:0ms;color:var(--fg)}
+.social:active{transform:scale(.94)}
+.social svg{width:16px;height:16px}
+.work{width:100%;max-width:320px;display:flex;flex-direction:column;margin-top:4px}
+.wrow{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  height:34px;padding:0 10px;border-radius:9px;width:100%;text-align:left;
+  color:var(--muted-fg);font-size:13px;
+  transition:background-color var(--duration-fast) var(--motion-glide),
+             color var(--duration-fast) var(--motion-glide);
+}
+.wrow:hover{transition-duration:0ms;background:var(--stone-100);color:var(--fg)}
+.wrow .yr{font-variant-numeric:tabular-nums;font-size:12px;color:var(--stone-400)}
+
+/* --- the muted media panel: the thing a surface has to sit over --- */
+.media{
+  border-radius:var(--radius-xl);
+  background:
+    repeating-linear-gradient(115deg, rgb(0 0 0 / .012) 0 12px, rgb(0 0 0 / 0) 12px 24px),
+    linear-gradient(160deg, var(--stone-200), var(--stone-100) 55%, var(--stone-300));
+  box-shadow:inset 0 0 0 1px var(--ring);
+  position:relative;overflow:hidden;min-height:300px;
+}
+.media .badge{
+  position:absolute;left:14px;bottom:14px;
+  font-size:11px;color:var(--stone-500);
+  background:rgb(255 255 255 / .72);
+  padding:5px 9px;border-radius:8px;
+  box-shadow:inset 0 0 0 1px var(--ring);
+}
+.media .glyph{
+  position:absolute;inset:0;display:grid;place-items:center;color:var(--stone-400);
+}
+
+/* ============================================================
+   MODAL MODE — the pass-8 behaviour, kept for comparison only.
+   560 centred, 20% scrim, instant in and out.
+   ============================================================ */
+.modal-scrim{
+  position:absolute;inset:0;border-radius:var(--radius-2xl);
+  background:rgba(28,25,23,.20);
+  opacity:0;pointer-events:none;z-index:50;
+}
+.modal{
+  position:absolute;left:50%;top:78px;width:560px;margin-left:-280px;z-index:51;
+  background:var(--popover);
+  border-radius:var(--radius-xl);
+  box-shadow:var(--shadow-overlay);
+  overflow:hidden;
+  opacity:0;pointer-events:none;
+}
+#stage[data-surface="modal"][data-palette="open"] .modal-scrim{opacity:1;pointer-events:auto}
+#stage[data-surface="modal"][data-palette="open"] .modal{opacity:1;pointer-events:auto}
+
+/* ============================================================
+   THE SHARED POPOVER CONTAINER — Demo 2 and Demo 3.
+   One node per anchor-group, never remounted. The container
+   tweens; the content crossfades.
+   ============================================================ */
+.pop{
+  position:absolute;left:0;top:0;z-index:45;
+  width:0;height:0;
+  transform:translate3d(0,0,0);
+  will-change:transform,width,height;
+  pointer-events:none;
+}
+.pop[data-open="true"]{pointer-events:auto}
+.pop-inner{
+  position:absolute;inset:0;
+  background:var(--popover);
+  border-radius:var(--radius-lg);
+  box-shadow:var(--shadow-overlay);
+  overflow:hidden;
+  opacity:0;transform:scale(.98) translateY(4px);
+  transform-origin:50% 100%;
+  transition:opacity var(--duration-base) var(--motion-glide),
+             transform var(--duration-base) var(--motion-glide);
+}
+.pop[data-open="true"] .pop-inner{opacity:1;transform:scale(1) translateY(0)}
+.pop[data-open="false"] .pop-inner{
+  transition-duration:var(--duration-fast);
+}
+.pop-face{
+  position:absolute;left:0;top:0;
+  transition:opacity var(--duration-fast) var(--motion-glide),
+             filter var(--duration-fast) var(--motion-glide);
+}
+.pop-face[data-on="false"]{opacity:0;filter:blur(var(--blur-garnish));pointer-events:none}
+.pop-face[data-on="true"]{opacity:1;filter:blur(0)}
+
+/* --- social card content --- */
+.card-pad{padding:12px}
+.card-head-row{display:flex;align-items:center;gap:9px}
+.card-av{
+  width:22px;height:22px;flex:none;border-radius:999px;
+  background:linear-gradient(140deg,var(--stone-300),var(--stone-500));
+}
+.card-name{font-size:13px;font-weight:600;letter-spacing:-.01em}
+.card-sub{font-size:11.5px;color:var(--muted-fg);margin-left:auto}
+.repo{
+  display:flex;flex-direction:column;gap:1px;
+  padding:7px 8px;border-radius:9px;background:var(--stone-50);
+  box-shadow:inset 0 0 0 1px var(--ring);
+}
+.repo .r1{font-size:12.5px;color:var(--stone-800);font-weight:500}
+.repo .r2{font-size:11px;color:var(--muted-fg)}
+.stackv{display:flex;flex-direction:column;gap:6px;margin-top:9px}
+.post{font-size:12.5px;color:var(--stone-700);line-height:1.45;margin-top:8px}
+.meta{font-size:11.5px;color:var(--muted-fg);margin-top:5px}
+
+/* --- Ledgy browser mock --- */
+.browser{
+  margin:6px 6px 0;height:180px;border-radius:12px;overflow:hidden;
+  background:var(--stone-50);
+  box-shadow:inset 0 0 0 1px var(--ring);
+  display:flex;flex-direction:column;
+}
+.browser .bar{
+  height:22px;flex:none;display:flex;align-items:center;gap:4px;padding:0 8px;
+  background:var(--stone-100);border-bottom:1px solid var(--stone-200);
+}
+.browser .dot{width:6px;height:6px;border-radius:999px;background:var(--stone-300)}
+.browser .url{
+  margin-left:6px;font-size:9px;color:var(--stone-400);
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+.browser .view{flex:1;padding:14px 14px 0;display:flex;flex-direction:column;gap:7px}
+.wf{border-radius:4px;background:var(--stone-200)}
+.wf.h1{height:11px;width:62%}
+.wf.h2{height:11px;width:44%}
+.wf.p{height:6px;width:88%;background:var(--stone-200);opacity:.72}
+.wf.p2{height:6px;width:70%;background:var(--stone-200);opacity:.72}
+.wf.btn{height:16px;width:74px;background:var(--stone-400);margin-top:4px;border-radius:5px}
+.wf.block{flex:1;margin:8px -14px 0;border-radius:8px 8px 0 0;background:var(--stone-200);opacity:.6}
+.cap{
+  height:32px;display:flex;align-items:center;gap:6px;padding:0 12px;
+  font-size:12px;color:var(--stone-700);
+}
+.cap .host{font-weight:500}
+.cap .arrow{color:var(--stone-400);margin-left:auto}
+.press{position:absolute;inset:0;transform:scale(1);transition:transform var(--duration-fast) var(--motion-spring)}
+.press:active{transform:scale(.985)}
+
+/* ---------- footer map ---------- */
+.map{display:grid;gap:0}
+.map li{
+  display:grid;grid-template-columns:1fr auto;gap:16px;align-items:baseline;
+  padding:9px 2px;border-bottom:1px solid var(--stone-200);font-size:13px;
+}
+.map li:last-child{border-bottom:0}
+.map .moment{color:var(--stone-800)}
+.map .pattern{color:var(--muted-fg);font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:11.5px;text-align:right}
+#diag{color:var(--stone-400);font-size:11px;margin-top:18px}
+
+/* ============================================================
+   REDUCED MOTION — first-class mode. The JS morph reads the same
+   flag and drops its duration to zero.
+   ============================================================ */
+html[data-reduced="true"] *,
+html[data-reduced="true"] *::before,
+html[data-reduced="true"] *::after{
+  transition-property:opacity !important;
+  transition-duration:var(--duration-fast) !important;
+  transition-delay:0ms !important;
+  animation-duration:.01ms !important;
+  animation-delay:0ms !important;
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ======================= HEADER ======================= -->
+  <header class="masthead">
+    <div>
+      <h1>Popovers</h1>
+      <p class="thesis">One family. It grows out of the thing you pointed at.</p>
+    </div>
+    <div class="controls">
+      <button class="switch" id="reduced-toggle" aria-pressed="false" type="button">
+        <span class="track"><span class="knob"></span></span>
+        <span>Reduced motion</span>
+      </button>
+      <button class="switch" id="sound-toggle" aria-pressed="true" type="button">
+        <span class="track"><span class="knob"></span></span>
+        <span id="sound-label">Sound</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ======================= INTRO ======================= -->
+  <h2 class="section-title">The mechanic</h2>
+  <div class="panel">
+    <p class="lede">
+      Every surface here is <b>anchored</b>: it starts at the rect of the thing you
+      pointed at and grows to the rect it needs. Between two anchors in the same
+      group it <b>morphs</b> — one container, tweened — instead of closing and
+      reopening. Content crossfades separately, faster, with 2&nbsp;px of blur.
+      There is <b>no scrim anywhere</b>: the page stays visible, because the page
+      is the context that makes the popover mean anything.
+    </p>
+    <p class="footnote">
+      Decoded from Colin Lienard's <code class="mono">Contacts.svelte</code>: one
+      persistent container per anchor-group, left/width/height tweened on hover,
+      content flown in with a slight blur, icon tint muted&nbsp;→&nbsp;foreground.
+      Reproduced here with a measured rAF lerp on
+      <code class="mono">translate3d&nbsp;+&nbsp;width/height&nbsp;+&nbsp;radius</code>,
+      glide easing, 200&nbsp;ms in / 150&nbsp;ms out.
+    </p>
+  </div>
+
+  <!-- ======================= CONTROLS + STAGE ======================= -->
+  <h2 class="section-title">The stage — one mock hero, three popovers</h2>
+
+  <div class="panel" id="lab-controls" style="padding:16px 18px">
+    <div class="ctl-row" style="margin-bottom:0">
+      <div class="ctl">
+        <span class="lbl">Surface</span>
+        <div class="segment" id="seg-surface">
+          <span class="thumb"></span>
+          <button type="button" data-v="morph" aria-pressed="true">morph <span style="color:var(--stone-400)">chip becomes panel</span></button>
+          <button type="button" data-v="popover" aria-pressed="false">regular popover <span style="color:var(--stone-400)">chip stays</span></button>
+          <button type="button" data-v="modal" aria-pressed="false">modal <span style="color:var(--stone-400)">current mock</span></button>
+        </div>
+      </div>
+      <div class="ctl">
+        <span class="lbl">Trigger</span>
+        <div class="segment" id="seg-trigger">
+          <span class="thumb"></span>
+          <button type="button" data-v="click" aria-pressed="true">click / ⌘K</button>
+          <button type="button" data-v="hover" aria-pressed="false">hover</button>
+        </div>
+      </div>
+      <button class="check" id="dim-toggle" aria-pressed="false" type="button">
+        <span class="box"></span><span>Page dim 4%</span>
+      </button>
+    </div>
+  </div>
+
+  <div style="height:14px"></div>
+
+  <div id="stage" data-surface="morph" data-trigger="click" data-palette="closed" data-dim="off">
+    <div class="shell">
+      <div class="dim" aria-hidden="true"></div>
+
+      <div class="hero-col">
+        <!-- identity chip / palette: ONE surface -->
+        <div class="chip-slot" id="chip-slot">
+          <div class="corridor" id="corridor" aria-hidden="true"></div>
+
+          <!-- ONE surface. At rest it is the chip; in morph mode it
+               becomes the panel, and its atoms travel into the
+               panel's identity header. -->
+          <div class="surface" id="chip-surface" data-open="false">
+            <span class="head-rule" aria-hidden="true"></span>
+            <span class="atom avatar" id="a-avatar" aria-hidden="true"></span>
+            <span class="atom who" id="a-name">Ion Mesca</span>
+            <span class="atom a-avail" id="a-avail" aria-hidden="true"><span class="in avail"><i class="dot"></i>Available from October</span></span>
+            <span class="atom kbdslot" id="a-kbd" aria-hidden="true">
+              <span class="kbd k-cmd">⌘K</span>
+              <span class="kbd k-esc">esc</span>
+            </span>
+            <button class="chip-hit" id="chip-hit" type="button"
+                    aria-haspopup="dialog" aria-expanded="false" aria-label="Ion Mesca — open command palette"></button>
+            <div class="face face-palette pal" id="pal-face" data-on="false" role="dialog"
+                 aria-label="Command palette"></div>
+          </div>
+
+          <!-- surface 2: the chip stays, this drops in below it -->
+          <div class="drop" id="drop-panel" role="dialog" aria-label="Command palette (popover)"></div>
+        </div>
+
+        <p class="intro">
+          Curious generalist at heart, building AI native software and fintech
+          systems at <a class="u" id="ledgy-link" href="#" role="link">Ledgy</a>
+        </p>
+
+        <div class="actions">
+          <button class="btn btn-primary" type="button">Book a call</button>
+          <button class="social" id="soc-0" type="button" aria-label="GitHub"></button>
+          <button class="social" id="soc-1" type="button" aria-label="X"></button>
+          <button class="social" id="soc-2" type="button" aria-label="LinkedIn"></button>
+        </div>
+
+        <div class="work">
+          <button class="wrow" type="button"><span>Ledgy Agent</span><span class="yr">2026</span></button>
+          <button class="wrow" type="button"><span>Cap table modelling</span><span class="yr">2025</span></button>
+          <button class="wrow" type="button"><span>Portfolio, sixth rewrite</span><span class="yr">2025</span></button>
+        </div>
+      </div>
+
+      <div class="media" aria-hidden="true">
+        <div class="glyph">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="9" cy="10" r="1.6"/><path d="M3.5 17.5 9 12.5l4 3.5 3-2.5 4.5 4"/>
+          </svg>
+        </div>
+        <span class="badge">media panel — the page behind the surface</span>
+      </div>
+
+      <!-- comparison surface: the current modal mock -->
+      <div class="modal-scrim" id="modal-scrim" aria-hidden="true"></div>
+      <div class="modal" id="modal" role="dialog" aria-label="Command palette (modal)"></div>
+    </div>
+
+    <!-- the two shared morphing containers -->
+    <div class="pop" id="social-pop" data-open="false" data-instance=""></div>
+    <div class="pop" id="ledgy-pop" data-open="false" data-instance=""></div>
+  </div>
+
+  <!-- ======================= DEMO NOTES ======================= -->
+  <h2 class="section-title">What each demo is asking</h2>
+  <div class="demos">
+
+    <section class="panel wide" data-demo="palette" data-mounted="false">
+      <div class="demo-head"><span class="idx">1</span><h3>⌘K as a chip-anchored surface — the decision</h3></div>
+      <p class="where">
+        Ion's open question was "what happens to the chip?". Three answers, one
+        control.
+      </p>
+      <p class="where" style="margin-top:10px">
+        <b>1 · Morph — the chip becomes the panel, with zero jump.</b> Nothing is
+        duplicated, nothing is remounted, and — the hard rule — <b>nothing in the
+        chip's row ever moves or resizes</b>. The avatar stays 24&nbsp;px at 5,9. The
+        name stays at 38,11 in the same style. The kbd chip stays where ⌘K sat and
+        crossfades into <span class="mono">esc</span> in place. The panel's top-left
+        corner <b>is</b> the chip's top-left corner, and the container grows right and
+        down around that frozen row to 380×444 over 200&nbsp;ms, radius
+        15&nbsp;→&nbsp;21, Subtle&nbsp;→&nbsp;Overlay. The availability line (green
+        dot, "Available from October") fades in <i>under</i> the row, in space the
+        panel just opened, so it displaces nothing. Close reverses at 150&nbsp;ms and
+        the panel collapses back into being the chip — again without the row moving.
+      </p>
+      <p class="where" style="margin-top:10px">
+        <b>The price, shown honestly:</b> the <span class="mono">esc</span> chip ends
+        up at the <i>chip's</i> right edge, roughly 160&nbsp;px in, not at the panel's
+        far-right corner where a normal header would put it. Zero jump and a
+        conventionally balanced header cannot both be true. It is left exactly so —
+        judge it by eye.
+      </p>
+      <p class="where" style="margin-top:10px">
+        <b>2 · Regular popover — the chip stays.</b> The conventional answer: the chip
+        remains, lifted (Subtle&nbsp;→&nbsp;Raised, ⌘K brightened), and the panel drops
+        in 8&nbsp;px below it — scale&nbsp;.98&nbsp;→&nbsp;1, fade, rise 4&nbsp;px, origin
+        top-left, glide 200&nbsp;ms. Identical content, so the comparison is about
+        motion and continuity only. Note the cost: the identity is now on screen
+        twice.
+      </p>
+      <p class="where" style="margin-top:10px">
+        <b>3 · Modal — the pass-8 mock.</b> 560 centred, 20% scrim, instant both ways.
+      </p>
+      <p class="where" style="margin-top:10px">
+        <b>No scrim</b> on 1 and 2 — tick <i>Page dim 4%</i> to compare that against
+        nothing at all. <b>Trigger&nbsp;=&nbsp;hover</b> is included honestly —
+        150&nbsp;ms intent, 300&nbsp;ms leave grace — so the misfires are feelable:
+        reaching the panel crosses the intro paragraph and the Ledgy link, each of
+        which wants the pointer for itself. In click mode, chip hover is a
+        <b>lift</b> and nothing more.
+      </p>
+      <p class="recipe">
+        open&nbsp;&nbsp;container 200ms glide · header anatomy 0px of movement · content 150ms, groups +25ms, blur 2→0<br>
+        close&nbsp;150ms glide · esc / click-outside / the esc chip the ⌘K chip became<br>
+        sound&nbsp;soft-wood tick on open only, honours the global toggle
+      </p>
+    </section>
+
+    <section class="panel" data-demo="socials" data-mounted="false">
+      <div class="demo-head"><span class="idx">2</span><h3>Social previews — the Colin morph</h3></div>
+      <p class="where">
+        Three icons, <b>one container</b>. First hover grows it out of that icon
+        (scale .98&nbsp;→&nbsp;1, fade, rise 4&nbsp;px, glide 200&nbsp;ms). Slide to the
+        next icon and the container <b>morphs</b> — position and size tween, 200&nbsp;ms —
+        while the card content crossfades through 2&nbsp;px of blur. The cards are
+        deliberately three different sizes, so the morph is visible rather than
+        theoretical. Leaving collapses at the last anchor in 150&nbsp;ms. Icons tint
+        muted&nbsp;→&nbsp;foreground; the cards are pointer-enterable through a
+        140&nbsp;ms grace corridor.
+      </p>
+      <p class="recipe">
+        node&nbsp;&nbsp;#social-pop — created once, never replaced<br>
+        morph&nbsp;translate3d + width/height, rAF lerp, glide 200ms, retargetable mid-flight
+      </p>
+    </section>
+
+    <section class="panel" data-demo="ledgy" data-mounted="false">
+      <div class="demo-head"><span class="idx">3</span><h3>Ledgy — the external-site preview</h3></div>
+      <p class="where">
+        Hover the underlined <b>Ledgy</b> for 150&nbsp;ms and a 280-wide preview grows
+        from the link: a browser-chrome mock with traffic dots, a wireframe hero, and
+        a <span class="mono">ledgy.com ↗</span> caption. It prefers to sit above the
+        link and flips below when there is no room. The whole card is one link — here
+        it only presses. On touch, click opens it. This is the pattern for every
+        external site we mention, and later for article hover-cards.
+      </p>
+      <p class="recipe">
+        same entrance family · scale .98→1 + fade + rise 4px, glide 200ms<br>
+        intent 150ms in · grace 140ms out · flips above/below on fit
+      </p>
+    </section>
+  </div>
+
+  <!-- ======================= FOOTER ======================= -->
+  <h2 class="section-title">The family — rules, and where they land</h2>
+  <div class="panel">
+    <ul class="map">
+      <li><span class="moment"><b>Anchored, always.</b> A popover starts at the rect of its trigger and grows. Nothing appears centred in space.</span><span class="pattern">rule</span></li>
+      <li><span class="moment"><b>One container per anchor-group.</b> Moving between siblings morphs it; it never closes and reopens.</span><span class="pattern">rule</span></li>
+      <li><span class="moment"><b>Two ways to grow.</b> <i>Morph</i>: the trigger becomes the surface, corner to corner, and its elements travel into the surface's header. <i>Drop</i>: the trigger stays and a panel appears below it. Morph when the trigger's content belongs in the panel; drop when it does not.</span><span class="pattern">morph / drop</span></li>
+      <li><span class="moment"><b>A morph moves the container, never its anatomy.</b> Shared elements keep their exact position and size through the whole transition; only the surface around them grows. Anything that cannot hold still crossfades in place instead.</span><span class="pattern">zero jump</span></li>
+      <li><span class="moment"><b>Glide 200&nbsp;ms in, 150&nbsp;ms out.</b> Container only. Nothing here reaches 400&nbsp;ms.</span><span class="pattern">200 / 150</span></li>
+      <li><span class="moment"><b>Content is 150&nbsp;ms and separate</b> — fade + 4–6&nbsp;px rise + 2&nbsp;px blur, groups 25&nbsp;ms apart.</span><span class="pattern">150 · blur 2</span></li>
+      <li><span class="moment"><b>Overlay shadow + 1&nbsp;px ring</b> whenever a surface is floating. Subtle at rest.</span><span class="pattern">shadow-overlay</span></li>
+      <li><span class="moment"><b>Radius by size:</b> 15 for cards and previews, 21 for panels. 27 stays the landing shell.</span><span class="pattern">15 / 21</span></li>
+      <li><span class="moment"><b>No scrim anywhere.</b> At most a 4% page dim, and only if Ion rules for it.</span><span class="pattern">none</span></li>
+      <li><span class="moment"><b>Hover opens previews. Click opens tools.</b> A hover-opened surface never holds an action you must not misfire.</span><span class="pattern">rule</span></li>
+      <li><span class="moment"><b>Hover intent 150&nbsp;ms, leave grace 140–300&nbsp;ms</b>, and cards you can walk the pointer into.</span><span class="pattern">150 / grace</span></li>
+      <li><span class="moment">Social icons — GitHub, X, LinkedIn</span><span class="pattern">demo 2 · shipping</span></li>
+      <li><span class="moment">Ledgy, and every external site we name</span><span class="pattern">demo 3 · shipping</span></li>
+      <li><span class="moment">Article hover-cards in case studies</span><span class="pattern">same family · later</span></li>
+      <li><span class="moment">Project rows → cover preview</span><span class="pattern">candidate · same family</span></li>
+      <li><span class="moment">⌘K palette — morph, regular popover, or modal</span><span class="pattern">demo 1 · pending Ion</span></li>
+    </ul>
+    <p class="footnote">
+      Demo&nbsp;1 is the only open question. Demos&nbsp;2 and&nbsp;3 are the family
+      behaving normally; the palette is the case where the family's rule
+      (grow from the trigger) collides with an earlier ruling (the palette is
+      instant, motion-lab section&nbsp;4). Both cannot be true. The popover version
+      keeps the page visible and answers "where did this come from"; the instant
+      modal is faster to nothing. That is Ion's call, not this file's.
+    </p>
+    <p id="diag">initialising…</p>
+  </div>
+
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ---------------------------------------------------------
+     Sandbox notes: no history/URL APIs are used at all, no
+     storage, no network. matchMedia and AudioContext are the
+     only host APIs touched and both are wrapped.
+     --------------------------------------------------------- */
+
+  /* ---------------------------------------------------------
+     Diagnostics — this file is verified headlessly, so errors
+     have to land in the DOM, not only in the console.
+     --------------------------------------------------------- */
+  var lab = { mounted: [], errors: [] };
+  window.__popLab = lab;
+
+  function note(msg) { lab.errors.push(String(msg)); render(); }
+  function render() {
+    var el = document.getElementById("diag");
+    if (!el) return;
+    el.textContent =
+      "demos-mounted:" + lab.mounted.length + "/3" +
+      " · errors:" + lab.errors.length +
+      (lab.errors.length ? " · " + lab.errors.join(" | ") : "");
+    el.setAttribute("data-mounted", String(lab.mounted.length));
+    el.setAttribute("data-errors", String(lab.errors.length));
+  }
+  window.addEventListener("error", function (e) {
+    note("error: " + (e && e.message ? e.message : "unknown"));
+  });
+  window.addEventListener("unhandledrejection", function (e) {
+    note("rejection: " + (e && e.reason ? e.reason : "unknown"));
+  });
+  var nativeConsoleError = console.error.bind(console);
+  console.error = function () {
+    note("console: " + Array.prototype.join.call(arguments, " "));
+    nativeConsoleError.apply(null, arguments);
+  };
+  function mount(name, fn) {
+    try {
+      fn();
+      var card = document.querySelector('[data-demo="' + name + '"]');
+      if (card) card.setAttribute("data-mounted", "true");
+      lab.mounted.push(name);
+    } catch (err) { note(name + ": " + (err && err.message ? err.message : err)); }
+    render();
+  }
+  var $ = function (sel, root) { return (root || document).querySelector(sel); };
+
+  var D_BASE = 200, D_FAST = 150, STAGGER = 25;
+
+  /* ---------------------------------------------------------
+     Reduced motion — global mode, seeded from the OS.
+     --------------------------------------------------------- */
+  var reducedQuery = null;
+  try { reducedQuery = window.matchMedia("(prefers-reduced-motion: reduce)"); } catch (e) { reducedQuery = null; }
+  var reduced = !!(reducedQuery && reducedQuery.matches);
+  function applyReduced() {
+    document.documentElement.setAttribute("data-reduced", reduced ? "true" : "false");
+    var b = document.getElementById("reduced-toggle");
+    if (b) b.setAttribute("aria-pressed", reduced ? "true" : "false");
+  }
+  function dur(ms) { return reduced ? 0 : ms; }
+
+  /* ---------------------------------------------------------
+     Sound — SOUND A (soft wood) is ratified. In this lab it is
+     wired to ONE event: the palette opening. Default ON, so Ion
+     hears his own pick; silent if the frame has no WebAudio.
+     --------------------------------------------------------- */
+  var AudioCtor = null;
+  try { AudioCtor = window.AudioContext || window.webkitAudioContext || null; } catch (e) { AudioCtor = null; }
+  var isDesktop = true;
+  try { isDesktop = window.matchMedia("(hover: hover) and (pointer: fine)").matches; } catch (e) { isDesktop = true; }
+  var canHover = isDesktop;
+  var soundAvailable = !!AudioCtor && isDesktop;
+  var soundOn = true;              /* default ON for this lab */
+  var actx = null;
+
+  function ctx() {
+    if (actx) return actx;
+    if (!AudioCtor) return null;
+    try { actx = new AudioCtor(); } catch (e) { actx = null; }
+    return actx;
+  }
+  /* A — soft wood: 2 kHz body + a quiet 3 kHz tap, 30 ms decay. */
+  function playTickA() {
+    var c = ctx();
+    if (!c) return;
+    try {
+      if (c.state === "suspended" && c.resume) c.resume();
+      var t = c.currentTime;
+      var out = c.createGain(); out.gain.value = 1; out.connect(c.destination);
+      var o1 = c.createOscillator(), g1 = c.createGain();
+      o1.type = "triangle";
+      o1.frequency.setValueAtTime(2000, t);
+      o1.frequency.exponentialRampToValueAtTime(1500, t + 0.03);
+      g1.gain.setValueAtTime(0.0001, t);
+      g1.gain.exponentialRampToValueAtTime(0.06, t + 0.002);
+      g1.gain.exponentialRampToValueAtTime(0.0001, t + 0.03);
+      o1.connect(g1); g1.connect(out); o1.start(t); o1.stop(t + 0.06);
+      var o2 = c.createOscillator(), g2 = c.createGain();
+      o2.type = "sine";
+      o2.frequency.setValueAtTime(3000, t);
+      g2.gain.setValueAtTime(0.0001, t);
+      g2.gain.exponentialRampToValueAtTime(0.02, t + 0.001);
+      g2.gain.exponentialRampToValueAtTime(0.0001, t + 0.012);
+      o2.connect(g2); g2.connect(out); o2.start(t); o2.stop(t + 0.04);
+    } catch (e) { /* silence is an acceptable outcome */ }
+  }
+  function openSound() { if (soundOn) playTickA(); }
+  lab.soundState = function () { return { on: soundOn, available: soundAvailable }; };
+
+  /* ---------------------------------------------------------
+     Easing + the morph engine.
+
+     A popover container is absolutely positioned and therefore
+     out of flow: tweening its width and height relayouts only
+     its own subtree, never the page. Position rides on a
+     transform, so it stays composited. This is the sanctioned
+     morph from the motion system, and the mechanic decoded from
+     Colin's Contacts.svelte (he tweens left/width/height).
+     --------------------------------------------------------- */
+  function bezier(x1, y1, x2, y2) {
+    function A(a, b) { return 1 - 3 * b + 3 * a; }
+    function B(a, b) { return 3 * b - 6 * a; }
+    function C(a) { return 3 * a; }
+    function calc(t, a, b) { return ((A(a, b) * t + B(a, b)) * t + C(a)) * t; }
+    function slope(t, a, b) { return 3 * A(a, b) * t * t + 2 * B(a, b) * t + C(a); }
+    return function (x) {
+      if (x <= 0) return 0;
+      if (x >= 1) return 1;
+      var t = x, i, s, e;
+      for (i = 0; i < 8; i++) {
+        s = slope(t, x1, x2);
+        if (s === 0) break;
+        e = calc(t, x1, x2) - x;
+        t -= e / s;
+      }
+      if (t < 0) t = 0; if (t > 1) t = 1;
+      return calc(t, y1, y2);
+    };
+  }
+  var GLIDE = bezier(0.16, 1, 0.3, 1);
+
+  function makeMorph(el, onPaint) {
+    /* `p` is a free channel on the same clock: the palette uses it to
+       drive per-element travel (chip avatar → header avatar, chip name
+       → header name), so element continuity and container continuity
+       are literally the same interpolation — including when a close
+       interrupts an open half way. */
+    var cur = { x: 0, y: 0, w: 0, h: 0, r: 15, p: 0 };
+    var from = null, to = null, t0 = 0, ms = 0, raf = 0, done = null;
+
+    function paint() {
+      el.style.transform = "translate3d(" + cur.x + "px," + cur.y + "px,0)";
+      el.style.width = cur.w + "px";
+      el.style.height = cur.h + "px";
+      el.style.borderRadius = cur.r + "px";
+      if (onPaint) onPaint(cur);
+    }
+    function lerp(a, b, p) { return a + (b - a) * p; }
+    function frame(now) {
+      var p = ms <= 0 ? 1 : (now - t0) / ms;
+      if (p > 1) p = 1;
+      var e = GLIDE(p);
+      cur.x = lerp(from.x, to.x, e);
+      cur.y = lerp(from.y, to.y, e);
+      cur.w = lerp(from.w, to.w, e);
+      cur.h = lerp(from.h, to.h, e);
+      cur.r = lerp(from.r, to.r, e);
+      cur.p = lerp(from.p, to.p, e);
+      paint();
+      if (p < 1) { raf = requestAnimationFrame(frame); }
+      else {
+        raf = 0;
+        el.setAttribute("data-morphing", "false");
+        var d = done; done = null;
+        if (d) d();
+      }
+    }
+    return {
+      /* jump with no animation — used for the first placement */
+      snap: function (r) {
+        if (raf) { cancelAnimationFrame(raf); raf = 0; }
+        cur = { x: r.x, y: r.y, w: r.w, h: r.h,
+                r: r.r === undefined ? cur.r : r.r,
+                p: r.p === undefined ? cur.p : r.p };
+        el.setAttribute("data-morphing", "false");
+        paint();
+      },
+      /* retargetable: a new target mid-flight restarts from the
+         current interpolated rect, which is what makes sliding
+         between anchors read as one continuous movement */
+      move: function (r, d, cb) {
+        var target = { x: r.x, y: r.y, w: r.w, h: r.h,
+                       r: r.r === undefined ? cur.r : r.r,
+                       p: r.p === undefined ? cur.p : r.p };
+        d = dur(d);
+        if (raf) { cancelAnimationFrame(raf); raf = 0; }
+        if (d <= 0) { cur = target; paint(); el.setAttribute("data-morphing", "false"); if (cb) cb(); return; }
+        from = { x: cur.x, y: cur.y, w: cur.w, h: cur.h, r: cur.r, p: cur.p };
+        to = target; ms = d; done = cb || null;
+        t0 = performance.now();
+        el.setAttribute("data-morphing", "true");
+        raf = requestAnimationFrame(frame);
+      },
+      rect: function () { return { x: cur.x, y: cur.y, w: cur.w, h: cur.h, r: cur.r, p: cur.p }; },
+      busy: function () { return !!raf; }
+    };
+  }
+
+  /* ---------------------------------------------------------
+     Icons
+     --------------------------------------------------------- */
+  var ICON = {
+    search: '<svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><circle cx="7" cy="7" r="4.75"/><path d="M10.5 10.5 14 14"/></svg>',
+    home:   '<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 6.8 8 2.5l5.5 4.3V13a.5.5 0 0 1-.5.5H3a.5.5 0 0 1-.5-.5z"/></svg>',
+    letter: '<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3.5" width="12" height="9" rx="1.5"/><path d="m2.6 4.6 5.4 3.8 5.4-3.8"/></svg>',
+    doc:    '<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 2h5l3 3v9H4z"/><path d="M9 2v3h3M6 8.5h4M6 11h3"/></svg>',
+    stack:  '<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m8 2 6 3-6 3-6-3z"/><path d="m2 8 6 3 6-3M2 11l6 3 6-3"/></svg>',
+    spark:  '<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2.2 9.3 6 13 7.3 9.3 8.6 8 12.4 6.7 8.6 3 7.3 6.7 6z"/></svg>',
+    copy:   '<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5.5" y="5.5" width="8" height="8" rx="1.6"/><path d="M10.5 5.5v-1a1.5 1.5 0 0 0-1.5-1.5H4a1.5 1.5 0 0 0-1.5 1.5V9A1.5 1.5 0 0 0 4 10.5h1"/></svg>',
+    cal:    '<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="3.5" width="11" height="10" rx="1.6"/><path d="M2.5 6.5h11M5.5 2.2v2M10.5 2.2v2"/></svg>',
+    sun:    '<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" aria-hidden="true"><circle cx="8" cy="8" r="2.6"/><path d="M8 1.6v1.5M8 12.9v1.5M2.4 2.4l1.1 1.1M12.5 12.5l1.1 1.1M1.6 8h1.5M12.9 8h1.5M2.4 13.6l1.1-1.1M12.5 3.5l1.1-1.1"/></svg>',
+    arrow:  '<svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 11 11 5"/><path d="M5.75 5H11v5.25"/></svg>',
+    github: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5C5.37.5 0 5.87 0 12.5c0 5.3 3.44 9.8 8.21 11.39.6.11.82-.26.82-.58v-2.03c-3.34.73-4.04-1.61-4.04-1.61-.55-1.39-1.34-1.76-1.34-1.76-1.09-.75.08-.73.08-.73 1.21.09 1.84 1.24 1.84 1.24 1.07 1.84 2.81 1.31 3.5 1 .11-.78.42-1.31.76-1.61-2.67-.3-5.47-1.34-5.47-5.95 0-1.31.47-2.38 1.24-3.22-.12-.31-.54-1.53.12-3.18 0 0 1.01-.32 3.3 1.23a11.5 11.5 0 0 1 6 0c2.29-1.55 3.3-1.23 3.3-1.23.66 1.65.24 2.87.12 3.18.77.84 1.24 1.91 1.24 3.22 0 4.62-2.81 5.64-5.49 5.94.43.37.81 1.1.81 2.22v3.29c0 .32.22.7.83.58C20.56 22.29 24 17.8 24 12.5 24 5.87 18.63.5 12 .5z"/></svg>',
+    x:      '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>',
+    linkedin:'<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4.98 3.5C4.98 4.88 3.87 6 2.5 6S0 4.88 0 3.5 1.12 1 2.5 1s2.48 1.12 2.48 2.5zM.22 8.02h4.56V24H.22zM8.34 8.02h4.37v2.18h.06c.61-1.15 2.1-2.36 4.32-2.36 4.62 0 5.47 3.04 5.47 6.99V24h-4.56v-7.28c0-1.74-.03-3.97-2.42-3.97-2.42 0-2.79 1.89-2.79 3.85V24H8.34z"/></svg>'
+  };
+
+  /* ---------------------------------------------------------
+     Palette content — one builder, two widths (380 popover,
+     560 modal). Groups carry --i so the stagger is declarative.
+     --------------------------------------------------------- */
+  function paletteHTML() {
+    function row(icon, label, keys) {
+      return '<button type="button" class="prow">' +
+        '<span class="ico">' + icon + '</span>' +
+        '<span class="grow">' + label + '</span>' +
+        (keys ? '<span class="kbd">' + keys + '</span>' : '') +
+        '</button>';
+    }
+    return '' +
+      '<div class="grp pal-search" style="--i:0">' +
+        ICON.search + '<span class="spacer">Search…</span>' +
+      '</div>' +
+      '<div class="pal-body">' +
+        '<div class="grp" style="--i:1">' +
+          '<div class="pal-label">Navigate</div>' +
+          row(ICON.home, "Home") +
+          row(ICON.letter, "Letter") +
+          row(ICON.doc, "Articles") +
+          row(ICON.stack, "Stack") +
+          row(ICON.spark, "Agents &amp; Skills") +
+        '</div>' +
+        '<div class="grp" style="--i:2">' +
+          '<div class="pal-label">Actions</div>' +
+          row(ICON.copy, "Copy email", "⌘⇧C") +
+          row(ICON.cal, "Book a call") +
+        '</div>' +
+      '</div>' +
+      '<div class="grp pal-foot" style="--i:3">' +
+        '<span><span class="k">↑↓</span> navigate</span>' +
+        '<span><span class="k">↵</span> open</span>' +
+        '<span><span class="k">esc</span> close</span>' +
+      '</div>';
+  }
+
+  /* The identity header, in normal flow. The morph surface builds the
+     same header out of travelling atoms instead; these two must stay
+     dimensionally identical, which is why both read the same tokens. */
+  function headHTML() {
+    return '<div class="drop-head">' +
+        '<span class="avatar" aria-hidden="true"></span>' +
+        '<span class="dh-text">' +
+          '<span class="who">Ion Mesca</span>' +
+          '<span class="avail"><i class="dot"></i>Available from October</span>' +
+        '</span>' +
+        '<button type="button" class="kbd pal-esc">esc</button>' +
+      '</div>';
+  }
+  function panelHTML() {
+    return headHTML() + '<div class="pal" data-on="false" style="flex:1;min-height:0">' + paletteHTML() + '</div>';
+  }
+
+  /* ---------------------------------------------------------
+     Segment controls
+     --------------------------------------------------------- */
+  function segment(id, onPick) {
+    var seg = document.getElementById(id);
+    var thumb = seg.querySelector(".thumb");
+    var btns = [].slice.call(seg.querySelectorAll("button"));
+    function place(i) {
+      thumb.style.width = btns[i].offsetWidth + "px";
+      thumb.style.transform = "translateX(" + (btns[i].offsetLeft - 3) + "px)";
+    }
+    function pick(i, quiet) {
+      btns.forEach(function (b, j) { b.setAttribute("aria-pressed", j === i ? "true" : "false"); });
+      place(i);
+      if (!quiet) onPick(btns[i].getAttribute("data-v"));
+    }
+    btns.forEach(function (b, i) { b.addEventListener("click", function () { pick(i); }); });
+    requestAnimationFrame(function () { place(0); });
+    return {
+      set: function (v) {
+        for (var i = 0; i < btns.length; i++) {
+          if (btns[i].getAttribute("data-v") === v) { pick(i); return; }
+        }
+      }
+    };
+  }
+
+  /* =========================================================
+     HEADER
+     ========================================================= */
+  (function header() {
+    try {
+      var rBtn = document.getElementById("reduced-toggle");
+      rBtn.addEventListener("click", function () { reduced = !reduced; applyReduced(); });
+      applyReduced();
+
+      var sBtn = document.getElementById("sound-toggle");
+      var sLabel = document.getElementById("sound-label");
+      if (!soundAvailable) {
+        soundOn = false;
+        sBtn.setAttribute("aria-disabled", "true");
+        sBtn.setAttribute("aria-pressed", "false");
+        document.documentElement.setAttribute("data-sound", "off");
+        sLabel.textContent = AudioCtor ? "Sound — desktop only" : "Sound — unavailable here";
+      } else {
+        sBtn.addEventListener("click", function () {
+          soundOn = !soundOn;
+          sBtn.setAttribute("aria-pressed", soundOn ? "true" : "false");
+          document.documentElement.setAttribute("data-sound", soundOn ? "on" : "off");
+          if (soundOn) playTickA();
+        });
+      }
+    } catch (e) { note("header: " + (e && e.message ? e.message : e)); }
+  })();
+
+  var stage = document.getElementById("stage");
+
+  /* =========================================================
+     DEMO 1 — the ⌘K palette as a chip-anchored popover
+     ========================================================= */
+  var palette = null;
+  mount("palette", function () {
+    var slot     = document.getElementById("chip-slot");
+    var surface  = document.getElementById("chip-surface");
+    var chipHit  = document.getElementById("chip-hit");
+    var palFace  = document.getElementById("pal-face");
+    var corridor = document.getElementById("corridor");
+    var drop     = document.getElementById("drop-panel");
+    var modal    = document.getElementById("modal");
+
+    var elAvatar = document.getElementById("a-avatar");
+    var elName   = document.getElementById("a-name");
+    var elAvail  = document.getElementById("a-avail");
+    var elKbd    = document.getElementById("a-kbd");
+
+    palFace.innerHTML = paletteHTML();
+    drop.innerHTML = panelHTML();
+    modal.innerHTML = '<div style="width:560px;height:444px;display:flex;flex-direction:column">' +
+                      panelHTML() + '</div>';
+    var dropPal = drop.querySelector(".pal");
+    /* the modal copy is not animated: its groups must simply be there */
+    [].forEach.call(modal.querySelectorAll(".grp"), function (g) {
+      g.style.opacity = "1"; g.style.transform = "none"; g.style.filter = "none";
+      g.style.transition = "none";
+    });
+
+    var PANEL = { w: 380, h: 444, r: 21 };
+    var HEAD = 69;            /* 42 frozen chip row + 26 availability + 1px rule */
+    var GAP = 8;
+    var chipRect = { w: 168, h: 42 };
+
+    /* ---- the two layouts the atoms interpolate between ----
+       CHIP (h42): [5] avatar 24 [9] name [9] kbd [14]
+       HEADER:     [14] avatar 24 [11] name / availability, kbd right
+       The panel's top-left corner IS the chip's top-left corner, so
+       these are two readings of the same coordinate space and the
+       travel is small enough to be legible rather than showy. */
+    var ATOMS = null;
+    function measureChip() {
+      var nameW = Math.round(elName.getBoundingClientRect().width) || 74;
+      var kbdW  = Math.round(elKbd.getBoundingClientRect().width) || 33;
+      chipRect.w = 5 + 24 + 9 + nameW + 9 + kbdW + 14;
+      chipRect.h = 42;
+      slot.style.width = chipRect.w + "px";
+      slot.style.height = chipRect.h + "px";
+      chipHit.style.width = chipRect.w + "px";
+      corridor.style.width = Math.max(chipRect.w, PANEL.w) + "px";
+      corridor.style.height = (chipRect.h + GAP) + "px";
+      drop.style.top = (chipRect.h + GAP) + "px";
+      /* ONE position each, for both states. There is no `b`. */
+      ATOMS = {
+        avatar: { el: elAvatar, at: [5, 9] },
+        name:   { el: elName,   at: [38, 11] },
+        kbd:    { el: elKbd,    at: [chipRect.w - 14 - kbdW, 10] },
+        /* the availability line sits under the frozen row, indented to
+           the name — new space the panel opened up, so it pushes on
+           nothing that was already there */
+        avail:  { el: elAvail,  at: [38, 44] }
+      };
+      placeAtoms();
+    }
+    /* Called on measure and never again. The morph does not touch it. */
+    function placeAtoms() {
+      if (!ATOMS) return;
+      for (var k in ATOMS) {
+        if (!Object.prototype.hasOwnProperty.call(ATOMS, k)) continue;
+        ATOMS[k].el.style.transform =
+          "translate3d(" + ATOMS[k].at[0] + "px," + ATOMS[k].at[1] + "px,0)";
+      }
+    }
+    function closedRect() { return { x: 0, y: 0, w: chipRect.w, h: chipRect.h, r: 15, p: 0 }; }
+    /* the panel grows RIGHT and DOWN out of the chip's own corner */
+    function openRect()   { return { x: 0, y: 0, w: PANEL.w, h: PANEL.h, r: PANEL.r, p: 1 }; }
+
+    var isOpen = false;
+    var morph = makeMorph(surface);   /* no per-frame atom work: they never move */
+    measureChip();
+    morph.snap(closedRect());
+    /* re-measure once after first paint, in case metrics settle */
+    requestAnimationFrame(function () {
+      measureChip();
+      if (!isOpen) morph.snap(closedRect());
+      else morph.snap(openRect());
+    });
+
+    var mode = "morph";       /* morph | popover | modal */
+    var trigger = "click";    /* click | hover */
+    var hoverIn = 0, hoverOut = 0;
+
+    function setState(open) {
+      isOpen = open;
+      stage.setAttribute("data-palette", open ? "open" : "closed");
+      chipHit.setAttribute("aria-expanded", open ? "true" : "false");
+    }
+
+    function open() {
+      if (isOpen) return;
+      setState(true);
+      openSound();
+      if (mode === "morph") {
+        surface.setAttribute("data-open", "true");
+        palFace.setAttribute("data-on", "true");
+        morph.move(openRect(), D_BASE);
+      } else if (mode === "popover") {
+        dropPal.setAttribute("data-on", "true");
+      }
+      /* modal: CSS does the instant work */
+    }
+    function close() {
+      if (!isOpen) return;
+      setState(false);
+      if (mode === "morph") {
+        surface.setAttribute("data-open", "false");
+        palFace.setAttribute("data-on", "false");
+        morph.move(closedRect(), D_FAST);
+      } else if (mode === "popover") {
+        dropPal.setAttribute("data-on", "false");
+      }
+    }
+    function toggle() { if (isOpen) close(); else open(); }
+
+    /* --- trigger: click / ⌘K --- */
+    chipHit.addEventListener("click", function (e) {
+      e.stopPropagation();
+      if (trigger === "click") toggle();
+    });
+    document.addEventListener("keydown", function (e) {
+      var k = (e.key || "").toLowerCase();
+      if ((e.metaKey || e.ctrlKey) && k === "k") { e.preventDefault(); toggle(); return; }
+      if (k === "escape" && isOpen) { e.preventDefault(); close(); }
+    });
+    /* click-outside. The lab's own chrome (masthead switches, the
+       Surface/Trigger/dim controls) is not "the page" — clicking a
+       control must not count as dismissing the thing it controls. */
+    var labChrome = [document.querySelector(".masthead"), document.getElementById("lab-controls")];
+    document.addEventListener("click", function (e) {
+      if (!isOpen) return;
+      if (surface.contains(e.target)) return;
+      if (drop.contains(e.target)) return;
+      if (modal.contains(e.target)) return;
+      for (var i = 0; i < labChrome.length; i++) {
+        if (labChrome[i] && labChrome[i].contains(e.target)) return;
+      }
+      close();
+    });
+    /* the esc chip in the identity header is the panel's own dismiss.
+       In morph mode the chip HAS become that header, so this is
+       literally the same affordance you pressed to open it. */
+    stage.addEventListener("click", function (e) {
+      if (e.target.closest && e.target.closest(".pal-esc, .k-esc")) { e.stopPropagation(); close(); }
+    }, true);
+
+    /* --- trigger: hover (150ms intent in, 300ms grace out) --- */
+    function armOpen() {
+      if (trigger !== "hover") return;
+      clearTimeout(hoverOut);
+      clearTimeout(hoverIn);
+      hoverIn = setTimeout(open, 150);
+    }
+    function armClose() {
+      if (trigger !== "hover") return;
+      clearTimeout(hoverIn);
+      clearTimeout(hoverOut);
+      hoverOut = setTimeout(close, 300);
+    }
+    surface.addEventListener("mouseenter", armOpen);
+    surface.addEventListener("mouseleave", armClose);
+    corridor.addEventListener("mouseenter", function () { clearTimeout(hoverOut); });
+    corridor.addEventListener("mouseleave", armClose);
+    drop.addEventListener("mouseenter", function () { clearTimeout(hoverOut); });
+    drop.addEventListener("mouseleave", armClose);
+    modal.addEventListener("mouseenter", function () { clearTimeout(hoverOut); });
+    modal.addEventListener("mouseleave", armClose);
+
+    /* --- controls --- */
+    var segSurface = segment("seg-surface", function (v) {
+      close();
+      mode = v;
+      stage.setAttribute("data-surface", v);
+    });
+    var segTrigger = segment("seg-trigger", function (v) {
+      close();
+      trigger = v;
+      stage.setAttribute("data-trigger", v);
+      clearTimeout(hoverIn); clearTimeout(hoverOut);
+    });
+    var dimBtn = document.getElementById("dim-toggle");
+    var dimOn = false;
+    dimBtn.addEventListener("click", function () {
+      dimOn = !dimOn;
+      dimBtn.setAttribute("aria-pressed", dimOn ? "true" : "false");
+      stage.setAttribute("data-dim", dimOn ? "on" : "off");
+    });
+
+    window.addEventListener("resize", function () {
+      measureChip();
+      if (isOpen && mode === "morph") morph.snap(openRect());
+      else morph.snap(closedRect());
+    });
+
+    palette = {
+      open: open, close: close, toggle: toggle,
+      isOpen: function () { return isOpen; },
+      mode: function () { return mode; },
+      trigger: function () { return trigger; },
+      setMode: function (v) { segSurface.set(v); },
+      setTrigger: function (v) { segTrigger.set(v); },
+      setDim: function (v) { if (v !== dimOn) dimBtn.click(); },
+      rect: function () { return morph.rect(); },
+      targets: function () { return { closed: closedRect(), open: openRect(), head: HEAD }; },
+      /* viewport-space rects, so a test can prove the header anatomy
+         does not move even as the surface around it grows */
+      atoms: function () {
+        var out = {};
+        for (var k in ATOMS) {
+          if (!Object.prototype.hasOwnProperty.call(ATOMS, k)) continue;
+          var r = ATOMS[k].el.getBoundingClientRect();
+          var s = surface.getBoundingClientRect();
+          out[k] = {
+            vx: Math.round(r.left * 100) / 100, vy: Math.round(r.top * 100) / 100,
+            vw: Math.round(r.width * 100) / 100, vh: Math.round(r.height * 100) / 100,
+            x: Math.round((r.left - s.left) * 100) / 100,
+            y: Math.round((r.top - s.top) * 100) / 100,
+            at: ATOMS[k].at
+          };
+        }
+        return out;
+      },
+      node: surface
+    };
+    lab.palette = palette;
+  });
+
+  /* =========================================================
+     DEMO 2 — social hover previews, one morphing container
+     ========================================================= */
+  mount("socials", function () {
+    var pop = document.getElementById("social-pop");
+    pop.setAttribute("data-instance", "social-" + Math.random().toString(36).slice(2, 9));
+
+    var inner = document.createElement("div");
+    inner.className = "pop-inner";
+    pop.appendChild(inner);
+
+    var CARDS = [
+      { w: 264, h: 150, icon: ICON.github, label: "GitHub", html:
+        '<div class="card-pad" style="width:264px">' +
+          '<div class="card-head-row"><span class="card-av"></span>' +
+          '<span class="card-name">ionmesca</span><span class="card-sub">github.com</span></div>' +
+          '<div class="stackv">' +
+            '<div class="repo"><span class="r1">ion-portfolio</span><span class="r2">TypeScript · Next.js · ★ 24</span></div>' +
+            '<div class="repo"><span class="r1">wheel-physics</span><span class="r2">TypeScript · ★ 8</span></div>' +
+          '</div>' +
+        '</div>' },
+      { w: 244, h: 112, icon: ICON.x, label: "X", html:
+        '<div class="card-pad" style="width:244px">' +
+          '<div class="card-head-row"><span class="card-av"></span>' +
+          '<span class="card-name">@ionmesca</span><span class="card-sub">x.com</span></div>' +
+          '<p class="post">Spent the week deciding whether a command palette should grow out of the thing you clicked.</p>' +
+          '<p class="meta">2h · 41 likes</p>' +
+        '</div>' },
+      { w: 244, h: 92, icon: ICON.linkedin, label: "LinkedIn", html:
+        '<div class="card-pad" style="width:244px">' +
+          '<div class="card-head-row"><span class="card-av"></span>' +
+          '<span class="card-name">Ion Mesca</span><span class="card-sub">linkedin</span></div>' +
+          '<p class="post" style="margin-top:6px">Design Engineer at Ledgy</p>' +
+          '<p class="meta">Zurich · 1st</p>' +
+        '</div>' }
+    ];
+
+    var btns = [0, 1, 2].map(function (i) { return document.getElementById("soc-" + i); });
+    var faces = CARDS.map(function (c, i) {
+      btns[i].innerHTML = c.icon;
+      var f = document.createElement("div");
+      f.className = "pop-face";
+      f.setAttribute("data-on", "false");
+      f.setAttribute("data-face", String(i));
+      f.style.width = c.w + "px";
+      f.innerHTML = c.html;
+      inner.appendChild(f);
+      return f;
+    });
+
+    var morph = makeMorph(pop);
+    var openIdx = -1, isOpen = false;
+    var tIn = 0, tOut = 0;
+
+    var placedBelow = true;
+    /* Placement: prefer BELOW the icon. The row sits high in this
+       hero, and a card above it lands on the identity chip — the
+       anchor for demo 1 — which reads as a replacement rather than
+       a preview. Flips above when there is no room below. */
+    function anchorRect(i) {
+      var c = CARDS[i];
+      var ar = btns[i].getBoundingClientRect();
+      var sr = stage.getBoundingClientRect();
+      var cx = ar.left - sr.left + ar.width / 2;
+      var x = Math.round(cx - c.w / 2);
+      var maxX = Math.round(sr.width - c.w - 8);
+      if (x > maxX) x = maxX;
+      if (x < 8) x = 8;
+      var below = Math.round(ar.bottom - sr.top + 8);
+      var above = Math.round(ar.top - sr.top - c.h - 8);
+      placedBelow = (below + c.h + 8 <= sr.height) || above < 8;
+      return { x: x, y: placedBelow ? below : above, w: c.w, h: c.h, r: 15 };
+    }
+    function show(i) {
+      clearTimeout(tOut);
+      if (i === openIdx && isOpen) return;
+      faces.forEach(function (f, j) { f.setAttribute("data-on", j === i ? "true" : "false"); });
+      btns.forEach(function (b, j) { b.setAttribute("data-active", j === i ? "true" : "false"); });
+      if (!isOpen) {
+        /* first open: the container is placed at its final rect and
+           the entrance itself does the growing (scale .98 → 1,
+           fade, rise 4px) */
+        morph.snap(anchorRect(i));
+        isOpen = true;
+        pop.setAttribute("data-open", "true");
+      } else {
+        morph.move(anchorRect(i), D_BASE);
+      }
+      openIdx = i;
+    }
+    function hide() {
+      clearTimeout(tIn);
+      if (!isOpen) return;
+      isOpen = false;
+      pop.setAttribute("data-open", "false");
+      btns.forEach(function (b) { b.setAttribute("data-active", "false"); });
+      /* collapse at the last anchor — the container does not travel
+         on the way out, it just goes away where it stood */
+    }
+
+    btns.forEach(function (b, i) {
+      b.addEventListener("mouseenter", function () {
+        clearTimeout(tOut);
+        if (isOpen) { show(i); return; }          /* sibling → instant morph */
+        clearTimeout(tIn);
+        tIn = setTimeout(function () { show(i); }, 150);
+      });
+      b.addEventListener("mouseleave", function () {
+        clearTimeout(tIn);
+        clearTimeout(tOut);
+        tOut = setTimeout(hide, 140);             /* grace corridor */
+      });
+      b.addEventListener("focus", function () { show(i); });
+      b.addEventListener("blur", function () { tOut = setTimeout(hide, 140); });
+      b.addEventListener("click", function (e) {
+        e.preventDefault();
+        if (!canHover) { if (isOpen && openIdx === i) hide(); else show(i); }
+      });
+    });
+    pop.addEventListener("mouseenter", function () { clearTimeout(tOut); });
+    pop.addEventListener("mouseleave", function () { tOut = setTimeout(hide, 140); });
+
+    lab.social = {
+      node: pop,
+      instance: function () { return pop.getAttribute("data-instance"); },
+      show: show, hide: hide,
+      isOpen: function () { return isOpen; },
+      index: function () { return openIdx; },
+      rect: function () { return morph.rect(); },
+      anchorRect: anchorRect,
+      faceOn: function () {
+        for (var i = 0; i < faces.length; i++) {
+          if (faces[i].getAttribute("data-on") === "true") return i;
+        }
+        return -1;
+      }
+    };
+  });
+
+  /* =========================================================
+     DEMO 3 — the Ledgy site preview
+     ========================================================= */
+  mount("ledgy", function () {
+    var link = document.getElementById("ledgy-link");
+    var pop = document.getElementById("ledgy-pop");
+    pop.setAttribute("data-instance", "ledgy-" + Math.random().toString(36).slice(2, 9));
+
+    var W = 280, MOCK_H = 180, CAP_H = 32, PAD = 6;
+    var H = MOCK_H + CAP_H + PAD;      /* 218 */
+
+    var inner = document.createElement("div");
+    inner.className = "pop-inner";
+    inner.innerHTML =
+      '<a class="press" href="#" id="ledgy-card" aria-label="ledgy.com"></a>' +
+      '<div class="pop-face" data-on="true" style="width:280px;pointer-events:none">' +
+        '<div class="browser">' +
+          '<div class="bar">' +
+            '<span class="dot"></span><span class="dot"></span><span class="dot"></span>' +
+            '<span class="url">ledgy.com</span>' +
+          '</div>' +
+          '<div class="view">' +
+            '<div class="wf h1"></div><div class="wf h2"></div>' +
+            '<div class="wf p"></div><div class="wf p2"></div>' +
+            '<div class="wf btn"></div>' +
+            '<div class="wf block"></div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="cap"><span class="host">ledgy.com</span>' +
+          '<span class="arrow">' + ICON.arrow + '</span></div>' +
+      '</div>';
+    pop.appendChild(inner);
+    /* the whole card is one link: the anchor lies over the content
+       and takes the press; the content itself is inert */
+    inner.querySelector(".press").style.zIndex = "1";
+    inner.querySelector(".pop-face").style.zIndex = "0";
+
+    var morph = makeMorph(pop);
+    var isOpen = false, tIn = 0, tOut = 0, placedBelow = false;
+
+    function targetRect() {
+      var rects = link.getClientRects();
+      var lr = rects.length ? rects[0] : link.getBoundingClientRect();
+      var sr = stage.getBoundingClientRect();
+      var cx = lr.left - sr.left + lr.width / 2;
+      var x = Math.round(cx - W / 2);
+      var maxX = Math.round(sr.width - W - 8);
+      if (x > maxX) x = maxX;
+      if (x < 8) x = 8;
+      var above = Math.round(lr.top - sr.top - H - 8);
+      placedBelow = above < 8;
+      var y = placedBelow ? Math.round(lr.bottom - sr.top + 8) : above;
+      return { x: x, y: y, w: W, h: H, r: 15 };
+    }
+    function show() {
+      clearTimeout(tOut);
+      if (isOpen) return;
+      morph.snap(targetRect());
+      inner.style.transformOrigin = placedBelow ? "50% 0%" : "50% 100%";
+      isOpen = true;
+      pop.setAttribute("data-open", "true");
+    }
+    function hide() {
+      clearTimeout(tIn);
+      if (!isOpen) return;
+      isOpen = false;
+      pop.setAttribute("data-open", "false");
+    }
+
+    link.addEventListener("mouseenter", function () {
+      clearTimeout(tOut); clearTimeout(tIn);
+      tIn = setTimeout(show, 150);
+    });
+    link.addEventListener("mouseleave", function () {
+      clearTimeout(tIn); clearTimeout(tOut);
+      tOut = setTimeout(hide, 140);
+    });
+    link.addEventListener("focus", show);
+    link.addEventListener("blur", function () { tOut = setTimeout(hide, 140); });
+    link.addEventListener("click", function (e) {
+      e.preventDefault();
+      /* touch: the link itself opens the preview; a second tap would
+         follow it on the real site */
+      if (!canHover) { if (isOpen) hide(); else show(); }
+    });
+    pop.addEventListener("mouseenter", function () { clearTimeout(tOut); });
+    pop.addEventListener("mouseleave", function () { tOut = setTimeout(hide, 140); });
+    inner.querySelector(".press").addEventListener("click", function (e) { e.preventDefault(); });
+
+    lab.ledgy = {
+      node: pop,
+      instance: function () { return pop.getAttribute("data-instance"); },
+      show: show, hide: hide,
+      isOpen: function () { return isOpen; },
+      rect: function () { return morph.rect(); },
+      placedBelow: function () { return placedBelow; }
+    };
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>

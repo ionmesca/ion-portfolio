@@ -1,0 +1,1044 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mobile landing — A/B lab</title>
+<style>
+/* ===========================================================================
+   TOKENS — inlined from globals.v2.css / the wheel prototype. Light only.
+   ======================================================================== */
+:root {
+  --stone-50:  #fafaf9;
+  --stone-100: #f5f5f4;
+  --stone-200: #e7e5e4;
+  --stone-300: #d6d3d1;
+  --stone-400: #a8a29e;
+  --stone-500: #78716c;
+  --stone-700: #44403c;
+  --stone-800: #292524;
+  --stone-950: #0c0a09;
+  --white: #ffffff;
+
+  --background: var(--white);
+  --foreground: var(--stone-950);
+  --muted: var(--stone-100);
+  --muted-foreground: var(--stone-500);
+  --border: var(--stone-200);
+  --primary: #1c1917;
+  --primary-foreground: var(--stone-50);
+
+  --radius-sm: 9px;
+  --radius-md: 12px;
+  --radius-lg: 15px;
+  --radius-xl: 21px;
+
+  /* Layered smooth shadow, 5th layer = constant 1px hairline ring (black 5%). */
+  --shadow-subtle:
+    0 0.5px 0.5px 0 rgb(0 0 0 / 0.04),
+    0 1.5px 1px 0 rgb(0 0 0 / 0.03),
+    0 3px 1.5px 0 rgb(0 0 0 / 0.02),
+    0 5px 2px 0 rgb(0 0 0 / 0.01),
+    0 0 0 1px rgb(0 0 0 / 0.05);
+  --shadow-raised:
+    0 1px 1px 0 rgb(0 0 0 / 0.04),
+    0 3px 2px 0 rgb(0 0 0 / 0.03),
+    0 6px 3px 0 rgb(0 0 0 / 0.02),
+    0 10px 4px 0 rgb(0 0 0 / 0.01),
+    0 0 0 1px rgb(0 0 0 / 0.05);
+  --shadow-overlay:
+    0 2px 2px 0 rgb(0 0 0 / 0.05),
+    0 6px 4px 0 rgb(0 0 0 / 0.0375),
+    0 12px 6px 0 rgb(0 0 0 / 0.025),
+    0 20px 8px 0 rgb(0 0 0 / 0.0125),
+    0 0 0 1px rgb(0 0 0 / 0.05);
+  --shadow-modal:
+    0 4px 4px 0 rgb(0 0 0 / 0.06),
+    0 12px 8px 0 rgb(0 0 0 / 0.045),
+    0 24px 12px 0 rgb(0 0 0 / 0.03),
+    0 40px 16px 0 rgb(0 0 0 / 0.015),
+    0 0 0 1px rgb(0 0 0 / 0.05);
+
+  /* motion */
+  --spring: cubic-bezier(0.34, 1.56, 0.64, 1);   /* things you TOUCH */
+  --glide:  cubic-bezier(0.16, 1, 0.3, 1);       /* things that MOVE THEMSELVES */
+  --fast: 150ms;
+  --base: 200ms;
+  --slow: 400ms;
+  --stagger: 50ms;   /* declared for completeness; no list entrance in this lab */
+
+  /* phone + drum geometry */
+  --screen-w: 390px;
+  --screen-h: 780px;
+  --bezel: 8px;
+  --frame-radius: 48px;   /* screen radius 40 + 8 bezel = concentric */
+  --screen-radius: 40px;
+  --topbar-h: 52px;
+  --pad: 20px;
+
+  --drum-h: 190px;
+  --row-h: 40px;
+  --mask-a: 4%;
+  --mask-b: 96%;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body { height: 100%; }
+body {
+  margin: 0;
+  background: var(--stone-100);
+  color: var(--foreground);
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-weight: 400;
+  font-size: 15px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-synthesis-weight: none;
+}
+
+/* The wheel-prototype trap: a <button> inherits the UA's centred text.
+   Every button in this file is a layout box, so kill it once, globally. */
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  margin: 0;
+  padding: 0;
+  text-align: left;
+}
+
+:focus-visible { outline: 2px solid var(--stone-400); outline-offset: 2px; }
+
+/* ===========================================================================
+   LAB CHROME
+   ======================================================================== */
+.lab {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  padding: 32px 16px 40px;
+}
+
+/* segmented A/B control — theme-segment anatomy: container pad 4 radius 12,
+   active segment = card + shadow radius 8.
+   DEVIATION: the container is stone-200, not muted. The page ground is already
+   muted (stone-100), so a muted container would be invisible on it. */
+.seg {
+  display: flex;
+  gap: 2px;
+  padding: 4px;
+  background: var(--stone-200);
+  border-radius: var(--radius-md);
+}
+.seg button {
+  height: 32px;
+  padding: 0 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--muted-foreground);
+  cursor: pointer;
+  transition: color var(--fast) linear, background-color var(--fast) linear,
+              box-shadow var(--fast) linear, transform var(--base) var(--spring);
+  white-space: nowrap;
+}
+.seg button:hover { color: var(--foreground); }
+.seg button[aria-pressed="true"] {
+  background: var(--background);
+  color: var(--foreground);
+  font-weight: 500;
+  box-shadow: var(--shadow-subtle);
+}
+.seg button:active { transform: scale(0.97); }
+
+.frame {
+  flex: none;
+  padding: var(--bezel);
+  background: var(--background);
+  border-radius: var(--frame-radius);
+  box-shadow: var(--shadow-modal);
+}
+.screen {
+  position: relative;
+  width: var(--screen-w);
+  height: var(--screen-h);
+  border-radius: var(--screen-radius);
+  background: var(--background);
+  overflow: hidden;
+  isolation: isolate;
+  /* white screen on a white bezel needs a hairline, or the concentric
+     radii read as one flat blob */
+  box-shadow: 0 0 0 1px rgb(0 0 0 / 0.06);
+}
+
+.caption { margin: 0; font-size: 12px; line-height: 1.4; color: var(--muted-foreground); }
+.note    { margin: -12px 0 0; font-size: 12px; line-height: 1.4; color: var(--stone-400); }
+
+/* ===========================================================================
+   SHARED SCREEN LANGUAGE
+   ======================================================================== */
+.opt { position: absolute; inset: 0; display: none; }
+.opt[data-on="true"] { display: block; }
+
+.topbar {
+  height: var(--topbar-h);
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 var(--pad);
+  background: var(--background);   /* solid on purpose — no blur */
+  border-bottom: 1px solid var(--border);
+}
+.avatar {
+  width: 28px;
+  height: 28px;
+  flex: none;
+  border-radius: 50%;
+  background: linear-gradient(140deg, var(--stone-200), var(--stone-300));
+}
+.topbar-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.35;
+  color: var(--foreground);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.icon-btn {
+  width: 32px;
+  height: 32px;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  background: var(--background);
+  color: var(--stone-700);
+  box-shadow: var(--shadow-subtle);
+  cursor: pointer;
+  transition: transform var(--base) var(--spring);
+}
+.icon-btn:active { transform: scale(0.97); }
+
+.hero { padding: var(--pad) var(--pad) 0; }
+.hero-title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 500;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+  color: var(--foreground);
+}
+.hero-intro {
+  margin: 8px 0 0;
+  font-size: 15px;
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--muted-foreground);
+}
+.hero-intro .u {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  text-decoration-color: var(--stone-300);
+}
+.hero-actions {
+  margin-top: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.btn-primary {
+  height: 40px;              /* touch target — never a pill */
+  padding: 0 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: var(--radius-md);
+  background: var(--primary);
+  color: var(--primary-foreground);
+  font-size: 14px;
+  font-weight: 500;
+  box-shadow: var(--shadow-subtle);
+  cursor: pointer;
+  transition: transform var(--fast) var(--spring), opacity var(--fast) linear;
+}
+.btn-primary:active { transform: scale(0.97); }
+.social {
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  background: var(--background);
+  color: var(--stone-700);
+  box-shadow: var(--shadow-subtle);
+  cursor: pointer;
+  transition: transform var(--fast) var(--spring);
+}
+.social:active { transform: scale(0.97); }
+.social svg { width: 16px; height: 16px; }
+
+.footnote {
+  margin: 0;
+  padding: 0 var(--pad) var(--pad);
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--muted-foreground);
+}
+
+.thumb { flex: none; border-radius: 8px; }
+.thumb-24 { width: 24px; height: 24px; }
+.thumb-20 { width: 20px; height: 20px; border-radius: 7px; }
+
+/* the large media visual, shared by both options */
+.media {
+  position: relative;
+  width: 100%;
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-raised);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.media-ghost {
+  font-size: 30px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+  text-align: center;
+  padding: 0 24px;
+  color: rgb(12 10 9 / 0.13);
+  user-select: none;
+}
+
+/* ===========================================================================
+   OPTION A — wheel as control
+   ======================================================================== */
+#optA > .col { display: flex; flex-direction: column; height: 100%; }
+
+.drum-block { margin-top: 24px; }
+.drum-mask {
+  height: var(--drum-h);
+  margin: 0 12px;
+  padding: 0 8px;
+  overflow: hidden;
+  touch-action: none;          /* the drum owns vertical drag */
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: grab;
+  -webkit-mask-image: linear-gradient(to bottom,
+    rgba(0,0,0,0) 0%, rgba(0,0,0,1) var(--mask-a),
+    rgba(0,0,0,1) var(--mask-b), rgba(0,0,0,0) 100%);
+  mask-image: linear-gradient(to bottom,
+    rgba(0,0,0,0) 0%, rgba(0,0,0,1) var(--mask-a),
+    rgba(0,0,0,1) var(--mask-b), rgba(0,0,0,0) 100%);
+}
+.drum-mask[data-dragging="true"] { cursor: grabbing; }
+.drum {
+  position: relative;
+  height: var(--drum-h);
+}
+/* The selection band is FIXED at the centre slot and the rows travel through
+   it — the iOS picker convention. It replaces a fill attached to the active
+   row, which blinked off mid-handover and left the clamped ends reading as
+   random whitespace instead of an empty drum. */
+.drum-band {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc((var(--drum-h) - var(--row-h)) / 2);
+  height: var(--row-h);
+  border-radius: var(--radius-md);
+  background: var(--muted);
+  z-index: 0;
+  pointer-events: none;
+}
+.row {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc((var(--drum-h) - var(--row-h)) / 2);   /* fixed active slot */
+  height: var(--row-h);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 12px 4px 8px;
+  border-radius: var(--radius-md);
+  transform-origin: center;
+  backface-visibility: hidden;
+  will-change: transform, opacity;
+  cursor: pointer;
+  isolation: isolate;
+}
+.row-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.35;
+  color: var(--foreground);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.row-year {
+  flex: none;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.35;
+  color: var(--muted-foreground);
+  font-variant-numeric: tabular-nums;
+  opacity: 0;                   /* driven per frame — active row only */
+  will-change: transform, opacity;
+}
+
+.media-stack {
+  position: relative;
+  margin: 24px var(--pad) 0;
+  aspect-ratio: 16 / 10;
+}
+.media-stack .media {
+  position: absolute;
+  inset: 0;
+  will-change: transform, opacity;
+}
+
+/* ===========================================================================
+   OPTION B — scroll as control
+   ======================================================================== */
+.scroller {
+  position: absolute;
+  inset: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+.scroller .topbar { position: sticky; top: 0; z-index: 3; }
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px var(--pad) 0;
+}
+.stack .media { aspect-ratio: 4 / 5; }
+.card-chip {
+  position: absolute;
+  left: 12px;
+  bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 32px;
+  padding: 0 10px 0 6px;
+  border-radius: var(--radius-md);
+  background: var(--background);
+  box-shadow: var(--shadow-subtle);
+}
+.card-chip .n { font-size: 15px; font-weight: 500; line-height: 1.35; }
+.card-chip .y {
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--muted-foreground);
+  font-variant-numeric: tabular-nums;
+}
+.end-spacer { height: 96px; flex: none; }
+
+/* sticky indicator — absolutely positioned over the screen so showing and
+   hiding it never touches the scroller's layout */
+.indicator {
+  position: absolute;
+  top: var(--topbar-h);
+  left: 0;
+  right: 0;
+  z-index: 4;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 var(--pad);
+  background: var(--background);
+  border-bottom: 1px solid var(--border);
+  opacity: 0;
+  transform: translateY(-6px);
+  pointer-events: none;
+  transition: opacity var(--fast) linear, transform var(--base) var(--glide);
+}
+.indicator[data-on="true"] { opacity: 1; transform: translateY(0); }
+.ind-swap {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 21px;
+}
+.ind-line {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+  will-change: transform, opacity;
+}
+.ind-line .n { font-size: 15px; font-weight: 500; line-height: 1.35; }
+.ind-line .y {
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--muted-foreground);
+  font-variant-numeric: tabular-nums;
+}
+.ind-count {
+  flex: none;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--muted-foreground);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .indicator, .ind-line, .media, .seg button, .btn-primary, .social, .icon-btn {
+    transition-duration: 1ms !important;
+  }
+}
+</style>
+</head>
+<body>
+
+<div class="lab">
+  <div class="seg" id="seg" role="group" aria-label="Prototype option">
+    <button type="button" data-opt="A" aria-pressed="true">A — wheel</button>
+    <button type="button" data-opt="B" aria-pressed="false">B — scroll</button>
+  </div>
+
+  <div class="frame">
+    <div class="screen" id="screen">
+      <section class="opt" id="optA" data-on="true" aria-label="Option A — wheel"></section>
+      <section class="opt" id="optB" aria-label="Option B — scroll"></section>
+    </div>
+  </div>
+
+  <p class="caption">drag inside the screen — mouse works like touch</p>
+  <p class="note">Type is a system-font stand-in for Aeonik Pro.</p>
+</div>
+
+<script>
+(() => {
+  "use strict";
+
+  /* ======================================================================
+     DATA
+     ==================================================================== */
+  const PROJECTS = [
+    { name: "Ledgy Agent",      year: "2026", g: ["#e3e6fb", "#bcc3f2"] },
+    { name: "Hey Buna App",     year: "2025", g: ["#dcefe1", "#aed4bd"] },
+    { name: "Equity Dashboard", year: "2025", g: ["#e6e2fa", "#c4bcef"] },
+    { name: "Ripple Agent",     year: "2024", g: ["#dee8f8", "#b6c9ea"] },
+    { name: "Vesting builder",  year: "2024", g: ["#e4e4f4", "#c2c4e4"] },
+  ];
+  const LAST = PROJECTS.length - 1;
+
+  const thumbFill = p => "linear-gradient(140deg," + p.g[0] + "," + p.g[1] + ")";
+  const mediaFill = p => "linear-gradient(150deg," + p.g[0] + "," + p.g[1] + ")";
+
+  /* ======================================================================
+     PHYSICS CONSTANTS — lifted from wheel-prototype.html unless noted
+     ==================================================================== */
+  const LERP = 0.12;        // per 60fps frame; framerate-corrected below
+  const STEP = 12;          // deg of drum rotation per row of offset
+  const RADIUS = 192;       // px; sin(12deg) * 192 = 39.9 => centre pitch 40
+  const SCALE_END = 0.92, SCALE_REF = 2.5;
+  const OPACITY_MIN = 0.47, OPACITY_END = 4.0, OPACITY_POW = 2.2;  // 1/.75/.59/.47
+  const CULL_AT = 2.5, CULL_FADE = 0.4;   // fade a row out before the mask clips it
+  const BLUR_START = 1.6, BLUR_END = 2.2, BLUR_MAX = 0.4;
+  const FILL_OUT = 0.35;    // |o| over which the active fill + year fade away
+  const YEAR_DRIFT = 4;     // px the year travels as it fades in
+
+  const PITCH = 40;         // px a finger must travel to advance one row
+  const RUBBER_DIM = 1.6;   // rows of give past either end
+  const RUBBER_K = 0.55;    // iOS-style resistance coefficient
+  const FLICK_MS = 170;     // ms of velocity projected into the snap target
+  const VEL_WINDOW = 90;    // ms of pointer history used for the flick velocity
+  const TAP_SLOP = 6, TAP_MS = 400;
+
+  // Which card is ACTIVE: the one crossing 40% of screen height — the same
+  // boundary as the desktop wheel.
+  const ACTIVE_LINE = 0.40;
+
+  // DEVIATION (flagged): the spec used that same 40% line to REVEAL the
+  // indicator. This hero is compact — top bar + hero end at ~233px of 780 —
+  // so card 1 already sits across the 312px line at rest, which made the bar
+  // appear on first paint and cover the "Software Designer" title. The reveal
+  // now fires when card 1 reaches the bar's own bottom edge (top bar 52 +
+  // bar 40 = ~93px), i.e. exactly as the card starts sliding under it. The
+  // active line is untouched, and the hide-again branch now actually runs.
+
+  const DEG = Math.PI / 180;
+  const clamp = (v, lo, hi) => (v < lo ? lo : v > hi ? hi : v);
+  const clampIdx = i => clamp(i, 0, LAST);
+  const smoothstep = (a, b, x) => {
+    const t = clamp((x - a) / (b - a), 0, 1);
+    return t * t * (3 - 2 * t);
+  };
+  const reduceMotion =
+    window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  /* ======================================================================
+     ICONS
+     ==================================================================== */
+  const ICON = {
+    search:
+      '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor"' +
+      ' stroke-width="1.5" stroke-linecap="round" aria-hidden="true">' +
+      '<circle cx="7" cy="7" r="4.75"/><path d="M10.5 10.5 14 14"/></svg>',
+    arrow:
+      '<svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor"' +
+      ' stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+      '<path d="M5 11 11 5"/><path d="M5.75 5H11v5.25"/></svg>',
+    github:
+      '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5C5.37.5 0' +
+      ' 5.87 0 12.5c0 5.3 3.44 9.8 8.21 11.39.6.11.82-.26.82-.58v-2.03c-3.34.73-4.04-1.61-4.04-1.61' +
+      '-.55-1.39-1.34-1.76-1.34-1.76-1.09-.75.08-.73.08-.73 1.21.09 1.84 1.24 1.84 1.24 1.07 1.84' +
+      ' 2.81 1.31 3.5 1 .11-.78.42-1.31.76-1.61-2.67-.3-5.47-1.34-5.47-5.95 0-1.31.47-2.38 1.24-3.22' +
+      '-.12-.31-.54-1.53.12-3.18 0 0 1.01-.32 3.3 1.23a11.5 11.5 0 0 1 6 0c2.29-1.55 3.3-1.23 3.3-1.23' +
+      '.66 1.65.24 2.87.12 3.18.77.84 1.24 1.91 1.24 3.22 0 4.62-2.81 5.64-5.49 5.94.43.37.81 1.1.81' +
+      ' 2.22v3.29c0 .32.22.7.83.58C20.56 22.29 24 17.8 24 12.5 24 5.87 18.63.5 12 .5z"/></svg>',
+    x:
+      '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.244 2.25h3.308' +
+      'l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713' +
+      ' 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>',
+    linkedin:
+      '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4.98 3.5C4.98 4.88' +
+      ' 3.87 6 2.5 6S0 4.88 0 3.5 1.12 1 2.5 1s2.48 1.12 2.48 2.5zM.22 8.02h4.56V24H.22zM8.34 8.02' +
+      'h4.37v2.18h.06c.61-1.15 2.1-2.36 4.32-2.36 4.62 0 5.47 3.04 5.47 6.99V24h-4.56v-7.28c0-1.74' +
+      '-.03-3.97-2.42-3.97-2.42 0-2.79 1.89-2.79 3.85V24H8.34z"/></svg>',
+  };
+
+  /* ======================================================================
+     SHARED PAGE TOP — identical markup in both options
+     ==================================================================== */
+  const HEADER = `
+    <header class="topbar">
+      <span class="avatar" aria-hidden="true"></span>
+      <span class="topbar-name">Ion Mesca</span>
+      <button class="icon-btn" type="button" aria-label="Search">${ICON.search}</button>
+    </header>
+    <section class="hero">
+      <h1 class="hero-title">Software Designer</h1>
+      <p class="hero-intro">Curious generalist at heart, building AI native software and
+        fintech systems at <span class="u">Ledgy</span></p>
+      <div class="hero-actions">
+        <button class="btn-primary" type="button">Book a call ${ICON.arrow}</button>
+        <button class="social" type="button" aria-label="GitHub">${ICON.github}</button>
+        <button class="social" type="button" aria-label="X">${ICON.x}</button>
+        <button class="social" type="button" aria-label="LinkedIn">${ICON.linkedin}</button>
+      </div>
+    </section>`;
+
+  /* ======================================================================
+     LAYER SWAP — one interrupt-safe crossfade used by both options.
+     Never queues: at most one outgoing node exists, and a node's content is
+     never rewritten while it is visible, so a fast burst of changes reads as
+     one continuous handover instead of a flicker.
+     ==================================================================== */
+  function makeSwapper(host, build, opts) {
+    const dur = opts.duration;
+    const rise = opts.rise;         // px the incoming node rises from
+    const fall = opts.fall || 0;    // px the outgoing node leaves towards
+    const live = [];                // [outgoing?, incoming]
+
+    return function swap(payload) {
+      // Drop anything already on its way out — it is near zero opacity anyway.
+      while (live.length > 1) {
+        const dead = live.shift();
+        clearTimeout(dead.timer);
+        dead.el.remove();
+      }
+      const prev = live[0];
+      if (prev) {
+        prev.el.style.transition =
+          "opacity " + dur + "ms linear, transform " + dur + "ms var(--glide)";
+        prev.el.style.opacity = "0";
+        if (fall) prev.el.style.transform = "translateY(" + (-fall) + "px)";
+        prev.el.style.pointerEvents = "none";
+        prev.timer = setTimeout(() => {
+          const i = live.indexOf(prev);
+          if (i > -1) live.splice(i, 1);
+          prev.el.remove();
+        }, dur + 30);
+      }
+
+      const el = build(payload);
+      el.style.opacity = "0";
+      el.style.transform = "translateY(" + rise + "px)";
+      el.style.transition = "none";
+      host.appendChild(el);
+      const rec = { el, timer: 0 };
+      live.push(rec);
+
+      // Two frames: one to land the start state, one to release the transition.
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        el.style.transition =
+          "opacity " + dur + "ms linear, transform " + dur + "ms var(--glide)";
+        el.style.opacity = "1";
+        el.style.transform = "translateY(0)";
+      }));
+    };
+  }
+
+  /* ======================================================================
+     OPTION A — the drum drives everything
+     ==================================================================== */
+  const optA = document.getElementById("optA");
+  optA.innerHTML =
+    '<div class="col">' + HEADER +
+    '<div class="drum-block"><div class="drum-mask" id="drumMask">' +
+    '<div class="drum" id="drum" role="listbox" aria-label="Projects" tabindex="0">' +
+    '<span class="drum-band" aria-hidden="true"></span></div>' +
+    '</div></div>' +
+    '<div class="media-stack" id="mediaStack"></div>' +
+    '<p class="footnote" style="margin-top:auto">Updated Aug 16, 2026</p>' +
+    '</div>';
+
+  const drum = document.getElementById("drum");
+  const drumMask = document.getElementById("drumMask");
+  const mediaStack = document.getElementById("mediaStack");
+
+  const freshState = () => ({ t: "", o: -1, b: -1, f: -1, z: 0, p: "", yx: "" });
+
+  const rows = PROJECTS.map((p, i) => {
+    const el = document.createElement("button");
+    el.type = "button";
+    el.className = "row";
+    el.setAttribute("role", "option");
+    el.dataset.index = String(i);
+    el.innerHTML =
+      '<span class="thumb thumb-24" style="background:' + thumbFill(p) + '"></span>' +
+      '<span class="row-name">' + p.name + '</span>' +
+      '<span class="row-year">' + p.year + '</span>';
+    drum.appendChild(el);
+    return { el, year: el.querySelector(".row-year"), state: freshState() };
+  });
+
+  // Non-physical on purpose: scale() before translateY() bunches the rows
+  // towards the ends without any rotateX, so glyphs never shear.
+  function transformFor(o) {
+    const ao = o < 0 ? -o : o;
+    const s = 1 - (1 - SCALE_END) * clamp(ao / SCALE_REF, 0, 1);
+    const ty = Math.sin(o * STEP * DEG) * RADIUS;
+    return "scale(" + s.toFixed(4) + ") translateY(" + ty.toFixed(2) + "px)";
+  }
+
+  function writeDrum(f) {
+    for (let i = 0; i < rows.length; i++) {
+      const r = rows[i];
+      const o = i - f;
+      const ao = o < 0 ? -o : o;
+
+      const t = transformFor(o);
+      const cull = 1 - smoothstep(CULL_AT - CULL_FADE, CULL_AT, ao);
+      const falloff = Math.pow(1 - clamp(ao / OPACITY_END, 0, 1), OPACITY_POW);
+      const opacity = +((OPACITY_MIN + (1 - OPACITY_MIN) * falloff) * cull).toFixed(3);
+      const blur = +(BLUR_MAX *
+        clamp((ao - BLUR_START) / (BLUR_END - BLUR_START), 0, 1)).toFixed(2);
+      // fillAmt now only drives the year reveal — the band itself is fixed.
+      const fillAmt = +(1 - smoothstep(0, FILL_OUT, ao)).toFixed(3);
+      const z = 10 - Math.round(clamp(ao, 0, 4) * 2);
+      const pe = opacity < 0.02 ? "none" : "auto";
+      const yx = "translateX(" +
+        ((o < 0 ? -1 : 1) * YEAR_DRIFT * (1 - fillAmt)).toFixed(2) + "px)";
+
+      const s = r.state;
+      if (s.t !== t) { r.el.style.transform = t; s.t = t; }
+      if (s.o !== opacity) { r.el.style.opacity = opacity; s.o = opacity; }
+      if (s.b !== blur) {
+        r.el.style.filter = blur > 0.01 ? "blur(" + blur + "px)" : "none";
+        s.b = blur;
+      }
+      if (s.f !== fillAmt) {
+        r.year.style.opacity = fillAmt;   // the year belongs to the active row only
+        s.f = fillAmt;
+      }
+      if (s.z !== z) { r.el.style.zIndex = String(z); s.z = z; }
+      if (s.p !== pe) { r.el.style.pointerEvents = pe; s.p = pe; }
+      if (s.yx !== yx) { r.year.style.transform = yx; s.yx = yx; }
+    }
+
+    const act = clampIdx(Math.round(f));
+    for (let i = 0; i < rows.length; i++) {
+      const on = i === act;
+      if (rows[i].el.dataset.active !== String(on)) {
+        rows[i].el.dataset.active = String(on);
+        rows[i].el.setAttribute("aria-selected", String(on));
+      }
+    }
+  }
+
+  const swapMedia = makeSwapper(mediaStack, (p) => {
+    const el = document.createElement("div");
+    el.className = "media";
+    el.style.background = mediaFill(p);
+    el.innerHTML = '<span class="media-ghost">' + p.name + "</span>";
+    return el;
+  }, { duration: reduceMotion ? 1 : 200, rise: reduceMotion ? 0 : 8 });
+
+  // With five items the drum does NOT wrap. A timeline that rotates past its
+  // own ends would lie about where you are, so both ends clamp with iOS-style
+  // rubber-band give instead.
+  const rubber = over => (1 - 1 / (over / RUBBER_DIM * RUBBER_K + 1)) * RUBBER_DIM;
+  function rubberize(f) {
+    if (f < 0) return -rubber(-f);
+    if (f > LAST) return LAST + rubber(f - LAST);
+    return f;
+  }
+
+  const A = {
+    fRaw: 0, fRender: 0, target: 0, active: -1,
+    dragging: false, dirty: true,
+    startY: 0, startF: 0, startT: 0, moved: 0, tapRow: -1,
+    samples: [],
+  };
+
+  function stepA(dt) {
+    if (A.dragging) {
+      const v = rubberize(A.fRaw);
+      if (v !== A.fRender) { A.fRender = v; A.dirty = true; }
+    } else if (reduceMotion) {
+      if (A.fRender !== A.target) { A.fRender = A.target; A.dirty = true; }
+    } else {
+      // framerate-independent lerp: fRender += (target - fRender) * (1 - .88^(dt/16.667))
+      const alpha = 1 - Math.pow(1 - LERP, dt / 16.667);
+      const diff = A.target - A.fRender;
+      if (Math.abs(diff) > 0.0004) { A.fRender += diff * alpha; A.dirty = true; }
+      else if (A.fRender !== A.target) { A.fRender = A.target; A.dirty = true; }
+    }
+
+    if (A.dirty) { writeDrum(A.fRender); A.dirty = false; }
+
+    const act = clampIdx(Math.round(A.fRender));
+    if (act !== A.active) { A.active = act; swapMedia(PROJECTS[act]); }
+  }
+
+  function goTo(i) {
+    A.target = clampIdx(i);
+    A.fRaw = A.target;
+  }
+
+  drumMask.addEventListener("pointerdown", (e) => {
+    if (e.button !== undefined && e.button !== 0) return;
+    A.dragging = true;
+    A.startY = e.clientY;
+    A.startF = A.fRender;
+    A.fRaw = A.fRender;
+    A.startT = e.timeStamp;
+    A.moved = 0;
+    A.samples.length = 0;
+    A.samples.push({ t: e.timeStamp, f: A.fRaw });
+    const row = e.target.closest ? e.target.closest(".row") : null;
+    A.tapRow = row ? +row.dataset.index : -1;
+    drumMask.dataset.dragging = "true";
+    try { drumMask.setPointerCapture(e.pointerId); } catch (_) {}
+    e.preventDefault();
+  });
+
+  drumMask.addEventListener("pointermove", (e) => {
+    if (!A.dragging) return;
+    const dy = e.clientY - A.startY;
+    if (Math.abs(dy) > A.moved) A.moved = Math.abs(dy);
+    A.fRaw = A.startF - dy / PITCH;     // drag down => earlier project
+    A.samples.push({ t: e.timeStamp, f: A.fRaw });
+    while (A.samples.length > 2 && e.timeStamp - A.samples[0].t > VEL_WINDOW) {
+      A.samples.shift();
+    }
+    e.preventDefault();
+  });
+
+  function endDrag(e) {
+    if (!A.dragging) return;
+    A.dragging = false;
+    delete drumMask.dataset.dragging;
+    try { drumMask.releasePointerCapture(e.pointerId); } catch (_) {}
+
+    // A tap on a row animates to it; a drag flicks and snaps.
+    const isTap = A.moved < TAP_SLOP && (e.timeStamp - A.startT) < TAP_MS;
+    if (isTap) {
+      if (A.tapRow >= 0) goTo(A.tapRow);
+      else A.target = clampIdx(Math.round(A.fRender));
+      return;
+    }
+
+    const first = A.samples[0];
+    const last = A.samples[A.samples.length - 1];
+    const span = last && first ? last.t - first.t : 0;
+    const vel = span > 8 ? (last.f - first.f) / span : 0;   // rows per ms
+    A.target = clampIdx(Math.round(A.fRaw + vel * FLICK_MS));
+    A.fRaw = A.target;
+  }
+  drumMask.addEventListener("pointerup", endDrag);
+  drumMask.addEventListener("pointercancel", endDrag);
+
+  drum.addEventListener("keydown", (e) => {
+    if (e.key === "ArrowDown") { goTo(Math.round(A.target) + 1); e.preventDefault(); }
+    else if (e.key === "ArrowUp") { goTo(Math.round(A.target) - 1); e.preventDefault(); }
+  });
+
+  /* ======================================================================
+     OPTION B — native scroll drives everything
+     ==================================================================== */
+  const optB = document.getElementById("optB");
+  optB.innerHTML =
+    '<div class="scroller" id="scroller">' + HEADER +
+    '<div class="stack" id="stack"></div>' +
+    '<p class="footnote" style="padding-top:20px">Updated Aug 16, 2026</p>' +
+    '<div class="end-spacer"></div>' +
+    '</div>' +
+    '<div class="indicator" id="indicator" aria-live="polite">' +
+    '<div class="ind-swap" id="indSwap"></div>' +
+    '<span class="ind-count" id="indCount">1 / 5</span>' +
+    '</div>';
+
+  const scroller = document.getElementById("scroller");
+  const stack = document.getElementById("stack");
+  const indicator = document.getElementById("indicator");
+  const indSwap = document.getElementById("indSwap");
+  const indCount = document.getElementById("indCount");
+
+  const cards = PROJECTS.map((p) => {
+    const el = document.createElement("article");
+    el.className = "media";
+    el.style.background = mediaFill(p);
+    el.innerHTML =
+      '<span class="media-ghost">' + p.name + "</span>" +
+      '<div class="card-chip">' +
+      '<span class="thumb thumb-20" style="background:' + thumbFill(p) + '"></span>' +
+      '<span class="n">' + p.name + "</span>" +
+      '<span class="y">' + p.year + "</span></div>";
+    stack.appendChild(el);
+    return el;
+  });
+
+  const swapIndicator = makeSwapper(indSwap, (p) => {
+    const el = document.createElement("div");
+    el.className = "ind-line";
+    el.innerHTML = '<span class="n">' + p.name + '</span><span class="y">' + p.year + "</span>";
+    return el;
+  }, { duration: reduceMotion ? 1 : 150, rise: reduceMotion ? 0 : 6, fall: reduceMotion ? 0 : 6 });
+
+  const B = {
+    tops: [], screenH: 780, revealPx: 92,
+    lastScroll: -1, active: -1, on: null, measured: false,
+  };
+
+  function measureB() {
+    const sr = scroller.getBoundingClientRect();
+    B.screenH = sr.height || 780;
+    const st = scroller.scrollTop;
+    B.tops = cards.map(c => c.getBoundingClientRect().top - sr.top + st);
+    B.revealPx = indicator.offsetTop + indicator.offsetHeight;
+    B.lastScroll = -1;      // force a recompute on the next frame
+    B.measured = true;
+  }
+
+  function stepB() {
+    if (!B.measured) return;
+    const st = scroller.scrollTop;              // one scroll read per frame
+    if (st === B.lastScroll) return;
+    B.lastScroll = st;
+
+    const line = B.screenH * ACTIVE_LINE;
+    let idx = -1;
+    for (let i = 0; i < B.tops.length; i++) {
+      if (B.tops[i] - st <= line) idx = i; else break;
+    }
+
+    const on = idx >= 0 && (B.tops[0] - st) <= B.revealPx;
+    if (on !== B.on) {
+      B.on = on;
+      if (on) indicator.dataset.on = "true"; else delete indicator.dataset.on;
+    }
+    if (idx >= 0 && idx !== B.active) {
+      B.active = idx;
+      swapIndicator(PROJECTS[idx]);
+      indCount.textContent = (idx + 1) + " / " + PROJECTS.length;
+    }
+  }
+
+  /* ======================================================================
+     OPTION SWITCH + SHARED rAF
+     ==================================================================== */
+  let current = "A";
+  const seg = document.getElementById("seg");
+  const segBtns = [...seg.querySelectorAll("button")];
+
+  // Sandboxed viewers can throw on location/history. The lab must boot anyway.
+  function readOpt() {
+    try { return new URLSearchParams(location.search).get("opt"); } catch (_) { return null; }
+  }
+  function syncUrl() {
+    try {
+      const u = new URL(location.href);
+      u.searchParams.set("opt", current);
+      history.replaceState(null, "", u);
+    } catch (_) { /* no-op: the segment control still works */ }
+  }
+
+  function setOpt(name) {
+    current = name === "B" ? "B" : "A";
+    optA.dataset.on = String(current === "A");
+    optB.dataset.on = String(current === "B");
+    for (const b of segBtns) b.setAttribute("aria-pressed", String(b.dataset.opt === current));
+    if (current === "B") measureB();       // offsets are only real once visible
+    else { for (const r of rows) r.state = freshState(); A.dirty = true; }
+    syncUrl();
+  }
+
+  seg.addEventListener("click", (e) => {
+    const b = e.target.closest("button");
+    if (b) setOpt(b.dataset.opt);
+  });
+
+  let lastTime = 0;
+  function frame(now) {
+    const dt = lastTime ? clamp(now - lastTime, 1, 50) : 16.667;
+    lastTime = now;
+    if (current === "A") stepA(dt); else stepB();
+    requestAnimationFrame(frame);
+  }
+
+  /* -------------------------------------------------------------- boot */
+  writeDrum(0);
+  A.active = 0;
+  swapMedia(PROJECTS[0]);
+  setOpt(readOpt() === "B" ? "B" : "A");
+
+  window.addEventListener("resize", () => {
+    A.dirty = true;
+    if (current === "B") measureB();
+  });
+
+  requestAnimationFrame(frame);
+
+  // Verification hook — read by the headless probe, harmless in the browser.
+  window.__LAB__ = {
+    get option() { return current; },
+    get a() { return { f: A.fRender, target: A.target, active: A.active }; },
+    get b() { return { active: B.active, on: B.on, tops: B.tops.slice() }; },
+    setOpt,
+    goTo,
+    rows: rows.length,
+    cards: cards.length,
+  };
+})();
+</script>
+</body>
+</html>

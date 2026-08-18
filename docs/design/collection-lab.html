@@ -1,0 +1,1431 @@
+<!doctype html>
+<html lang="en" data-reduced="false" data-sound="on">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Collection pages — one pattern, three flavours</title>
+<style>
+/* ============================================================
+   COLLECTION LAB — one file, no dependencies, no network, no
+   storage, no history/URL APIs.
+
+   Tokens, page furniture, the sound tick and the hover-snap rule
+   are lifted VERBATIM from motion-lab.html.
+   The preview-popover mechanics (morph engine, intent/grace,
+   entrance family, browser-chrome card anatomy, flip-on-fit,
+   enterable corridor) are lifted VERBATIM from popover-lab.html.
+   The wheel's lens falloff constants come from mobile-lab.html /
+   wheel-prototype.html.
+   Nothing here re-invents any of those.
+   ============================================================ */
+:root{
+  /* --- motion tokens (authoritative) --- */
+  --motion-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --motion-glide:  cubic-bezier(0.16, 1, 0.3, 1);
+  --duration-fast: 150ms;
+  --duration-base: 200ms;
+  --duration-slow: 400ms;
+  --stagger-delay: 50ms;
+  --stagger-group: 25ms;
+
+  /* --- stone palette (light) --- */
+  --stone-50:#fafaf9;  --stone-100:#f5f5f4; --stone-200:#e7e5e4;
+  --stone-300:#d6d3d1; --stone-400:#a8a29e; --stone-500:#78716c;
+  --stone-600:#57534e; --stone-700:#44403c; --stone-800:#292524;
+  --stone-900:#1c1917;
+
+  --bg:var(--stone-100);
+  --surface:#ffffff;
+  --popover:#ffffff;
+  --fg:var(--stone-900);
+  --muted-fg:var(--stone-500);
+  --muted:var(--stone-100);      /* the hover fill — "background snaps to muted" */
+  --ring:rgb(0 0 0 / 0.06);
+  --ring-strong:rgb(0 0 0 / 0.12);
+
+  /* --- radii --- */
+  --radius:15px;
+  --radius-md:calc(var(--radius) * 0.8);  /* 12px — the collection row */
+  --radius-lg:var(--radius);              /* 15px — preview cards */
+  --radius-xl:calc(var(--radius) * 1.4);  /* 21px — panels */
+  --radius-2xl:calc(var(--radius) * 1.8); /* 27px — the page shell */
+
+  /* --- elevations, verbatim --- */
+  --shadow-subtle:
+    0 0.5px 0.5px 0 rgb(0 0 0 / 0.04),
+    0 1.5px 1px 0 rgb(0 0 0 / 0.03),
+    0 3px 1.5px 0 rgb(0 0 0 / 0.02),
+    0 5px 2px 0 rgb(0 0 0 / 0.01),
+    0 0 0 1px rgb(0 0 0 / 0.05);
+  --shadow-raised:
+    0 1px 1px 0 rgb(0 0 0 / 0.04),
+    0 3px 2px 0 rgb(0 0 0 / 0.03),
+    0 6px 3px 0 rgb(0 0 0 / 0.02),
+    0 10px 4px 0 rgb(0 0 0 / 0.01),
+    0 0 0 1px rgb(0 0 0 / 0.05);
+  --shadow-overlay:
+    0 4px 4px 0 rgb(0 0 0 / 0.06),
+    0 12px 8px 0 rgb(0 0 0 / 0.045),
+    0 24px 12px 0 rgb(0 0 0 / 0.03),
+    0 40px 16px 0 rgb(0 0 0 / 0.015),
+    0 0 0 1px rgb(0 0 0 / 0.05);
+
+  --blur-garnish: 2px;
+  --blur-icon: 4px;
+
+  /* --- this lab's page geometry --- */
+  --rail-w: 220px;
+  --col-w: 640px;
+  --col-h: 460px;      /* the scroll viewport; a real page scrolls the window */
+  --row-h: 48px;       /* THE collection row */
+  --card-w: 280px;     /* THE preview card */
+}
+
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg);
+  color:var(--fg);
+  font-family:ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Helvetica,Arial,sans-serif;
+  font-size:14px;
+  line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+}
+h1,h2,h3,h4,p,ul,ol,figure{margin:0}
+ul{padding:0;list-style:none}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+a{color:inherit;text-decoration:none}
+svg{display:block}
+code,.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px}
+
+/* ---------- shell ---------- */
+.wrap{max-width:1140px;margin:0 auto;padding:28px 20px 64px}
+
+/* ---------- header (motion-lab furniture) ---------- */
+.masthead{
+  background:var(--surface);
+  border-radius:var(--radius-xl);
+  box-shadow:var(--shadow-raised);
+  padding:20px 22px;
+  display:flex;flex-wrap:wrap;gap:18px;align-items:center;justify-content:space-between;
+  position:sticky;top:12px;z-index:80;
+}
+.masthead h1{font-size:20px;letter-spacing:-.02em;font-weight:600}
+.thesis{color:var(--muted-fg);font-size:13px;margin-top:2px}
+.controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+
+/* ---------- switch ---------- */
+.switch{
+  display:inline-flex;align-items:center;gap:8px;
+  height:32px;padding:0 12px 0 10px;
+  background:var(--surface);
+  border-radius:var(--radius-md);
+  box-shadow:var(--shadow-subtle);
+  font-size:13px;color:var(--stone-700);
+  transition:box-shadow var(--duration-fast) var(--motion-glide);
+}
+.switch:hover{transition-duration:0ms;box-shadow:0 0 0 1px var(--ring-strong), var(--shadow-subtle)}
+.switch[aria-disabled="true"]{opacity:.5;cursor:default}
+.switch .track{
+  width:28px;height:16px;border-radius:999px;background:var(--stone-300);
+  position:relative;flex:none;
+  transition:background-color var(--duration-fast) var(--motion-glide);
+}
+.switch .knob{
+  position:absolute;top:2px;left:2px;width:12px;height:12px;border-radius:999px;background:#fff;
+  box-shadow:var(--shadow-subtle);
+  transition:transform var(--duration-base) var(--motion-spring);
+}
+.switch[aria-pressed="true"] .track{background:var(--stone-900)}
+.switch[aria-pressed="true"] .knob{transform:translateX(12px)}
+
+/* ---------- prose furniture ---------- */
+.section-title{font-size:12px;letter-spacing:.02em;color:var(--muted-fg);margin:34px 2px 12px;font-weight:500}
+.panel{
+  background:var(--surface);
+  border-radius:var(--radius-xl);
+  box-shadow:var(--shadow-raised);
+  padding:22px;
+}
+.lede{font-size:15px;line-height:1.6;max-width:66ch}
+.lede b{font-weight:600}
+.footnote{color:var(--muted-fg);font-size:12.5px;line-height:1.6;margin-top:16px;max-width:78ch}
+
+/* ---------- segment control — the tab switch ---------- */
+.segment{
+  position:relative;display:inline-flex;padding:3px;gap:2px;
+  background:var(--stone-100);border-radius:var(--radius-md);
+  box-shadow:inset 0 0 0 1px var(--ring);
+}
+.segment .thumb{
+  position:absolute;top:3px;left:3px;bottom:3px;width:60px;
+  background:var(--surface);border-radius:10px;box-shadow:var(--shadow-subtle);
+  transform:translateX(0);
+  transition:transform var(--duration-base) var(--motion-glide),
+             width var(--duration-base) var(--motion-glide);
+}
+.segment button{
+  position:relative;z-index:1;height:26px;padding:0 12px;border-radius:10px;
+  display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  font-size:12px;color:var(--muted-fg);white-space:nowrap;
+  transition:color var(--duration-fast) var(--motion-glide);
+}
+.segment button:hover{transition-duration:0ms;color:var(--stone-700)}
+.segment button[aria-pressed="true"]{color:var(--fg)}
+.ctl-row{display:flex;gap:18px;flex-wrap:wrap;align-items:center}
+.ctl{display:flex;gap:9px;align-items:center}
+.ctl > .lbl{font-size:11.5px;color:var(--muted-fg)}
+
+/* ---------- buttons (motion-lab, verbatim) ---------- */
+.btn{
+  height:32px;padding:0 14px;border-radius:var(--radius-md);
+  display:inline-flex;align-items:center;justify-content:center;gap:7px;
+  font-size:13px;font-weight:500;white-space:nowrap;
+  transform:scale(1);
+  transition:transform var(--duration-fast) var(--motion-spring),
+             box-shadow var(--duration-fast) var(--motion-glide),
+             background-color var(--duration-fast) var(--motion-glide),
+             color var(--duration-fast) var(--motion-glide);
+}
+.btn:active{transform:scale(.97)}
+.btn-secondary{background:var(--surface);color:var(--stone-800);box-shadow:var(--shadow-subtle)}
+.btn-secondary:hover{transition-duration:0ms;box-shadow:0 0 0 1px var(--ring-strong), var(--shadow-subtle)}
+.btn:focus-visible{outline:2px solid var(--stone-900);outline-offset:2px}
+/* the tightened metrics: pad 12, gap 6, h32 */
+.btn-home{padding:0 12px;gap:6px}
+.btn-home .gl{color:var(--stone-400);transition:color var(--duration-fast) var(--motion-glide)}
+.btn-home:hover .gl{transition-duration:0ms;color:var(--fg)}
+
+/* ============================================================
+   THE STAGE — the Letter page's skeleton.
+   Stone-100 page ground (the body), one white shell.
+   #stage is the positioning context for the preview popover:
+   a popover floats above the page, it does not live inside the
+   scrolling column.
+   ============================================================ */
+#stage{position:relative}
+.shell{
+  position:relative;
+  background:var(--surface);
+  border-radius:var(--radius-2xl);
+  box-shadow:var(--shadow-raised);
+  padding:28px;
+}
+.pane{
+  display:grid;
+  grid-template-columns:var(--rail-w) var(--col-w) 1fr;
+  gap:40px;
+  align-items:start;
+}
+.pane[data-on="false"]{display:none}
+
+/* ---------- left rail ---------- */
+.rail{display:flex;flex-direction:column;gap:18px;position:sticky;top:0}
+.wheel{display:flex;flex-direction:column;gap:2px}
+/* the section wheel: text-only rows, lens opacity falloff, the
+   active row carries the muted fill. Opacity is written by JS
+   from the wheel-prototype constants. */
+.wrow{
+  height:32px;border-radius:var(--radius-md);padding:0 10px;
+  display:flex;align-items:center;width:100%;text-align:left;
+  font-size:13px;color:var(--fg);
+  transition:background-color var(--duration-fast) var(--motion-glide),
+             opacity var(--duration-base) var(--motion-glide);
+}
+.wrow:hover{transition-duration:0ms;background:var(--muted)}
+.wrow[data-active="true"]{background:var(--muted)}
+.wrow .wct{font-variant-numeric:tabular-nums;color:var(--stone-400);font-size:11.5px;margin-left:auto}
+.railcap{font-size:11.5px;color:var(--stone-400);padding:0 10px}
+
+/* ---------- content column ---------- */
+.col{
+  width:var(--col-w);height:var(--col-h);
+  overflow-y:auto;overflow-x:hidden;
+  padding-right:6px;
+  scrollbar-width:thin;
+}
+.ptitle{font-size:24px;font-weight:600;letter-spacing:-.02em;padding:0 12px}
+.pintro{font-size:13px;color:var(--muted-fg);padding:0 12px;margin-top:6px;max-width:56ch}
+.groups{margin-top:22px;display:flex;flex-direction:column;gap:18px}
+.group{scroll-margin-top:0}
+.ghead{
+  display:flex;align-items:center;gap:12px;
+  height:32px;padding:0 12px;
+}
+.ghead .gname{font-size:11.5px;letter-spacing:.04em;text-transform:uppercase;color:var(--stone-400)}
+.ghead .grule{flex:1;height:1px;background:var(--stone-200)}
+/* the quiet group-header link (Agents & Skills → "Mine") */
+.glink{
+  display:inline-flex;align-items:center;gap:6px;flex:none;
+  font-size:11.5px;color:var(--muted-fg);
+  height:24px;padding:0 8px;border-radius:8px;
+  transition:background-color var(--duration-fast) var(--motion-glide),
+             color var(--duration-fast) var(--motion-glide);
+}
+.glink:hover{transition-duration:0ms;background:var(--muted);color:var(--fg)}
+.glink svg{width:14px;height:14px}
+.placeholder{
+  font-size:11.5px;color:var(--stone-400);padding:22px 12px 6px;
+}
+
+/* ============================================================
+   THE COLLECTION ROW — the one new component this lab defines.
+   h48 · radius 12 · pad H 12 · gap 12
+   icon 20 (r6) · name Subhead fg · one-liner Body muted (truncates)
+   · far-right ↗ 16 muted
+   Hover: background snaps to muted (0ms in / 150ms out — the
+   system rule), the arrow tints to foreground.
+   ============================================================ */
+.crow{
+  display:flex;align-items:center;gap:12px;
+  height:var(--row-h);padding:0 12px;border-radius:var(--radius-md);
+  width:100%;text-align:left;cursor:pointer;
+  background-color:transparent;
+  transition:background-color var(--duration-fast) var(--motion-glide);
+}
+.crow:hover,.crow[data-active="true"]{transition-duration:0ms;background-color:var(--muted)}
+.crow:focus-visible{outline:2px solid var(--stone-900);outline-offset:-2px}
+.crow .cico{
+  width:20px;height:20px;flex:none;border-radius:6px;
+  box-shadow:inset 0 0 0 1px rgb(0 0 0 / .08);
+}
+.crow .cname{font-size:14px;font-weight:500;letter-spacing:-.01em;color:var(--fg);flex:none}
+.crow .cdesc{
+  font-size:13px;color:var(--muted-fg);
+  flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.crow .cby{font-size:11.5px;color:var(--muted-fg);flex:none;white-space:nowrap}
+.crow .cby .au{
+  text-decoration:underline;text-decoration-color:transparent;
+  text-underline-offset:3px;text-decoration-thickness:1px;
+  transition:text-decoration-color var(--duration-fast) var(--motion-glide);
+}
+.crow .cby .au:hover{transition-duration:0ms;text-decoration-color:var(--stone-400);color:var(--fg)}
+.crow .carrow{color:var(--stone-400);flex:none;display:flex;
+  transition:color var(--duration-fast) var(--motion-glide)}
+.crow:hover .carrow{transition-duration:0ms;color:var(--fg)}
+/* articles: date at the far right, same right-aligned position
+   grammar as the palette's shortcut keys */
+.crow .cdate{
+  font-size:11.5px;color:var(--muted-fg);flex:none;margin-left:auto;
+  font-variant-numeric:tabular-nums;white-space:nowrap;
+}
+.crow[data-kind="article"] .cname{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* --- the install chip (Agents & Skills → "Mine") ---
+   a code chip: Caption size, muted fill, radius 9, pad 4/8 --- */
+.chip{
+  display:inline-flex;align-items:center;gap:6px;flex:none;
+  padding:4px 8px;border-radius:9px;
+  background:var(--muted);
+  box-shadow:inset 0 0 0 1px var(--ring);
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  font-size:11.5px;line-height:16px;color:var(--stone-600);
+  transition:background-color var(--duration-fast) var(--motion-glide),
+             color var(--duration-fast) var(--motion-glide);
+}
+.crow:hover .chip{background:var(--stone-200)}
+.chip:hover{transition-duration:0ms;background:var(--stone-200);color:var(--stone-900)}
+.chip:active{transform:scale(.98)}
+.chip:focus-visible{outline:2px solid var(--stone-900);outline-offset:2px}
+
+/* RECIPE 1 — icon swap (motion-lab, verbatim) */
+.t-icon-swap{display:inline-grid;place-items:center;position:relative}
+.t-icon-swap > .t-icon{
+  grid-area:1/1;
+  transition:opacity var(--duration-base) var(--motion-spring),
+             filter   var(--duration-base) var(--motion-spring),
+             transform var(--duration-base) var(--motion-spring);
+}
+.t-icon-swap > .t-icon[data-on="false"]{opacity:0;filter:blur(var(--blur-icon));transform:scale(.6)}
+.t-icon-swap > .t-icon[data-on="true"]{opacity:1;filter:blur(0);transform:scale(1)}
+/* RECIPE 2 — text states swap (motion-lab, verbatim) */
+.t-text-swap{display:inline-grid;place-items:center}
+.t-text-swap > span{
+  grid-area:1/1;white-space:nowrap;
+  transition:opacity var(--duration-fast) var(--motion-glide),
+             transform var(--duration-fast) var(--motion-glide),
+             filter var(--duration-fast) var(--motion-glide);
+}
+.t-text-swap > span[data-on="true"]{opacity:1;transform:translateY(0);filter:blur(0)}
+.t-text-swap > span[data-on="false"][data-dir="up"]{opacity:0;transform:translateY(-4px);filter:blur(var(--blur-garnish))}
+.t-text-swap > span[data-on="false"][data-dir="down"]{opacity:0;transform:translateY(4px);filter:blur(var(--blur-garnish))}
+/* RECIPE 3 — success check, the stroke draws itself (motion-lab) */
+.t-check path{
+  stroke-dasharray:var(--check-len,24);
+  stroke-dashoffset:var(--check-len,24);
+  transition:stroke-dashoffset var(--duration-base) var(--motion-glide) var(--stagger-delay);
+}
+.t-check[data-drawn="true"] path{stroke-dashoffset:0}
+
+/* ============================================================
+   THE SHARED PREVIEW POPOVER — popover-lab, verbatim.
+   One node for the whole anchor-group; it is never remounted.
+   The container tweens, the content crossfades.
+   ============================================================ */
+.pop{
+  position:absolute;left:0;top:0;z-index:45;
+  width:0;height:0;
+  transform:translate3d(0,0,0);
+  will-change:transform,width,height;
+  pointer-events:none;
+}
+.pop[data-open="true"]{pointer-events:auto}
+.pop-inner{
+  position:absolute;inset:0;
+  background:var(--popover);
+  border-radius:var(--radius-lg);
+  box-shadow:var(--shadow-overlay);
+  overflow:hidden;
+  opacity:0;transform:scale(.98) translateY(4px);
+  transform-origin:50% 100%;
+  transition:opacity var(--duration-base) var(--motion-glide),
+             transform var(--duration-base) var(--motion-glide);
+}
+.pop[data-open="true"] .pop-inner{opacity:1;transform:scale(1) translateY(0)}
+.pop[data-open="false"] .pop-inner{transition-duration:var(--duration-fast)}
+.pop-face{
+  position:absolute;left:0;top:0;
+  transition:opacity var(--duration-fast) var(--motion-glide),
+             filter var(--duration-fast) var(--motion-glide);
+}
+.pop-face[data-on="false"]{opacity:0;filter:blur(var(--blur-garnish));pointer-events:none}
+.pop-face[data-on="true"]{opacity:1;filter:blur(0)}
+
+/* --- browser-chrome mock (popover-lab, verbatim) --- */
+.browser{
+  margin:6px 6px 0;border-radius:12px;overflow:hidden;
+  background:var(--stone-50);
+  box-shadow:inset 0 0 0 1px var(--ring);
+  display:flex;flex-direction:column;
+}
+.browser .bar{
+  height:22px;flex:none;display:flex;align-items:center;gap:4px;padding:0 8px;
+  background:var(--stone-100);border-bottom:1px solid var(--stone-200);
+}
+.browser .dot{width:6px;height:6px;border-radius:999px;background:var(--stone-300)}
+.browser .url{
+  margin-left:6px;font-size:9px;color:var(--stone-400);
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+.browser .view{flex:1;padding:12px 14px 0;display:flex;flex-direction:column;gap:7px}
+.wf{border-radius:4px;background:var(--stone-200)}
+.wf.h1{height:11px;width:62%}
+.wf.h2{height:11px;width:44%}
+.wf.p{height:6px;width:88%;opacity:.72}
+.wf.p2{height:6px;width:70%;opacity:.72}
+.wf.btn{height:16px;width:74px;background:var(--stone-400);margin-top:4px;border-radius:5px}
+.wf.block{flex:1;margin:8px -14px 0;border-radius:8px 8px 0 0;opacity:.6}
+.cap{
+  height:32px;display:flex;align-items:center;gap:6px;padding:0 12px;
+  font-size:12px;color:var(--stone-700);
+}
+.cap .host{font-weight:500}
+.cap .arrow{color:var(--stone-400);margin-left:auto;display:flex}
+
+/* --- repo (README-ish) mock, for the skills Ion publishes --- */
+.repo-mock{
+  margin:6px 6px 0;border-radius:12px;overflow:hidden;
+  background:var(--stone-50);box-shadow:inset 0 0 0 1px var(--ring);
+  display:flex;flex-direction:column;
+}
+.repo-mock .rbar{
+  height:26px;flex:none;display:flex;align-items:center;gap:6px;padding:0 9px;
+  background:var(--stone-100);border-bottom:1px solid var(--stone-200);
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  font-size:10px;color:var(--stone-500);
+}
+.repo-mock .rbar svg{width:12px;height:12px;color:var(--stone-400);flex:none}
+.repo-mock .rbar .star{margin-left:auto;color:var(--stone-400)}
+.repo-mock .rview{flex:1;padding:11px 12px 0;display:flex;flex-direction:column;gap:7px}
+.wf.code{height:26px;width:100%;background:var(--stone-100);box-shadow:inset 0 0 0 1px var(--ring);border-radius:6px}
+
+/* --- "How I use it" — the ratified depth: the row stays one
+       line, the curious get the paragraph on hover --- */
+.howto{
+  margin-top:8px;padding:10px 12px 12px;
+  border-top:1px solid var(--stone-200);
+}
+.howto .lbl{font-size:11px;color:var(--stone-400);margin-bottom:4px}
+.howto p{font-size:12.5px;line-height:1.5;color:var(--stone-700)}
+
+/* --- excerpt card (Articles) — no chrome, no domain --- */
+.excerpt{padding:12px 13px 11px}
+.excerpt .xt{font-size:14px;font-weight:500;letter-spacing:-.01em;line-height:1.35}
+.excerpt .xb{
+  font-size:12.5px;line-height:1.5;color:var(--muted-fg);margin-top:7px;
+  display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;
+}
+.excerpt .xf{font-size:11.5px;color:var(--stone-400);margin-top:10px}
+
+/* ---------- footer rulebook ---------- */
+.map{display:grid;gap:0}
+.map li{
+  display:grid;grid-template-columns:1fr auto;gap:16px;align-items:baseline;
+  padding:9px 2px;border-bottom:1px solid var(--stone-200);font-size:13px;
+}
+.map li:last-child{border-bottom:0}
+.map .moment{color:var(--stone-800)}
+.map .pattern{color:var(--muted-fg);font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:11.5px;text-align:right}
+#diag{color:var(--stone-400);font-size:11px;margin-top:18px}
+
+/* ---------- reduced motion — first-class mode ---------- */
+html[data-reduced="true"] *,
+html[data-reduced="true"] *::before,
+html[data-reduced="true"] *::after{
+  transition-property:opacity !important;
+  transition-duration:var(--duration-fast) !important;
+  transition-delay:0ms !important;
+  animation-duration:.01ms !important;
+  animation-delay:0ms !important;
+}
+
+@media (max-width:1080px){
+  .pane{grid-template-columns:var(--rail-w) minmax(0,1fr);gap:28px}
+  .col{width:100%}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ======================= HEADER ======================= -->
+  <header class="masthead">
+    <div>
+      <h1>Collection pages</h1>
+      <p class="thesis">One pattern. Three flavours. A rail that knows where you are.</p>
+    </div>
+    <div class="controls">
+      <button class="switch" id="reduced-toggle" aria-pressed="false" type="button">
+        <span class="track"><span class="knob"></span></span>
+        <span>Reduced motion</span>
+      </button>
+      <button class="switch" id="sound-toggle" aria-pressed="true" type="button">
+        <span class="track"><span class="knob"></span></span>
+        <span id="sound-label">Sound</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ======================= INTRO ======================= -->
+  <h2 class="section-title">The pattern</h2>
+  <div class="panel">
+    <p class="lede">
+      Stack, Agents&nbsp;&amp;&nbsp;Skills and Articles are the same page three times:
+      the Letter's skeleton — left rail, 640 column — filled with <b>collection
+      rows</b>. The rail is a <b>section wheel</b> that tracks the scroll and can
+      drive it. Every row is an anchor for the <b>preview popover</b>, so the list
+      stays one line per item and the curiosity is paid for on hover, not with
+      more page.
+    </p>
+    <p class="footnote">
+      Nothing here is new machinery. The row's hover is the ratified snap rule
+      (0&nbsp;ms in, 150&nbsp;ms out). The preview is the popover family verbatim
+      — 150&nbsp;ms hover intent, 140&nbsp;ms leave grace, scale&nbsp;.98→1 + fade +
+      4&nbsp;px rise on glide&nbsp;200, one container that <b>morphs</b> between
+      adjacent rows. The wheel's opacity lens is the wheel prototype's own falloff.
+      Only three things are defined here: the row, the credit line, and the install chip.
+    </p>
+  </div>
+
+  <!-- ======================= TABS + STAGE ======================= -->
+  <h2 class="section-title">The stage — one shell, three collections</h2>
+
+  <div class="panel" style="padding:16px 18px;margin-bottom:14px">
+    <div class="ctl-row">
+      <div class="ctl">
+        <span class="lbl">Page</span>
+        <div class="segment" id="seg-tab">
+          <span class="thumb"></span>
+          <button type="button" data-v="stack" aria-pressed="true">Stack</button>
+          <button type="button" data-v="agents" aria-pressed="false">Agents &amp; Skills</button>
+          <button type="button" data-v="articles" aria-pressed="false">Articles</button>
+        </div>
+      </div>
+      <span class="lbl" id="tab-note">The switch swaps the content instantly — no transition. It is navigation, not motion.</span>
+    </div>
+  </div>
+
+  <div id="stage">
+    <div class="shell" id="shell"></div>
+    <!-- the ONE shared preview container for every row on every tab -->
+    <div class="pop" id="row-pop" data-open="false" data-instance=""></div>
+  </div>
+
+  <!-- ======================= FOOTER ======================= -->
+  <h2 class="section-title">The rulebook</h2>
+  <div class="panel">
+    <ul class="map" id="rulebook"></ul>
+    <p class="footnote" id="foot-note"></p>
+    <p id="diag">initialising…</p>
+  </div>
+
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ---------------------------------------------------------
+     Sandbox: no history/URL APIs, no storage, no network.
+     matchMedia and AudioContext are the only host APIs touched
+     and both are wrapped.
+     --------------------------------------------------------- */
+
+  /* ---------- diagnostics (headless verification reads these) ---------- */
+  var lab = { mounted: [], errors: [] };
+  window.__collLab = lab;
+
+  function note(msg) { lab.errors.push(String(msg)); render(); }
+  function render() {
+    var el = document.getElementById("diag");
+    if (!el) return;
+    el.textContent =
+      "mounted:" + lab.mounted.length + "/5" +
+      " · errors:" + lab.errors.length +
+      (lab.errors.length ? " · " + lab.errors.join(" | ") : "");
+    el.setAttribute("data-mounted", String(lab.mounted.length));
+    el.setAttribute("data-errors", String(lab.errors.length));
+  }
+  window.addEventListener("error", function (e) {
+    note("error: " + (e && e.message ? e.message : "unknown"));
+  });
+  window.addEventListener("unhandledrejection", function (e) {
+    note("rejection: " + (e && e.reason ? e.reason : "unknown"));
+  });
+  var nativeConsoleError = console.error.bind(console);
+  console.error = function () {
+    note("console: " + Array.prototype.join.call(arguments, " "));
+    nativeConsoleError.apply(null, arguments);
+  };
+  function mount(name, fn) {
+    try { fn(); lab.mounted.push(name); }
+    catch (err) { note(name + ": " + (err && err.message ? err.message : err)); }
+    render();
+  }
+
+  /* ---------- constants ----------
+     Reused verbatim from the earlier labs. */
+  var D_BASE = 200, D_FAST = 150, D_SLOW = 400;   /* motion-lab */
+  var INTENT = 150, GRACE = 140;                  /* popover-lab */
+  var GAP = 8;                                    /* popover-lab: anchor → card */
+  var CARD_W = 280, CARD_R = 15;                  /* popover-lab preview card */
+  var REVERT_MS = 1500;                           /* motion-lab copy → check */
+  /* wheel-prototype / mobile-lab lens: 1 / .75 / .59 / .47 */
+  var OPACITY_MIN = 0.47, OPACITY_END = 4.0, OPACITY_POW = 2.2;
+  var ACTIVE_LINE = 0.40;                         /* the 40% line */
+
+  /* ---------- reduced motion ---------- */
+  var reducedQuery = null;
+  try { reducedQuery = window.matchMedia("(prefers-reduced-motion: reduce)"); } catch (e) { reducedQuery = null; }
+  var reduced = !!(reducedQuery && reducedQuery.matches);
+  function applyReduced() {
+    document.documentElement.setAttribute("data-reduced", reduced ? "true" : "false");
+    var b = document.getElementById("reduced-toggle");
+    if (b) b.setAttribute("aria-pressed", reduced ? "true" : "false");
+  }
+  function dur(ms) { return reduced ? 0 : ms; }
+
+  /* ---------- sound — SOUND A (soft wood), motion-lab verbatim ----------
+     Wired to ONE event here: the install chip's copy → check.
+     Default ON; silent if the frame has no WebAudio. */
+  var AudioCtor = null;
+  try { AudioCtor = window.AudioContext || window.webkitAudioContext || null; } catch (e) { AudioCtor = null; }
+  var isDesktop = true;
+  try { isDesktop = window.matchMedia("(hover: hover) and (pointer: fine)").matches; } catch (e) { isDesktop = true; }
+  var canHover = isDesktop;
+  var soundAvailable = !!AudioCtor && isDesktop;
+  var soundOn = true;
+  var actx = null;
+  function ctx() {
+    if (actx) return actx;
+    if (!AudioCtor) return null;
+    try { actx = new AudioCtor(); } catch (e) { actx = null; }
+    return actx;
+  }
+  function playTickA() {
+    var c = ctx();
+    if (!c) return;
+    try {
+      if (c.state === "suspended" && c.resume) c.resume();
+      var t = c.currentTime;
+      var out = c.createGain(); out.gain.value = 1; out.connect(c.destination);
+      var o1 = c.createOscillator(), g1 = c.createGain();
+      o1.type = "triangle";
+      o1.frequency.setValueAtTime(2000, t);
+      o1.frequency.exponentialRampToValueAtTime(1500, t + 0.03);
+      g1.gain.setValueAtTime(0.0001, t);
+      g1.gain.exponentialRampToValueAtTime(0.06, t + 0.002);
+      g1.gain.exponentialRampToValueAtTime(0.0001, t + 0.03);
+      o1.connect(g1); g1.connect(out); o1.start(t); o1.stop(t + 0.06);
+      var o2 = c.createOscillator(), g2 = c.createGain();
+      o2.type = "sine";
+      o2.frequency.setValueAtTime(3000, t);
+      g2.gain.setValueAtTime(0.0001, t);
+      g2.gain.exponentialRampToValueAtTime(0.02, t + 0.001);
+      g2.gain.exponentialRampToValueAtTime(0.0001, t + 0.012);
+      o2.connect(g2); g2.connect(out); o2.start(t); o2.stop(t + 0.04);
+    } catch (e) { /* silence is an acceptable outcome */ }
+  }
+  function commitSound() { if (soundOn) playTickA(); }
+  lab.soundState = function () { return { on: soundOn, available: soundAvailable }; };
+
+  /* ---------- easing + the morph engine (popover-lab, verbatim) ---------- */
+  function bezier(x1, y1, x2, y2) {
+    function A(a, b) { return 1 - 3 * b + 3 * a; }
+    function B(a, b) { return 3 * b - 6 * a; }
+    function C(a) { return 3 * a; }
+    function calc(t, a, b) { return ((A(a, b) * t + B(a, b)) * t + C(a)) * t; }
+    function slope(t, a, b) { return 3 * A(a, b) * t * t + 2 * B(a, b) * t + C(a); }
+    return function (x) {
+      if (x <= 0) return 0;
+      if (x >= 1) return 1;
+      var t = x, i, s, e;
+      for (i = 0; i < 8; i++) {
+        s = slope(t, x1, x2);
+        if (s === 0) break;
+        e = calc(t, x1, x2) - x;
+        t -= e / s;
+      }
+      if (t < 0) t = 0; if (t > 1) t = 1;
+      return calc(t, y1, y2);
+    };
+  }
+  var GLIDE = bezier(0.16, 1, 0.3, 1);
+
+  function makeMorph(el) {
+    var cur = { x: 0, y: 0, w: 0, h: 0, r: CARD_R };
+    var from = null, to = null, t0 = 0, ms = 0, raf = 0;
+    function paint() {
+      el.style.transform = "translate3d(" + cur.x + "px," + cur.y + "px,0)";
+      el.style.width = cur.w + "px";
+      el.style.height = cur.h + "px";
+      el.style.borderRadius = cur.r + "px";
+    }
+    function lerp(a, b, p) { return a + (b - a) * p; }
+    function frame(now) {
+      var p = ms <= 0 ? 1 : (now - t0) / ms;
+      if (p > 1) p = 1;
+      var e = GLIDE(p);
+      cur.x = lerp(from.x, to.x, e);
+      cur.y = lerp(from.y, to.y, e);
+      cur.w = lerp(from.w, to.w, e);
+      cur.h = lerp(from.h, to.h, e);
+      cur.r = lerp(from.r, to.r, e);
+      paint();
+      if (p < 1) raf = requestAnimationFrame(frame);
+      else { raf = 0; el.setAttribute("data-morphing", "false"); }
+    }
+    return {
+      snap: function (r) {
+        if (raf) { cancelAnimationFrame(raf); raf = 0; }
+        cur = { x: r.x, y: r.y, w: r.w, h: r.h, r: r.r === undefined ? cur.r : r.r };
+        el.setAttribute("data-morphing", "false");
+        paint();
+      },
+      move: function (r, d) {
+        var target = { x: r.x, y: r.y, w: r.w, h: r.h, r: r.r === undefined ? cur.r : r.r };
+        d = dur(d);
+        if (raf) { cancelAnimationFrame(raf); raf = 0; }
+        if (d <= 0) { cur = target; paint(); el.setAttribute("data-morphing", "false"); return; }
+        from = { x: cur.x, y: cur.y, w: cur.w, h: cur.h, r: cur.r };
+        to = target; ms = d; t0 = performance.now();
+        el.setAttribute("data-morphing", "true");
+        raf = requestAnimationFrame(frame);
+      },
+      rect: function () { return { x: cur.x, y: cur.y, w: cur.w, h: cur.h, r: cur.r }; },
+      busy: function () { return !!raf; }
+    };
+  }
+
+  /* a scroll tween on the same easing, so a wheel click reads as
+     the page moving rather than jumping */
+  function tweenScroll(el, to, ms) {
+    var from = el.scrollTop, t0 = performance.now(), raf = 0;
+    ms = dur(ms);
+    if (ms <= 0) { el.scrollTop = to; return; }
+    function step(now) {
+      var p = (now - t0) / ms; if (p > 1) p = 1;
+      el.scrollTop = from + (to - from) * GLIDE(p);
+      if (p < 1) raf = requestAnimationFrame(step);
+    }
+    raf = requestAnimationFrame(step);
+  }
+
+  /* ---------- icons ---------- */
+  var ICON = {
+    arrow16: '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 11 11 5"/><path d="M5.75 5H11v5.25"/></svg>',
+    arrow12: '<svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 11 11 5"/><path d="M5.75 5H11v5.25"/></svg>',
+    back:    '<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.5 3.5 5 8l4.5 4.5"/></svg>',
+    copy14:  '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2.5"/><path d="M5 15V6.5A2.5 2.5 0 0 1 7.5 4H15"/></svg>',
+    check14: '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 12.5 9.5 17.5 19.5 6.5"/></svg>',
+    github:  '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5C5.37.5 0 5.87 0 12.5c0 5.3 3.44 9.8 8.21 11.39.6.11.82-.26.82-.58v-2.03c-3.34.73-4.04-1.61-4.04-1.61-.55-1.39-1.34-1.76-1.34-1.76-1.09-.75.08-.73.08-.73 1.21.09 1.84 1.24 1.84 1.24 1.07 1.84 2.81 1.31 3.5 1 .11-.78.42-1.31.76-1.61-2.67-.3-5.47-1.34-5.47-5.95 0-1.31.47-2.38 1.24-3.22-.12-.31-.54-1.53.12-3.18 0 0 1.01-.32 3.3 1.23a11.5 11.5 0 0 1 6 0c2.29-1.55 3.3-1.23 3.3-1.23.66 1.65.24 2.87.12 3.18.77.84 1.24 1.91 1.24 3.22 0 4.62-2.81 5.64-5.49 5.94.43.37.81 1.1.81 2.22v3.29c0 .32.22.7.83.58C20.56 22.29 24 17.8 24 12.5 24 5.87 18.63.5 12 .5z"/></svg>'
+  };
+
+  /* =========================================================
+     CONTENT — all placeholder, all clearly plausible.
+     ========================================================= */
+  function g(a, b) { return "linear-gradient(140deg," + a + "," + b + ")"; }
+
+  var TABS = [
+    {
+      id: "stack", label: "Stack", title: "Stack",
+      intro: "The tools that survive contact with a real week. Hover a row to see where it lives.",
+      rowKind: "tool", preview: "site",
+      foot: "placeholder content — Ion curates the real list post-build",
+      groups: [
+        { name: "Design", rows: [
+          { name: "Figma", desc: "where everything starts", host: "figma.com", grad: g("#f24e1e", "#a259ff") },
+          { name: "Rive", desc: "motion that survives handoff", host: "rive.app", grad: g("#57534e", "#1c1917") },
+          { name: "CleanShot X", desc: "every screenshot in this portfolio", host: "cleanshot.com", grad: g("#fbbf24", "#f97316") },
+          { name: "Sip", desc: "colour picking without leaving the canvas", host: "sipapp.io", grad: g("#38bdf8", "#6366f1") }
+        ]},
+        { name: "Development", rows: [
+          { name: "Next.js", desc: "the framework I stopped fighting", host: "nextjs.org", grad: g("#404040", "#0a0a0a") },
+          { name: "Cursor", desc: "autocomplete that has read the whole repo", host: "cursor.com", grad: g("#7dd3fc", "#0f172a") },
+          { name: "Convex", desc: "a database that streams straight into the UI", host: "convex.dev", grad: g("#f97316", "#ef4444") },
+          { name: "Ghostty", desc: "a terminal that finally feels native", host: "ghostty.org", grad: g("#a78bfa", "#4c1d95") }
+        ]},
+        { name: "AI", rows: [
+          { name: "Claude Code", desc: "the agent that does the boring eighty percent", host: "claude.com", grad: g("#d97757", "#7c2d12") },
+          { name: "Codex CLI", desc: "second opinion on the refactors I distrust", host: "openai.com", grad: g("#34d399", "#065f46") },
+          { name: "AI SDK", desc: "one interface, every model", host: "ai-sdk.dev", grad: g("#a3a3a3", "#171717") },
+          { name: "Superwhisper", desc: "dictation that keeps up with thinking", host: "superwhisper.com", grad: g("#818cf8", "#312e81") }
+        ]},
+        { name: "Everyday", rows: [
+          { name: "Raycast", desc: "the launcher that replaced five apps", host: "raycast.com", grad: g("#ff6363", "#b91c1c") },
+          { name: "Arc", desc: "tab hygiene, finally", host: "arc.net", grad: g("#f472b6", "#7c3aed") },
+          { name: "Linear", desc: "scope in, noise out", host: "linear.app", grad: g("#818cf8", "#4338ca") },
+          { name: "Obsidian", desc: "where half-formed ideas go to be found again", host: "obsidian.md", grad: g("#a855f7", "#4c1d95") }
+        ]}
+      ]
+    },
+    {
+      id: "agents", label: "Agents & Skills", title: "Agents & skills",
+      intro: "What I run every day, and what I publish back. Hover a row for how I actually use it.",
+      rowKind: "skill", preview: "site+use",
+      foot: "placeholder content — names, authors and counts are invented until Ion confirms them",
+      groups: [
+        { name: "Skills I use", rows: [
+          { name: "transitions.dev", desc: "motion recipes I steal from weekly", author: "Jakub Antalík",
+            host: "transitions.dev", grad: g("#60a5fa", "#1e3a8a"),
+            use: ["Every entrance in this design system started as one of these recipes.",
+                  "I keep the timing and throw away the flourish."] },
+          { name: "design-critique", desc: "a second pair of eyes before Ion gets one", author: "Anthropic",
+            host: "claude.com", grad: g("#d97757", "#7c2d12"),
+            use: ["Runs over a screenshot before I show anything to anyone.",
+                  "It catches hierarchy mistakes I have stopped seeing."] },
+          { name: "wayfinder", desc: "maps a codebase before I touch it", author: "Paperclip",
+            host: "paperclip.dev", grad: g("#34d399", "#065f46"),
+            use: ["First thing I run in an unfamiliar repo.",
+                  "The map goes in the ticket, so the next agent starts warm."] },
+          { name: "better-typography", desc: "the rules I keep forgetting at 1am", author: "Anthropic",
+            host: "claude.com", grad: g("#fbbf24", "#b45309"),
+            use: ["Reviews type scale and measure on every new page.",
+                  "It is the reason nothing here is set at 16/1.5 by accident."] }
+        ]},
+        { name: "Mine", link: { label: "ionmesca/skills", host: "github.com" }, rowKind: "mine", preview: "repo+use", rows: [
+          { name: "wheel-physics", desc: "the iOS drum, ported honestly", install: "wheel-physics", grad: g("#a8a29e", "#292524"), stars: 24,
+            use: ["The scroll-linked wheel on the Letter page, extracted.",
+                  "Rubber-band, flick velocity and lens falloff included."] },
+          { name: "token-contract", desc: "keeps Figma and globals.css telling the same story", install: "token-contract", grad: g("#38bdf8", "#0c4a6e"), stars: 12,
+            use: ["Diffs the design file against the CSS and fails loudly.",
+                  "Written after the third time a radius drifted silently."] },
+          { name: "letter-voice", desc: "writes like me, not like a brochure", install: "letter-voice", grad: g("#f472b6", "#831843"), stars: 8,
+            use: ["A style pass for anything user-facing on this site.",
+                  "Short sentences, no adjectives doing sales work."] },
+          { name: "popover-family", desc: "one anchored surface, every variant", install: "popover-family", grad: g("#a78bfa", "#3730a3"), stars: 5,
+            use: ["The morph container and intent timings from this very lab.",
+                  "Drop it in and hover previews behave the same everywhere."] }
+        ]}
+      ]
+    },
+    {
+      id: "articles", label: "Articles", title: "Articles",
+      intro: "Notes from building the thing while designing it. Newest first.",
+      rowKind: "article", preview: "excerpt",
+      foot: "placeholder content — titles, dates and excerpts are invented",
+      groups: [
+        { name: "2026", rows: [
+          { name: "Designing a wheel that respects your thumb", date: "Aug 2026", read: "6 min read · Aug 2026",
+            excerpt: "An iOS picker is not a list with rotation applied. It is a promise about weight: the drum must resist you a little, keep going when you let go, and never let a glyph shear. Here is what it took to keep that promise in the browser." },
+          { name: "Tokens before taste", date: "Jun 2026", read: "8 min read · Jun 2026",
+            excerpt: "Every redesign I have abandoned died the same way — I picked colours before I named anything. Naming first is slower for a week and faster forever, because taste can then argue with a value instead of a vibe." },
+          { name: "What shipping an AI agent taught me about undo", date: "Mar 2026", read: "5 min read · Mar 2026",
+            excerpt: "The agent was right most of the time. That turned out to be the problem: a tool that is usually right makes people stop reading, so the only honest interface is one where reversing costs nothing at all." }
+        ]},
+        { name: "2025", rows: [
+          { name: "The case against the loading skeleton", date: "Nov 2025", read: "4 min read · Nov 2025",
+            excerpt: "Skeletons are for content that arrives late. If nothing on your page arrives late, a skeleton is a costume worn by an empty box — it performs work that is not happening and teaches people to wait." },
+          { name: "Six rewrites, one portfolio", date: "Jul 2025", read: "9 min read · Jul 2025",
+            excerpt: "I have rebuilt this site six times and only the fourth taught me anything. The lesson was not a framework. It was that a portfolio is a claim about judgement, and judgement is legible in what you left out." },
+          { name: "A shadow is a story about light", date: "Feb 2025", read: "5 min read · Feb 2025",
+            excerpt: "Four stacked shadows with falling opacity read as one soft object; one big blurry shadow reads as a sticker. The difference costs nothing at runtime and decides whether a card looks like it has mass." }
+        ]},
+        { name: "2024", rows: [
+          { name: "Learning to read a design system", date: "Oct 2024", read: "7 min read · Oct 2024",
+            excerpt: "Joining a mature system feels like arriving late to an argument. The tokens are the transcript: read them in the order they were added and the decisions, including the regretted ones, come back into view." },
+          { name: "Why my first agent forgot everything", date: "May 2024", read: "6 min read · May 2024",
+            excerpt: "I gave it tools and no memory, then blamed the model. Context is not a prompt problem, it is an information architecture problem, and the fix looked far more like designing a filing cabinet than a chatbot." },
+          { name: "The interview question I now ask myself", date: "Jan 2024", read: "4 min read · Jan 2024",
+            excerpt: "Show me something you removed and tell me what it cost. Everyone can add. The people I want to work with can name the feature they killed, who complained, and why they shipped it anyway." }
+        ]}
+      ]
+    }
+  ];
+
+  /* =========================================================
+     ROW + CARD BUILDERS
+     ========================================================= */
+  function rowHTML(row, kind) {
+    var s = '<div class="crow" role="link" tabindex="0" data-kind="' + kind + '" data-key="' + row.key + '">';
+    if (kind !== "article") {
+      s += '<span class="cico" style="background:' + row.grad + '" aria-hidden="true"></span>';
+    }
+    s += '<span class="cname">' + row.name + '</span>';
+    if (kind === "article") {
+      s += '<span class="cdate">' + row.date + '</span>';
+    } else {
+      s += '<span class="cdesc">' + row.desc + '</span>';
+      if (row.author) {
+        s += '<span class="cby">by <span class="au">' + row.author + '</span></span>';
+      }
+      if (kind === "mine") {
+        s += '<button type="button" class="chip" data-chip="' + row.key + '" ' +
+             'aria-label="Copy install command for ' + row.name + '">' +
+               '<span class="t-icon-swap" style="width:14px;height:14px">' +
+                 '<span class="t-icon" data-icon="copy" data-on="true">' + ICON.copy14 + '</span>' +
+                 '<span class="t-icon t-check" data-icon="check" data-on="false">' + ICON.check14 + '</span>' +
+               '</span>' +
+               '<span class="t-text-swap">' +
+                 '<span data-on="true" data-dir="up">npx skills add ionmesca/' + row.install + '</span>' +
+                 '<span data-on="false" data-dir="down">Copied</span>' +
+               '</span>' +
+             '</button>';
+      } else {
+        s += '<span class="carrow" aria-hidden="true">' + ICON.arrow16 + '</span>';
+      }
+    }
+    return s + '</div>';
+  }
+
+  function howtoHTML(row) {
+    if (!row.use) return "";
+    return '<div class="howto"><div class="lbl">How I use it</div>' +
+      '<p>' + row.use[0] + ' ' + row.use[1] + '</p></div>';
+  }
+
+  function cardHTML(row, kind) {
+    if (kind === "excerpt") {
+      return '<div class="excerpt">' +
+        '<div class="xt">' + row.name + '</div>' +
+        '<p class="xb">' + row.excerpt + '</p>' +
+        '<div class="xf">' + row.read + '</div>' +
+      '</div>';
+    }
+    if (kind === "repo+use") {
+      return '<div class="repo-mock" style="height:132px">' +
+          '<div class="rbar">' + ICON.github +
+            '<span>ionmesca/' + row.install + '</span>' +
+            '<span class="star">★ ' + row.stars + '</span>' +
+          '</div>' +
+          '<div class="rview">' +
+            '<div class="wf h1"></div>' +
+            '<div class="wf p"></div><div class="wf p2"></div>' +
+            '<div class="wf code"></div>' +
+          '</div>' +
+        '</div>' + howtoHTML(row);
+    }
+    /* site / site+use — the browser-chrome mock, verbatim anatomy */
+    var mockH = kind === "site+use" ? 132 : 156;
+    return '<div class="browser" style="height:' + mockH + 'px">' +
+        '<div class="bar">' +
+          '<span class="dot"></span><span class="dot"></span><span class="dot"></span>' +
+          '<span class="url">' + row.host + '</span>' +
+        '</div>' +
+        '<div class="view">' +
+          '<div class="wf h1"></div><div class="wf h2"></div>' +
+          '<div class="wf p"></div><div class="wf p2"></div>' +
+          (kind === "site+use" ? '' : '<div class="wf btn"></div>') +
+          '<div class="wf block"></div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="cap"><span class="host">' + row.host + '</span>' +
+        '<span class="arrow">' + ICON.arrow12 + '</span></div>' +
+      howtoHTML(row);
+  }
+
+  /* =========================================================
+     BUILD — one pane per tab, all three mounted up front so the
+     switch is instant (it is navigation, not motion).
+     ========================================================= */
+  var shell = document.getElementById("shell");
+  var stage = document.getElementById("stage");
+  var pop = document.getElementById("row-pop");
+  pop.setAttribute("data-instance", "rowpop-" + Math.random().toString(36).slice(2, 9));
+  var popInner = document.createElement("div");
+  popInner.className = "pop-inner";
+  pop.appendChild(popInner);
+
+  var ROWS = {};        /* key -> { el, face, w, h, tab } */
+  var PANES = {};       /* id  -> { pane, col, wheel, groups, rows[] } */
+  var currentTab = "stack";
+
+  mount("panes", function () {
+    TABS.forEach(function (tab, ti) {
+      var pane = document.createElement("div");
+      pane.className = "pane";
+      pane.setAttribute("data-pane", tab.id);
+      pane.setAttribute("data-on", ti === 0 ? "true" : "false");
+
+      /* --- rail --- */
+      var rail = document.createElement("aside");
+      rail.className = "rail";
+      rail.innerHTML =
+        '<button type="button" class="btn btn-secondary btn-home">' +
+          '<span class="gl">' + ICON.back + '</span>Home</button>' +
+        '<nav class="wheel" aria-label="Sections"></nav>' +
+        '<p class="railcap">scroll → the wheel follows</p>';
+
+      var wheel = rail.querySelector(".wheel");
+      tab.groups.forEach(function (grp, gi) {
+        var b = document.createElement("button");
+        b.type = "button";
+        b.className = "wrow";
+        b.setAttribute("data-i", String(gi));
+        b.setAttribute("data-active", gi === 0 ? "true" : "false");
+        b.innerHTML = '<span>' + grp.name + '</span><span class="wct">' + grp.rows.length + '</span>';
+        wheel.appendChild(b);
+      });
+
+      /* --- content column --- */
+      var col = document.createElement("div");
+      col.className = "col";
+      col.setAttribute("data-col", tab.id);
+      var html = '<h2 class="ptitle">' + tab.title + '</h2>' +
+                 '<p class="pintro">' + tab.intro + '</p><div class="groups">';
+      tab.groups.forEach(function (grp, gi) {
+        var kind = grp.rowKind || tab.rowKind;
+        html += '<section class="group" data-g="' + gi + '"><div class="ghead">' +
+                  '<span class="gname">' + grp.name + '</span><span class="grule"></span>';
+        if (grp.link) {
+          html += '<a class="glink" href="#" data-glink="1">' + ICON.github +
+                  '<span>' + grp.link.label + '</span>' + ICON.arrow12 + '</a>';
+        }
+        html += '</div>';
+        grp.rows.forEach(function (row, ri) {
+          row.key = tab.id + "-" + gi + "-" + ri;
+          row.previewKind = grp.preview || tab.preview;
+          html += rowHTML(row, kind);
+        });
+        html += '</section>';
+      });
+      html += '</div><p class="placeholder">' + tab.foot + '</p>';
+      col.innerHTML = html;
+
+      pane.appendChild(rail);
+      pane.appendChild(col);
+      pane.appendChild(document.createElement("div"));   /* the right gutter */
+      shell.appendChild(pane);
+
+      /* --- one face per row, measured once --- */
+      var rowEls = [].slice.call(col.querySelectorAll(".crow"));
+      var keys = rowEls.map(function (el) { return el.getAttribute("data-key"); });
+      tab.groups.forEach(function (grp) {
+        grp.rows.forEach(function (row) {
+          var face = document.createElement("div");
+          face.className = "pop-face";
+          face.setAttribute("data-on", "false");
+          face.setAttribute("data-key", row.key);
+          face.style.width = CARD_W + "px";
+          face.innerHTML = cardHTML(row, row.previewKind);
+          popInner.appendChild(face);
+          ROWS[row.key] = { face: face, w: CARD_W, h: 0, tab: tab.id, row: row };
+        });
+      });
+      rowEls.forEach(function (el) { ROWS[el.getAttribute("data-key")].el = el; });
+
+      PANES[tab.id] = {
+        pane: pane, col: col, wheel: wheel,
+        groups: [].slice.call(col.querySelectorAll(".group")),
+        wrows: [].slice.call(wheel.querySelectorAll(".wrow")),
+        keys: keys, active: 0
+      };
+    });
+
+    /* measure every card height after layout */
+    Object.keys(ROWS).forEach(function (k) {
+      var h = ROWS[k].face.offsetHeight;
+      ROWS[k].h = h > 0 ? h : 200;
+    });
+  });
+
+  /* =========================================================
+     THE SECTION WHEEL — tracks scroll on the 40% line, and
+     click-scrolls. Opacity is the wheel prototype's lens.
+     ========================================================= */
+  mount("wheel", function () {
+    Object.keys(PANES).forEach(function (id) {
+      var P = PANES[id];
+
+      function paint(active) {
+        P.active = active;
+        for (var i = 0; i < P.wrows.length; i++) {
+          var d = Math.abs(i - active);
+          var falloff = Math.pow(1 - Math.min(d / OPACITY_END, 1), OPACITY_POW);
+          var o = OPACITY_MIN + (1 - OPACITY_MIN) * falloff;
+          P.wrows[i].style.opacity = o.toFixed(3);
+          P.wrows[i].setAttribute("data-active", i === active ? "true" : "false");
+        }
+      }
+
+      function computeActive() {
+        var line = P.col.scrollTop + P.col.clientHeight * ACTIVE_LINE;
+        var top = P.col.getBoundingClientRect().top;
+        var act = 0;
+        for (var i = 0; i < P.groups.length; i++) {
+          var gTop = P.groups[i].getBoundingClientRect().top - top + P.col.scrollTop;
+          if (gTop <= line) act = i;
+        }
+        /* at the very end of the scroll, the last section owns the rail —
+           otherwise a short final group can never become active */
+        if (P.col.scrollTop + P.col.clientHeight >= P.col.scrollHeight - 2) act = P.groups.length - 1;
+        return act;
+      }
+
+      /* Clicking a section is a statement about where you are, and it wins
+         over the line until you move the page yourself. Without this, a
+         click that parks a short group at the top leaves the 40% line
+         sitting inside the NEXT group, and the rail contradicts the click.
+         The lock is released by a real gesture, never by the tween's own
+         scroll events. */
+      var locked = false;
+      function release() { locked = false; }
+      P.col.addEventListener("wheel", release, { passive: true });
+      P.col.addEventListener("touchmove", release, { passive: true });
+      P.col.addEventListener("keydown", release);
+
+      var ticking = false;
+      P.col.addEventListener("scroll", function () {
+        if (ticking) return;
+        ticking = true;
+        requestAnimationFrame(function () {
+          ticking = false;
+          if (!locked) {
+            var a = computeActive();
+            if (a !== P.active) paint(a);
+          }
+          if (preview && preview.isOpen()) preview.follow();
+        });
+      });
+
+      P.wrows.forEach(function (b, i) {
+        b.addEventListener("click", function () {
+          var top = P.col.getBoundingClientRect().top;
+          var y = P.groups[i].getBoundingClientRect().top - top + P.col.scrollTop;
+          locked = true;
+          tweenScroll(P.col, Math.max(0, y - 8), D_SLOW);
+          paint(i);
+        });
+      });
+      P.release = release;
+
+      P.paint = paint;
+      P.computeActive = computeActive;
+      paint(0);
+    });
+  });
+
+  /* =========================================================
+     THE PREVIEW POPOVER — popover-lab's mechanics, one shared
+     container for every row: 150ms intent, 140ms grace, the
+     entrance does the growing, siblings MORPH the container,
+     flip above/below on fit, pointer-enterable.
+     ========================================================= */
+  var preview = null;
+  mount("preview", function () {
+    var morph = makeMorph(pop);
+    var openKey = null, isOpen = false, placedBelow = true;
+    var tIn = 0, tOut = 0;
+
+    function targetRect(key) {
+      var R = ROWS[key];
+      var ar = R.el.getBoundingClientRect();
+      var sr = stage.getBoundingClientRect();
+      /* Anchored to the row's LEFT, not its centre. A 280 card centred on a
+         640 row would cover the whole width of the rows underneath it, and
+         a covered row cannot be hovered — which would kill the morph the
+         moment it matters. Left-anchored, the right half of every row stays
+         live, so the pointer can walk down the list and the container
+         follows it. */
+      var x = Math.round(ar.left - sr.left + 24);
+      var maxX = Math.round(sr.width - R.w - 8);
+      if (x > maxX) x = maxX;
+      if (x < 8) x = 8;
+      var below = Math.round(ar.bottom - sr.top + GAP);
+      var above = Math.round(ar.top - sr.top - R.h - GAP);
+      /* prefer below; flip above when the card would leave the shell */
+      placedBelow = (below + R.h + 8 <= sr.height) || above < 8;
+      return { x: x, y: placedBelow ? below : above, w: R.w, h: R.h, r: CARD_R };
+    }
+
+    function show(key) {
+      clearTimeout(tOut);
+      if (!ROWS[key]) return;
+      if (key === openKey && isOpen) return;
+      Object.keys(ROWS).forEach(function (k) {
+        ROWS[k].face.setAttribute("data-on", k === key ? "true" : "false");
+        if (ROWS[k].el) ROWS[k].el.setAttribute("data-active", k === key ? "true" : "false");
+      });
+      var r = targetRect(key);
+      if (!isOpen) {
+        /* first open: placed at its final rect — the entrance itself
+           does the growing (scale .98 → 1, fade, rise 4px) */
+        morph.snap(r);
+        popInner.style.transformOrigin = placedBelow ? "50% 0%" : "50% 100%";
+        isOpen = true;
+        pop.setAttribute("data-open", "true");
+      } else {
+        morph.move(r, D_BASE);            /* sibling → the container morphs */
+      }
+      openKey = key;
+    }
+    function hide() {
+      clearTimeout(tIn);
+      if (!isOpen) return;
+      isOpen = false;
+      pop.setAttribute("data-open", "false");
+      Object.keys(ROWS).forEach(function (k) {
+        if (ROWS[k].el) ROWS[k].el.setAttribute("data-active", "false");
+      });
+    }
+    function follow() {
+      if (!isOpen || !openKey) return;
+      morph.snap(targetRect(openKey));    /* stay glued while the column scrolls */
+    }
+
+    Object.keys(ROWS).forEach(function (key) {
+      var el = ROWS[key].el;
+      if (!el) return;
+      el.addEventListener("mouseenter", function () {
+        clearTimeout(tOut);
+        if (isOpen) { show(key); return; }        /* sibling → instant morph */
+        clearTimeout(tIn);
+        tIn = setTimeout(function () { show(key); }, INTENT);
+      });
+      el.addEventListener("mouseleave", function () {
+        clearTimeout(tIn); clearTimeout(tOut);
+        tOut = setTimeout(hide, GRACE);           /* grace corridor */
+      });
+      el.addEventListener("focus", function () { show(key); });
+      el.addEventListener("blur", function () { tOut = setTimeout(hide, GRACE); });
+      el.addEventListener("click", function () {
+        if (!canHover) { if (isOpen && openKey === key) hide(); else show(key); }
+      });
+      el.addEventListener("keydown", function (e) {
+        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); }
+        if (e.key === "Escape") hide();
+      });
+    });
+    pop.addEventListener("mouseenter", function () { clearTimeout(tOut); });
+    pop.addEventListener("mouseleave", function () { tOut = setTimeout(hide, GRACE); });
+
+    preview = {
+      node: pop,
+      instance: function () { return pop.getAttribute("data-instance"); },
+      show: show, hide: hide, follow: follow,
+      isOpen: function () { return isOpen; },
+      key: function () { return openKey; },
+      rect: function () { return morph.rect(); },
+      targetRect: targetRect,
+      placedBelow: function () { return placedBelow; },
+      faceOn: function () {
+        var on = popInner.querySelector('.pop-face[data-on="true"]');
+        return on ? on.getAttribute("data-key") : null;
+      }
+    };
+    lab.preview = preview;
+  });
+
+  /* =========================================================
+     INSTALL CHIPS — the copy → check moment, motion-lab verbatim.
+     Icon swaps to a drawn tick, label swaps to "Copied",
+     auto-reverts after 1.5s, sound tick A honours the toggle.
+     ========================================================= */
+  mount("chips", function () {
+    var chips = [].slice.call(document.querySelectorAll(".chip"));
+    var state = {};
+    chips.forEach(function (btn) {
+      var key = btn.getAttribute("data-chip");
+      var icons = btn.querySelectorAll(".t-icon");
+      var check = btn.querySelector(".t-check");
+      var texts = btn.querySelectorAll(".t-text-swap > span");
+      var timer = null;
+      state[key] = false;
+
+      /* measure the tick once so the stroke draws exactly its own length */
+      try {
+        var path = check.querySelector("path");
+        if (path && path.getTotalLength) {
+          check.style.setProperty("--check-len", String(Math.ceil(path.getTotalLength())));
+        }
+      } catch (e) { /* dasharray falls back to 24 */ }
+
+      function set(done) {
+        state[key] = done;
+        for (var i = 0; i < icons.length; i++) {
+          var isCheck = icons[i].getAttribute("data-icon") === "check";
+          icons[i].setAttribute("data-on", (isCheck === done) ? "true" : "false");
+        }
+        check.setAttribute("data-drawn", done ? "true" : "false");
+        texts[0].setAttribute("data-on", done ? "false" : "true");
+        texts[1].setAttribute("data-on", done ? "true" : "false");
+        btn.setAttribute("data-copied", done ? "true" : "false");
+      }
+      btn.addEventListener("click", function (e) {
+        /* the chip is inside a row that is itself a link target */
+        e.preventDefault(); e.stopPropagation();
+        /* No clipboard write: sandboxed frame, and the pattern being
+           documented is the feedback, not the copy. */
+        commitSound();
+        set(true);
+        if (timer) clearTimeout(timer);
+        timer = setTimeout(function () { set(false); }, REVERT_MS);
+      });
+      set(false);
+    });
+    lab.chips = {
+      count: chips.length,
+      state: function (k) { return !!state[k]; },
+      click: function (k) {
+        var b = document.querySelector('.chip[data-chip="' + k + '"]');
+        if (b) b.click();
+      }
+    };
+  });
+
+  /* =========================================================
+     TABS — the two-… three-tab switch. Instant content swap.
+     ========================================================= */
+  mount("tabs", function () {
+    var seg = document.getElementById("seg-tab");
+    var thumb = seg.querySelector(".thumb");
+    var btns = [].slice.call(seg.querySelectorAll("button"));
+    function place(i) {
+      thumb.style.width = btns[i].offsetWidth + "px";
+      thumb.style.transform = "translateX(" + (btns[i].offsetLeft - 3) + "px)";
+    }
+    function pick(i) {
+      var id = btns[i].getAttribute("data-v");
+      btns.forEach(function (b, j) { b.setAttribute("aria-pressed", j === i ? "true" : "false"); });
+      place(i);
+      if (id === currentTab) return;
+      preview.hide();
+      Object.keys(PANES).forEach(function (k) {
+        PANES[k].pane.setAttribute("data-on", k === id ? "true" : "false");
+      });
+      currentTab = id;
+      /* the pane was display:none, so its rows had no rect — repaint the
+         wheel from the live scroll position now that it is measurable */
+      var P = PANES[id];
+      P.paint(P.computeActive());
+    }
+    btns.forEach(function (b, i) { b.addEventListener("click", function () { pick(i); }); });
+    requestAnimationFrame(function () { place(0); });
+    lab.tabs = {
+      set: function (id) {
+        for (var i = 0; i < btns.length; i++) {
+          if (btns[i].getAttribute("data-v") === id) { pick(i); return; }
+        }
+      },
+      current: function () { return currentTab; }
+    };
+  });
+
+  /* ---------- wheel API for verification ---------- */
+  lab.wheel = function (id) {
+    var P = PANES[id || currentTab];
+    return {
+      active: function () { return P.active; },
+      labels: function () { return P.wrows.map(function (b) { return b.textContent; }); },
+      opacities: function () { return P.wrows.map(function (b) { return +b.style.opacity; }); },
+      click: function (i) { P.wrows[i].click(); },
+      /* stands in for the reader scrolling, so it releases the click lock */
+      scrollTo: function (y) { P.release(); P.col.scrollTop = y; },
+      scrollTop: function () { return P.col.scrollTop; },
+      scrollHeight: function () { return P.col.scrollHeight; },
+      clientHeight: function () { return P.col.clientHeight; }
+    };
+  };
+  lab.rowKeys = function (id) { return PANES[id || currentTab].keys; };
+
+  /* =========================================================
+     HEADER TOGGLES
+     ========================================================= */
+  (function header() {
+    try {
+      var rBtn = document.getElementById("reduced-toggle");
+      rBtn.addEventListener("click", function () { reduced = !reduced; applyReduced(); });
+      applyReduced();
+
+      var sBtn = document.getElementById("sound-toggle");
+      var sLabel = document.getElementById("sound-label");
+      if (!soundAvailable) {
+        soundOn = false;
+        sBtn.setAttribute("aria-disabled", "true");
+        sBtn.setAttribute("aria-pressed", "false");
+        document.documentElement.setAttribute("data-sound", "off");
+        sLabel.textContent = AudioCtor ? "Sound — desktop only" : "Sound — unavailable here";
+      } else {
+        sBtn.addEventListener("click", function () {
+          soundOn = !soundOn;
+          sBtn.setAttribute("aria-pressed", soundOn ? "true" : "false");
+          document.documentElement.setAttribute("data-sound", soundOn ? "on" : "off");
+          if (soundOn) playTickA();
+        });
+      }
+    } catch (e) { note("header: " + (e && e.message ? e.message : e)); }
+  })();
+
+  /* =========================================================
+     THE RULEBOOK
+     ========================================================= */
+  (function rulebook() {
+    var rows = [
+      ["<b>The collection row.</b> h48 · radius 12 · pad&nbsp;H 12 · gap 12. Icon 20 (radius 6) · name Subhead foreground · one-liner Body muted-foreground, truncating · <span class='mono'>↗</span> 16 muted at the far right.", "48 / 12 / 12"],
+      ["<b>Hover snaps, leave eases.</b> The row's background goes to muted in 0&nbsp;ms and returns over 150&nbsp;ms. The arrow tints to foreground on the same rule. This is the system-wide convention, not a row rule.", "0 in / 150 out"],
+      ["<b>One line per item.</b> A collection row never wraps and never grows. Everything else the reader might want lives in the preview.", "rule"],
+      ["<b>Preview: the popover family, unchanged.</b> 150&nbsp;ms hover intent, 140&nbsp;ms leave grace, card enterable through the 8&nbsp;px gap, scale&nbsp;.98→1 + fade + 4&nbsp;px rise on glide 200, out at 150.", "inherited"],
+      ["<b>One container for the whole list.</b> Moving between adjacent rows morphs its rect over 200&nbsp;ms — it never closes and reopens. Content crossfades at 150&nbsp;ms with 2&nbsp;px blur.", "morph · 200 / 150"],
+      ["<b>Card geometry.</b> 280 wide, radius 15, Overlay shadow + 1&nbsp;px ring, popover fill. Height follows the content. Prefers below the row, flips above when the shell runs out, and anchors 24&nbsp;px in from the row's left so the right half of the rows underneath stays hoverable — that is what keeps row-to-row morphing possible.", "280 · r15"],
+      ["<b>A wheel click outranks the line.</b> Clicking a section pins the rail to it until the reader scrolls with a real gesture; the tween's own scroll events never move it back.", "click lock"],
+      ["<b>The section wheel.</b> Rows h32 radius 12, text only, lens opacity 1&nbsp;/&nbsp;.75&nbsp;/&nbsp;.59&nbsp;/&nbsp;.47 by distance, active row on muted fill. It tracks the 40%&nbsp;line while you scroll and smooth-scrolls when you click it.", "40% line"],
+      ["<b>The tab switch is not motion.</b> Segment control, instant content swap. Changing page is navigation; only the thumb slides.", "instant"],
+      ["<b>Stack flavour</b> — tool rows, browser-chrome preview with a domain caption.", "flavour 1"],
+      ["<b>Agents &amp; Skills flavour</b> — adds the <b>credit line</b> (\"by &lt;author&gt;\" Caption, author underlines on hover) and the <b>\"How I use it\"</b> block under the mock: two Body lines. The row stays one line; the curious get the paragraph on hover.", "flavour 2"],
+      ["<b>Skills Ion publishes</b> — the ↗ is replaced by an <b>install chip</b>: mono Caption on muted fill, radius 9, pad 4/8, copy icon 14. Click runs the ratified copy→check (drawn tick, \"Copied\", auto-revert 1.5&nbsp;s, sound tick A). The group header carries one quiet GitHub link.", "flavour 2b"],
+      ["<b>Articles flavour</b> — title Subhead plus date Caption at the far right, in the palette's shortcut position. No one-liner, no ↗, no icon: articles go inward, so the row is quieter. Preview is an <b>excerpt card</b> — title, three muted lines, reading-time caption. No chrome, no domain.", "flavour 3"],
+      ["Stack", "consumes the pattern"],
+      ["Agents &amp; Skills", "consumes the pattern"],
+      ["Articles", "consumes the pattern"],
+      ["Article hover-cards inside case studies", "same family · later"]
+    ];
+    var ul = document.getElementById("rulebook");
+    ul.innerHTML = rows.map(function (r) {
+      return '<li><span class="moment">' + r[0] + '</span><span class="pattern">' + r[1] + '</span></li>';
+    }).join("");
+    document.getElementById("foot-note").innerHTML =
+      "Three flagged calls, not decisions. <b>1 ·</b> Article rows drop the 20&nbsp;px icon — " +
+      "there is no brand mark to stand in for, and an avatar would make the list louder than the writing. " +
+      "<b>2 ·</b> The install chip is the only place where a row holds a click target that is not the row, " +
+      "which bends \"hover previews, click tools\" — it is a copy, so it cannot misfire into anything. " +
+      "<b>3 ·</b> The content column scrolls inside the shell here so the wheel is judgeable next to the " +
+      "rulebook; on the real page the window scrolls and the rail is sticky. The 40%&nbsp;line is identical either way.";
+  })();
+
+  render();
+})();
+</script>
+</body>
+</html>
