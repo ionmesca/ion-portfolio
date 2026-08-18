@@ -2,6 +2,7 @@
 
 import * as React from "react"
 
+import { ENTRANCE_TEARDOWN } from "@/lib/motion"
 import { cn } from "@/lib/utils"
 
 /* ============================================================================
@@ -40,12 +41,16 @@ import { cn } from "@/lib/utils"
       state is the settled page. There is no "hidden until JS says so" state
       to get stuck in.
 
-   3. RUNS ONCE. `played` is a module-level flag on the CLIENT bundle only.
-      The server always renders the playing markup (so the first paint is the
-      choreography and hydration matches), and the flag flips after the first
-      mount — so a client-side navigation back to the landing re-renders these
-      components with no animation classes at all. It is deliberately NOT
-      per-session storage: a real reload is a real arrival.
+   3. RUNS ON EVERY ARRIVAL. This rule USED TO SAY "runs once", enforced by a
+      module-level `played` flag on the client bundle. Ion's benji ruling
+      turned that around: a client-side navigation back to the landing is a
+      real arrival and should replay. `app/template.tsx` re-creates this whole
+      subtree on every navigation, so a fresh mount is a fresh choreography —
+      and the flag, being a module variable, outlived every re-mount and was
+      the one thing preventing it. It is gone. What survives is the shape:
+      the server always renders the playing markup, so the first paint IS the
+      choreography and hydration matches. Still deliberately NOT per-session
+      storage; there is now no persistence of any kind.
 
    4. THE CLASSES LEAVE WHEN THE SHOW ENDS. `fill-mode-both` must stay for the
       pre-delay hold (backwards fill keeps late groups hidden), but a filling
@@ -85,23 +90,21 @@ const RISE =
 const FADE =
   "motion-safe:animate-in motion-safe:fade-in motion-safe:fill-mode-both motion-safe:duration-150 motion-safe:ease-glide"
 
-let played = false
-
 /** ms. When the animation classes are dropped (rule 4): last start (250) +
-    duration (150) + generous slack for a busy main thread. */
-const INTRO_TEARDOWN = 700
+    duration (150) + generous slack for a busy main thread.
+    The number lives in lib/motion.ts because `app/template.tsx` tears the
+    generic page entrance down on the same clock, and importing it from HERE
+    would drag this module's `cn` onto every route — see the note there. */
+const INTRO_TEARDOWN = ENTRANCE_TEARDOWN
 
-/** True on the server, and on the client from first paint until teardown. */
-function usePlayOnce() {
-  const [play, setPlay] = React.useState(() =>
-    typeof window === "undefined" ? true : !played
-  )
+/** True on the server, and on the client from first paint until teardown.
+ *  Every mount plays — see rule 3. */
+function usePlay() {
+  const [play, setPlay] = React.useState(true)
   React.useEffect(() => {
-    played = true
-    if (!play) return
     const t = window.setTimeout(() => setPlay(false), INTRO_TEARDOWN)
     return () => window.clearTimeout(t)
-  }, [play])
+  }, [])
   return play
 }
 
@@ -119,7 +122,7 @@ export type IntroReveal = {
  * (the project rows, the media column). Wrappers use `<Reveal>` below.
  */
 export function useIntroReveal(): IntroReveal {
-  const play = usePlayOnce()
+  const play = usePlay()
 
   return React.useMemo(
     () => ({

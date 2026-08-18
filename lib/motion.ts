@@ -54,6 +54,44 @@ export const SPRING_WALL = {
 } as const
 
 /**
+ * The button press/release spring. Ion approved putting the press on a real
+ * spring on 2026-08-18, alongside the theme thumb and the copy→check swap.
+ *
+ * IT IS `SPRING_CELL`, NOT A NEW FAMILY, and the alias is the record of that
+ * decision rather than a shortcut. A press is a READOUT: the button reports
+ * "I got that" and settles. That is the same job the carousel's pill
+ * indicator does, and CELL is interior.dev's own constant for it — so it is
+ * reused rather than re-derived, and one fewer number in this file is one
+ * fewer number to keep in step with the rest.
+ *
+ * The numbers also happen to be right for a control, which is worth writing
+ * down because it is the thing that would have to change if the alias were
+ * ever broken:
+ *
+ *   ω  = √(k/m)     = √(520 / 0.45)  = 34.0 rad/s   → settles in ~120ms
+ *   c_crit = 2√(km) = 2√(520 × 0.45) = 30.6
+ *   ζ  = c / c_crit = 34 / 30.6      = 1.11
+ *
+ * ζ just over 1 is critically damped and a shade past it: the fastest arrival
+ * that never crosses its target. A button must not overshoot — growing past
+ * its resting size on release reads as a wobble, not as a click — which is the
+ * one place a press differs from the CSS `--motion-spring` bezier it replaces,
+ * whose 1.56 control point overshoots by design.
+ *
+ * WHAT THE SPRING BUYS OVER THE BEZIER is the interruption. The CSS transition
+ * restarts its curve when the target changes, so a release that lands while
+ * the press is still travelling begins again from a standstill and stutters.
+ * `createSpring` never resets velocity on `set`, so the button carries its
+ * speed through the reversal — see the integrator's note below.
+ */
+export const SPRING_PRESS = SPRING_CELL
+
+/** The pressed scale. Matches `active:scale-[0.97]` in components/ui/button.tsx,
+ *  which stays in the markup as the no-JS fallback and must not disagree with
+ *  the spring about where "pressed" is. */
+export const PRESS_SCALE = 0.97
+
+/**
  * The reduced-motion transition. Section 8 of globals.css collapses every CSS
  * transition on the page to 0.01ms; JS-driven motion has to make the same
  * promise itself. The ratified carve-out for a state swap is a 150ms opacity
@@ -66,6 +104,30 @@ export const SWAP_TRAVEL = 6
 
 /** The garnish blur, matching `--blur-garnish`. */
 export const SWAP_BLUR = 2
+
+/**
+ * ms. When an entrance's animation classes are dropped.
+ *
+ * THE CLASS-DROP RULE (rule 4, components/landing/intro-reveal.tsx). An
+ * entrance holds a `backwards` fill so late groups stay hidden through their
+ * delay, and a filling animation keeps its element a stacking context for as
+ * long as it is applied — a stacked project row paints over the open ⌘K panel,
+ * a stacked reading column paints over the collections' hover previews. So the
+ * classes come off once the show is over. The final frame is the settled page,
+ * so the drop is invisible.
+ *
+ * The number is the ceiling plus slack: every entrance on this site ends at
+ * `--duration-slow` (400ms), and 300ms of slack covers a busy main thread.
+ *
+ * IT LIVES HERE, not next to either choreography, for a reason that is about
+ * BYTES and not about tidiness. `app/template.tsx` is the one client component
+ * that every route now loads, and it needs this constant. Importing it from
+ * intro-reveal.tsx pulled that module's `cn` — clsx plus tailwind-merge, 8.6KB
+ * gz — onto routes that had no client JavaScript at all (`/dev`, the 404).
+ * Measured, not assumed. A shared constant belongs in the leaf both sides can
+ * reach, and the motion shelf is that leaf.
+ */
+export const ENTRANCE_TEARDOWN = 700
 
 /* ============================================================================
    THE SAME SPRINGS, WITHOUT THE LIBRARY.
@@ -197,7 +259,7 @@ export function createSpring(
  *  reduced motion; a JS-driven spring has to make the same promise itself, and
  *  it makes it by snapping. Read per `set`, not cached — the OS setting can
  *  change while the page is open. */
-function prefersReduced() {
+export function prefersReducedMotion() {
   try {
     return window.matchMedia("(prefers-reduced-motion: reduce)").matches
   } catch {
@@ -260,7 +322,7 @@ export function useSpringStyle<E extends HTMLElement>(
       driver.snap(target)
       return
     }
-    if (prefersReduced()) driver.snap(target)
+    if (prefersReducedMotion()) driver.snap(target)
     else driver.set(target)
   }, [target])
 

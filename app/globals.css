@@ -894,6 +894,264 @@
     }
   }
 
+  /* -- page entrance — EVERY navigation, not once per session ----------------
+     Ion ratified the benji recipe: a page's content blocks fade and rise 8px,
+     one `--stagger-delay` apart, every time you arrive at it. The mechanism is
+     `app/template.tsx`, which Next re-creates on each navigation, so the
+     classes below are re-applied for free — there is no "have I played?"
+     bookkeeping and no session storage.
+
+     THE LANDING DOES NOT USE THIS. `/` keeps its richer named-group
+     choreography (chip / hero / actions / rows / media — intro-reveal.tsx),
+     and the template deliberately withholds `.page-enter` there so the two
+     cannot stack. Everything else — the letter, the three collections — gets
+     the simple per-child stagger below.
+
+     WHICH ELEMENTS. The rail pages all render
+     `main > div.grid > [rail, reading column]` (components/nav/rail-shell.tsx).
+     Step 0 is the rail; steps 1..n are the reading column's own top-level
+     blocks. The column itself is NOT animated, only its children — a fading
+     parent with fading children compounds into a double fade, and a filling
+     parent is a stacking context wrapped around the whole page.
+
+     This selector is structural, and that is a deliberate trade: it reaches
+     into markup this file does not own. It fails SAFE. If the rail chassis is
+     re-shaped, the selector stops matching and the page renders settled with
+     no entrance — never blank, never half-animated, because every element's
+     resting style IS the settled page and the animation only holds a
+     `backwards` fill in front of it.
+
+     THE LADDER SATURATES AT STEP 5. Last start 250ms + 150ms duration = 400ms,
+     which is `--duration-slow`, the entrance ceiling — the same arithmetic the
+     landing's choreography lands on. A twenty-block page does not get a
+     one-second entrance; blocks past the sixth share the sixth's delay and
+     arrive together.
+
+     No layout shift: opacity and transform only. Works without JS: the class
+     is server-rendered and the whole choreography is CSS. Reduced motion: the
+     entire block is inside `prefers-reduced-motion: no-preference`, so there
+     is no animation-name at all and the page is settled instantly — not
+     "settled after 400ms of nothing".
+
+     The classes are DROPPED after the show (`app/template.tsx`), for the
+     fill-mode reason in rule 4 of intro-reveal.tsx: a filling animation keeps
+     its element a stacking context forever, and a stacked reading column
+     paints over anything the rail floats across it. */
+  @keyframes page-enter {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .page-enter :is(main > div > :first-child, main > div > :first-child ~ * > *) {
+      animation: page-enter var(--duration-fast) var(--ease-glide) both;
+    }
+
+    /* Step 0 — the rail. */
+    .page-enter main > div > :first-child {
+      animation-delay: 0ms;
+    }
+
+    /* Steps 1..5 — the reading column's blocks. `:first-child ~ *` is the
+       column; its children are the blocks. */
+    .page-enter main > div > :first-child ~ * > * {
+      animation-delay: calc(var(--stagger-delay) * 5);
+    }
+    .page-enter main > div > :first-child ~ * > :nth-child(1) {
+      animation-delay: calc(var(--stagger-delay) * 1);
+    }
+    .page-enter main > div > :first-child ~ * > :nth-child(2) {
+      animation-delay: calc(var(--stagger-delay) * 2);
+    }
+    .page-enter main > div > :first-child ~ * > :nth-child(3) {
+      animation-delay: calc(var(--stagger-delay) * 3);
+    }
+    .page-enter main > div > :first-child ~ * > :nth-child(4) {
+      animation-delay: calc(var(--stagger-delay) * 4);
+    }
+  }
+
+  /* -- text effect — the hero resolving out of blur --------------------------
+     Ion's reference is motion-primitives' `TextEffect`, blur-per-character
+     preset: each unit starts at `blur(10px)` with `brightness(0)` and zero
+     opacity and resolves to clear, one `--text-effect-step` after the last.
+
+     IT IS CSS, NOT MOTION. `TextEffect` imports `motion/react`. CLAUDE.md's
+     bundle ruling allows ~3KB gz on `/` and the measured cost of putting
+     Motion on the desktop-critical path is +41.4KB gz (lib/motion.ts records
+     the same measurement for the theme thumb). The variant is small enough to
+     restate: two keyframes and a delay ladder. See the report for the numbers.
+
+     ENTRANCE ONLY — never a loop. It IS the hero group's entrance inside the
+     landing choreography, which is why the base delay is the hero group's own
+     `--intro-delay` rather than a number of this rule's own.
+
+     ACCESSIBILITY. The split spans are `aria-hidden` and the container carries
+     the whole string as its accessible name, so a screen reader reads
+     "Software Designer" and never "S, o, f, t…". See text-effect.tsx for why
+     the sub-line splits per WORD instead — it contains a real link, and a link
+     inside an aria-hidden subtree is a link no one can reach.
+
+     Resting style is the settled text. `both` fill holds the pre-delay state;
+     under reduced motion there is no animation at all. */
+  /* THE LAST FRAME IS `filter: none`. CSS interpolates a filter list toward
+     `none` through each function's own identity, so the resolve is unchanged
+     and the end state is stated as what it means: no filter.
+
+     A NOTE FOR THE NEXT PERSON WHO WORRIES ABOUT THIS, because it cost an hour.
+     Rule 4 promises the class-drop is invisible, and a filter animation looks
+     like it should break that promise: text under a filter is composited
+     differently, so retaining one past the end of the animation ought to pop
+     when the class comes off. It does not, and both halves of that were
+     measured rather than reasoned:
+
+       - During a `forwards` fill Chrome does not compute this to the literal
+         `none`; it retains the identity list `blur(0px) brightness(1)`.
+       - That identity list renders text BYTE-IDENTICALLY to no filter. Two
+         clones of this headline, one filtered and one not: 0 of 10800
+         subpixels differed by more than 2, max delta 1, mean luminance equal
+         to three decimals.
+
+     So there is nothing to pop. The 18% raster change an early probe "found"
+     at the drop was Aeonik's `display: swap` landing, not the entrance —
+     measure font-dependent motion against `document.fonts.ready`, never
+     against the wall clock. */
+  @keyframes text-effect {
+    from {
+      opacity: 0;
+      filter: blur(10px) brightness(0);
+    }
+    to {
+      opacity: 1;
+      filter: none;
+    }
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .text-effect > [data-unit] {
+      /* 400ms per unit is motion-primitives' own figure. It is longer than
+         `--duration-slow` on purpose and does not break the entrance ceiling:
+         the ceiling governs when the last unit STARTS, and the tail of a blur
+         resolving is not something the eye waits on. */
+      animation: text-effect 400ms var(--ease-glide) both;
+      animation-delay: calc(
+        var(--intro-delay, 0ms) + var(--text-effect-step, 10ms) * var(--unit-index, 0)
+      );
+    }
+  }
+
+  /* -- Book a call: the arrow's orbit ----------------------------------------
+     Ion approved Amicro `btn-32` for this. What that component actually is:
+     a fixed-height box with `overflow: hidden` holding TWO copies of the same
+     content stacked one unit apart, translated by exactly one unit on hover,
+     on a spring — its label rolls up and a duplicate rolls in behind it.
+
+     WHAT IS TAKEN, WHAT IS REBUILT. The mechanism is taken verbatim: clipped
+     box, two copies, translate by one full unit. Everything else is rebuilt.
+     Amicro rolls the LABEL vertically and rotates the icon 45°; here the label
+     and the keycap are untouched — Figma's copy is the copy — and it is the
+     ARROW that travels. It leaves along the direction it points (↗, so up and
+     right, `translate(100%, -100%)`) and its replacement arrives from the
+     opposite corner. One clean orbit, not a bounce. Amicro drives it with
+     `motion/react` at stiffness 400 / damping 25 (ζ ≈ 0.63, so it overshoots);
+     Motion cannot come to `/` for 16px of arrow, so the clock is
+     `--duration-base` on `--ease-spring` — the token easing whose whole job is
+     "press, pop", and the only one of the two that behaves like the spring
+     Amicro actually uses.
+
+     `--ease-glide` WAS TRIED FIRST AND REJECTED, on evidence. It is an
+     expo-out: the headless strip caught the arrow 96% of the way through its
+     orbit 90ms into a 200ms travel, so the eye sees an arrow that has already
+     arrived and nothing in between. An orbit you cannot see is not an orbit.
+     `--ease-spring` overshoots by ~13% of the travel, which on 16px is about
+     2px past centre before it settles — the same small landing bounce the
+     reference has (ζ ≈ 0.63), at a size where it reads as a click rather than
+     as a wobble.
+
+     The box is exactly the icon's 16px, so `translate(±100%, ∓100%)` clears it
+     corner to corner with nothing left to peek. */
+  .btn-orbit {
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+  }
+
+  .btn-orbit > * {
+    grid-area: 1 / 1;
+    transition-property: translate;
+    transition-duration: var(--duration-base);
+    transition-timing-function: var(--ease-spring);
+  }
+
+  .btn-orbit > [data-orbit="lead"] {
+    translate: 0 0;
+  }
+
+  .btn-orbit > [data-orbit="trail"] {
+    translate: -100% 100%;
+  }
+
+  .group:hover .btn-orbit > [data-orbit="lead"] {
+    translate: 100% -100%;
+  }
+
+  .group:hover .btn-orbit > [data-orbit="trail"] {
+    translate: 0 0;
+  }
+
+  /* -- the press spring's lane ------------------------------------------------
+     `PressSpring` (components/ui/press-spring.tsx) writes `scale` on this
+     element every frame from the rAF integrator in lib/motion.ts. The button
+     primitive transitions `scale` on a 150ms bezier, and a transition on top
+     of a per-frame write is a second clock chasing the first — the same
+     mistake `.palette-thumb` exists to record. So the scale lane is taken out
+     here and the three colour lanes are restated, hover-snap included.
+
+     The CSS `active:scale-[0.97]` on the primitive stays in the markup on
+     purpose: it is the no-JS fallback, and it is inert the moment the spring
+     attaches because an inline `style.scale` outranks any class. */
+  .btn-spring {
+    transition-property: background-color, box-shadow, color;
+    transition-duration: var(--duration-fast);
+    transition-timing-function: var(--motion-glide);
+  }
+
+  .btn-spring:hover {
+    transition-duration: 0ms;
+  }
+
+  /* Reduced motion for all four landing-motion features.
+     Section 8 collapses every transition on the page to 0.01ms, which already
+     neutralises the orbit's travel; it is stated here as an assertion rather
+     than left to a global. The two ANIMATION-driven features (the page
+     entrance and the text effect) are never emitted under reduced motion at
+     all — their rules live inside `prefers-reduced-motion: no-preference` —
+     so there is nothing to undo for them. The press spring snaps: lib/motion.ts
+     reads the media query on every `set`. */
+  @media (prefers-reduced-motion: reduce) {
+    .btn-orbit > * {
+      transition-property: none !important;
+    }
+
+    .btn-orbit > [data-orbit="lead"],
+    .group:hover .btn-orbit > [data-orbit="lead"] {
+      translate: 0 0 !important;
+    }
+
+    /* The trailing copy is decoration with nothing to do; parking it outside
+       the clipped box is cheaper than asking it not to move. */
+    .btn-orbit > [data-orbit="trail"],
+    .group:hover .btn-orbit > [data-orbit="trail"] {
+      translate: -100% 100% !important;
+    }
+  }
+
   /* -- scroll reveal --------------------------------------------------------- */
 
   .reveal {
