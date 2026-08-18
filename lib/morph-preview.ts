@@ -212,6 +212,102 @@ export function placePreview({
   return { x, y, w, h, r: PREVIEW_RADIUS, below }
 }
 
+/* ============================================================================
+   THE CORRIDOR, ON ITS OWN.
+
+   Factored out on 2026-08-18 when Ion ruled that HOVER OPENS THE ⌘K PALETTE.
+   The palette is not a preview — it owns no card, no placement and no morph of
+   this file's kind — but it is now the biggest member of this family by the
+   only measure that matters to a reader: it answers a hovering pointer on the
+   same clock as the social cards and the collection rows. Two surfaces with
+   150/140 and a third with its own numbers would be three surfaces that feel
+   like three products.
+
+   So the TIMERS moved out of `useMorphPreview` and became this hook, and
+   `useMorphPreview` is now its first consumer. Nothing about the preview
+   behaviour changed: the four operations below are the four that were inline,
+   with the same clear-before-set discipline, in the same order.
+
+     serve(run, immediate)  pointer reached an anchor. Runs `run` after INTENT,
+                            or AT ONCE when `immediate` — which is the family's
+                            rule that an already-open surface morphs rather
+                            than closing and reopening.
+     release(run)           pointer left. Runs `run` after GRACE.
+     hold()                 drop a pending close. THIS is what makes a surface
+                            enterable: the pointer crosses the gap, the surface
+                            says "not yet", and the countdown started by
+                            leaving the trigger is dropped.
+     disarm()               drop a pending open.
+     cancel()               drop both.
+
+   The hook owns no state, only refs — nothing here should ever re-render the
+   thing it is timing.
+   ========================================================================= */
+
+export type HoverCorridor = {
+  serve: (run: () => void, immediate?: boolean) => void
+  release: (run: () => void) => void
+  hold: () => void
+  disarm: () => void
+  cancel: () => void
+}
+
+export function useHoverCorridor({
+  intent = INTENT,
+  grace = GRACE,
+}: { intent?: number; grace?: number } = {}): HoverCorridor {
+  const tIn = React.useRef<ReturnType<typeof setTimeout> | null>(null)
+  const tOut = React.useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const hold = React.useCallback(() => {
+    if (tOut.current) clearTimeout(tOut.current)
+    tOut.current = null
+  }, [])
+
+  const disarm = React.useCallback(() => {
+    if (tIn.current) clearTimeout(tIn.current)
+    tIn.current = null
+  }, [])
+
+  const cancel = React.useCallback(() => {
+    disarm()
+    hold()
+  }, [disarm, hold])
+
+  const serve = React.useCallback(
+    (run: () => void, immediate = false) => {
+      hold()
+      if (immediate) {
+        run()
+        return
+      }
+      disarm()
+      tIn.current = setTimeout(run, intent)
+    },
+    [disarm, hold, intent]
+  )
+
+  const release = React.useCallback(
+    (run: () => void) => {
+      cancel()
+      tOut.current = setTimeout(run, grace)
+    },
+    [cancel, grace]
+  )
+
+  React.useEffect(() => cancel, [cancel])
+
+  // MEMOISED, and it matters. `useMorphPreview` puts this object in the
+  // dependency list of `show`, `hide`, `enter` and `leave`, and `hide` is in
+  // the deps of the effect that owns the scroll, resize and Escape listeners.
+  // A fresh object per render would tear those three listeners down and
+  // rebuild them on every render of every surface in the family.
+  return React.useMemo(
+    () => ({ serve, release, hold, disarm, cancel }),
+    [serve, release, hold, disarm, cancel]
+  )
+}
+
 export type MorphPreviewOptions<K extends string> = {
   /** False disables every handler and skips all listeners. */
   enabled: boolean
@@ -292,8 +388,9 @@ export function useMorphPreview<K extends string>({
   const openRef = React.useRef(false)
   const keyRef = React.useRef<K | null>(null)
   const belowRef = React.useRef(true)
-  const tIn = React.useRef<ReturnType<typeof setTimeout> | null>(null)
-  const tOut = React.useRef<ReturnType<typeof setTimeout> | null>(null)
+  /** The intent/grace clock. Shared with the ⌘K palette since 2026-08-18 —
+   *  see `useHoverCorridor` above. */
+  const corridor = useHoverCorridor({ intent, grace })
 
   React.useLayoutEffect(() => {
     if (!enabled || !popNode) return
@@ -316,7 +413,7 @@ export function useMorphPreview<K extends string>({
 
   const show = React.useCallback(
     (key: K) => {
-      if (tOut.current) clearTimeout(tOut.current)
+      corridor.hold()
       const morph = morphRef.current
       const pop = popRef.current
       if (!morph || !pop) return
@@ -342,17 +439,17 @@ export function useMorphPreview<K extends string>({
       setShown(key)
       setActive(key)
     },
-    [place, reducedRef, setOrigin]
+    [corridor, place, reducedRef, setOrigin]
   )
 
   const hide = React.useCallback(() => {
-    if (tIn.current) clearTimeout(tIn.current)
+    corridor.disarm()
     if (!openRef.current) return
     openRef.current = false
     popRef.current?.setAttribute("data-open", "false")
     setActive(null)
     // `shown` is deliberately kept — see its doc comment.
-  }, [])
+  }, [corridor])
 
   const reposition = React.useCallback(
     (force = false) => {
@@ -413,45 +510,25 @@ export function useMorphPreview<K extends string>({
     }
   }, [enabled, reposition, hide])
 
-  React.useEffect(
-    () => () => {
-      if (tIn.current) clearTimeout(tIn.current)
-      if (tOut.current) clearTimeout(tOut.current)
-    },
-    []
-  )
-
   const enter = React.useCallback(
-    (key: K) => {
-      if (tOut.current) clearTimeout(tOut.current)
-      // Already open: an adjacent anchor morphs at once. Re-serving the intent
-      // delay here is what would turn the morph into a close-and-reopen.
-      if (openRef.current) {
-        show(key)
-        return
-      }
-      if (tIn.current) clearTimeout(tIn.current)
-      tIn.current = setTimeout(() => show(key), intent)
-    },
-    [intent, show]
+    // `immediate` when something is already open: an adjacent anchor morphs at
+    // once. Re-serving the intent delay here is what would turn the morph into
+    // a close-and-reopen.
+    (key: K) => corridor.serve(() => show(key), openRef.current),
+    [corridor, show]
   )
 
-  const leave = React.useCallback(() => {
-    if (tIn.current) clearTimeout(tIn.current)
-    if (tOut.current) clearTimeout(tOut.current)
-    tOut.current = setTimeout(hide, grace)
-  }, [grace, hide])
-
-  const hold = React.useCallback(() => {
-    if (tOut.current) clearTimeout(tOut.current)
-  }, [])
+  const leave = React.useCallback(
+    () => corridor.release(hide),
+    [corridor, hide]
+  )
 
   const focus = React.useCallback(
     (key: K) => {
-      if (tOut.current) clearTimeout(tOut.current)
+      corridor.hold()
       show(key)
     },
-    [show]
+    [corridor, show]
   )
 
   return {
@@ -461,7 +538,7 @@ export function useMorphPreview<K extends string>({
     shown,
     enter,
     leave,
-    hold,
+    hold: corridor.hold,
     focus,
     dismiss: hide,
     reposition,
