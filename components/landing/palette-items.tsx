@@ -49,10 +49,10 @@ export const CONTACT_EMAIL = "ion.mesca@gmail.com"
 /**
  * PLACEHOLDER destinations, all `#`.
  *
- * `/` and `/letter` are the only routes that exist today. Articles, Stack and
- * Agents & Skills are planned pages; Book a call and the three social rows wait
- * on real URLs. They point at `#` rather than at their eventual paths on
- * purpose — a dead anchor is a smaller lie than a 404.
+ * Every Navigate row now has a real route: `/`, `/letter`, `/articles`,
+ * `/stack` and `/agents` all exist. What is still `#` is Book a call and the
+ * three social rows, which wait on real URLs — a dead anchor is a smaller lie
+ * than a 404.
  */
 const PLACEHOLDER = "#"
 
@@ -63,10 +63,9 @@ export const PALETTE_GROUPS: PaletteGroup[] = [
     items: [
       { id: "home", label: "Home", icon: Home, href: "/" },
       { id: "letter", label: "Letter", icon: PenLine, href: "/letter" },
-      // TODO(routes): /articles, /stack, /agents once those pages exist.
-      { id: "articles", label: "Articles", icon: FileText, href: PLACEHOLDER },
-      { id: "stack", label: "Stack", icon: Layers, href: PLACEHOLDER },
-      { id: "agents", label: "Agents & Skills", icon: Bot, href: PLACEHOLDER },
+      { id: "articles", label: "Articles", icon: FileText, href: "/articles" },
+      { id: "stack", label: "Stack", icon: Layers, href: "/stack" },
+      { id: "agents", label: "Agents & Skills", icon: Bot, href: "/agents" },
     ],
   },
   {

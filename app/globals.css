@@ -694,6 +694,86 @@
     transform: translateY(0);
   }
 
+  /* -- collection preview popover --------------------------------------------
+     ONE container for a whole list, ported from docs/design/collection-lab.html
+     (which lifted it from popover-lab.html unchanged). The rules that make it
+     a morph and not a stack of popovers:
+
+       · The container is a single node that is never remounted. Walking the
+         pointer from row to row TWEENS its rect over 200ms (the rAF loop in
+         components/collections/preview-popover.tsx); it never closes and
+         reopens.
+       · The container tweens; the CONTENT crossfades. Every row's card is
+         mounted as a `-face` and swapped at 150ms with a 2px blur, so the box
+         can change size while the copy inside it changes identity.
+       · The entrance does the growing — scale .98 → 1, fade, 4px rise on the
+         glide. The rect is snapped to its final size first, so the card never
+         animates its own layout.
+
+     Geometry (width, radius, shadow) is set by the component; what lives here
+     is only what JS cannot express cleanly. */
+
+  .collection-pop {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 30;
+    width: 0;
+    height: 0;
+    transform: translate3d(0, 0, 0);
+    pointer-events: none;
+    will-change: transform, width, height;
+  }
+
+  .collection-pop[data-open="true"] {
+    pointer-events: auto;
+  }
+
+  .collection-pop-inner {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    border-radius: var(--radius-lg);
+    background-color: var(--color-popover);
+    box-shadow: var(--shadow-overlay);
+    opacity: 0;
+    transform: scale(0.98) translateY(4px);
+    transform-origin: 50% 100%;
+    transition:
+      opacity var(--duration-base) var(--ease-glide),
+      transform var(--duration-base) var(--ease-glide);
+  }
+
+  .collection-pop[data-open="true"] .collection-pop-inner {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+
+  /* Out is faster than in — the popover family's rule everywhere. */
+  .collection-pop[data-open="false"] .collection-pop-inner {
+    transition-duration: var(--duration-fast);
+  }
+
+  .collection-pop-face {
+    position: absolute;
+    top: 0;
+    left: 0;
+    transition:
+      opacity var(--duration-fast) var(--ease-glide),
+      filter var(--duration-fast) var(--ease-glide);
+  }
+
+  .collection-pop-face[data-on="false"] {
+    opacity: 0;
+    filter: blur(var(--blur-garnish));
+    pointer-events: none;
+  }
+
+  .collection-pop-face[data-on="true"] {
+    opacity: 1;
+    filter: blur(0);
+  }
+
   /* -- scroll reveal --------------------------------------------------------- */
 
   .reveal {
