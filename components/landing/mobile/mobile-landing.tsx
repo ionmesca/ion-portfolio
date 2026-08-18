@@ -135,10 +135,22 @@ export function MobileLanding({ projects }: { projects: Project[] }) {
               target="_blank"
               rel="noreferrer noopener"
               aria-label={label}
+              data-slot="button"
+              data-variant="ghost"
+              data-size="icon-touch"
               // Figma 20:489/20:493/20:497: on mobile the bare desktop glyph
-              // becomes a 40 x 40 icon button — radius `md`, `card` fill,
-              // `Subtle` — because a 20px glyph is not a touch target.
-              className="flex size-10 shrink-0 items-center justify-center rounded-md bg-card text-muted-foreground shadow-subtle [transition:color_var(--duration-fast)_var(--motion-glide)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
+              // becomes a 40 x 40 icon button, because a 20px glyph is not a
+              // touch target. The frame fills it `card` + `Subtle`; ghost per
+              // Ion's review (2026-08-18) — three shadowed cards next to the
+              // primary CTA read as four buttons of equal weight. Ghost keeps
+              // the same 40px target and lets "Book a call" lead. The glyph
+              // stays `muted-foreground` (the `icon-touch` size otherwise
+              // promotes it to `current`), and the muted fill arrives on
+              // `:active` as well as `:hover`, since a finger never hovers.
+              className={cn(
+                buttonVariants({ variant: "ghost", size: "icon-touch" }),
+                "text-muted-foreground active:bg-ghost-hover"
+              )}
             >
               <Glyph className={size} />
             </a>
