@@ -15,7 +15,8 @@ import { projects } from "@/lib/projects";
  *
  * The frame's measurements, left to right: 164 gutter, 263 rail, 48 gap, the
  * right column filling the rest, 24 gutter (164 + 263 + 48 + 1013 + 24 =
- * 1512). Top offset 136.
+ * 1512). Top offset 136. Below 1512 the left gutter is fluid and the media
+ * column keeps its share — see the comment on the desktop wrapper.
  *
  * THE PAGE SCROLLS, AND THE RAIL DOES NOT. This is the wheel prototype's own
  * model (docs/design/wheel-prototype.html): the right column stacks every
@@ -41,8 +42,31 @@ export default function Home() {
   return (
     <ActiveProjectProvider count={projects.length}>
       <main className="bg-background">
-        {/* desktop — unchanged at 1024 and up */}
-        <div className="hidden min-h-screen gap-12 pt-[136px] pr-6 pb-6 pl-[164px] lg:flex">
+        {/* desktop — 1024 and up.
+
+            THE LEFT GUTTER IS FLUID. Ruled by Ion, 2026-08-18: the split has
+            to stay proportional down to mobile, and the space has to come out
+            of the rail's whitespace before it comes out of the media. The
+            gutter was a hard 164, so every pixel a narrower window cost came
+            straight off the media column: at Ion's ~1236 the panels had lost
+            a fifth of their width while the margin beside the rail had lost
+            nothing.
+
+              padding-left = clamp(40px, 164px − (1512px − 100vw) × 0.25, 164px)
+
+            0.25 = the gutter pays a quarter of whatever the window gives up
+            from the 1512 frame. That is steeper than the frame's own
+            proportions on purpose — whitespace first — and it lands the media
+            column within a few percent of a straight scale of the frame:
+            1013 at 1512, 806 at 1236, 647 at 1024, against 1013 / 828 / 686
+            for a pure scale. The 40px floor is the last width at which the
+            chip still reads as being in a margin rather than against the
+            edge. `100vw`, not `100%`, so the 1512 frame keeps its exact 164
+            on a platform whose scrollbar takes width from the content box.
+
+            The 263 rail and the 24 right gutter are Figma and do not move;
+            the media column is `flex-1` and takes what is left. */}
+        <div className="hidden min-h-screen gap-12 pt-[136px] pr-6 pb-6 pl-[clamp(40px,164px_-_(1512px_-_100vw)*0.25,164px)] lg:flex">
           <div className="sticky top-[136px] flex h-[700px] max-h-[calc(100dvh-160px)] w-[263px] shrink-0 flex-col gap-16 self-start">
             <div className="flex flex-col gap-6">
               {/* The identity chip, and — on a desktop pointer — the ⌘K palette
