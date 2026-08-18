@@ -35,15 +35,15 @@ export {
   Copy,
   Check,
   Plus,
-  X,
+  // lucide's `X` is the dismiss cross. It is re-exported as `Close` because
+  // this site also has a brand X (the social network) — `XGlyph` in
+  // components/landing/brand-glyphs.tsx. Two things called `X` in one import
+  // list is a bug waiting to happen, so the generic one takes the plain name.
+  X as Close,
   // command palette affordances
   ArrowUp,
   ArrowDown,
   CornerDownLeft,
-  // theme
-  Sun,
-  Moon,
-  Monitor,
 } from "lucide-react"
 
 export type { LucideIcon } from "lucide-react"

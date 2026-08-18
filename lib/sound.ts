@@ -18,12 +18,16 @@ type AudioContextCtor = typeof AudioContext
 
 let ctorChecked = false
 let AudioCtor: AudioContextCtor | null = null
-let isDesktop = false
 let actx: AudioContext | null = null
 
 /**
- * Master enable flag. Default ON — the module is the mechanism, and whichever
- * screen owns the user preference is free to switch it off at boot.
+ * Master enable flag.
+ *
+ * Default ON. This is a ratified decision, not an oversight: the tick only ever
+ * fires on a deliberate commit action on a desktop pointer device, which makes
+ * it feedback rather than noise. The command palette's preferences surface will
+ * own the user-facing toggle and call `setSoundEnabled` at boot — this module
+ * stays the mechanism and holds no opinion about the UI.
  */
 let soundEnabled = true
 
@@ -35,11 +39,15 @@ export function isSoundEnabled(): boolean {
   return soundEnabled
 }
 
+/**
+ * Cache the AudioContext constructor lookup. The `ctorChecked` latch is set
+ * AFTER the `window` guard on purpose: during SSR there is no window, and
+ * latching there would cache "no audio" forever for the hydrated client too.
+ */
 function detect(): void {
+  if (typeof window === "undefined") return
   if (ctorChecked) return
   ctorChecked = true
-
-  if (typeof window === "undefined") return
 
   try {
     AudioCtor =
@@ -50,11 +58,19 @@ function detect(): void {
   } catch {
     AudioCtor = null
   }
+}
 
+/**
+ * Re-asked on every call rather than cached: a media-query match is cheap, and
+ * the answer genuinely changes when an iPad gains a trackpad or a laptop folds
+ * into tablet mode.
+ */
+function isDesktop(): boolean {
+  if (typeof window === "undefined") return false
   try {
-    isDesktop = window.matchMedia("(hover: hover) and (pointer: fine)").matches
+    return window.matchMedia("(hover: hover) and (pointer: fine)").matches
   } catch {
-    isDesktop = false
+    return false
   }
 }
 
@@ -73,12 +89,15 @@ function ctx(): AudioContext | null {
 /** True when a tick would actually be audible right now. */
 export function canPlayTick(): boolean {
   detect()
-  return !!AudioCtor && isDesktop
+  return !!AudioCtor && isDesktop()
 }
 
 /**
  * Play the commit tick. No-ops when sound is disabled, when the device is
  * touch-primary, or when WebAudio is unavailable.
+ *
+ * Fire-and-forget: resuming a parked context is asynchronous, so the tick may
+ * land a frame after the call. Callers never await it.
  */
 export function playTick(): void {
   if (!soundEnabled) return
@@ -87,13 +106,26 @@ export function playTick(): void {
   const c = ctx()
   if (!c) return
 
-  try {
-    if (c.state === "suspended") void c.resume()
-    const t = c.currentTime
+  void emitTick(c)
+}
 
-    const out = c.createGain()
-    out.gain.value = 1
-    out.connect(c.destination)
+async function emitTick(c: AudioContext): Promise<void> {
+  try {
+    // A parked context freezes `currentTime`, so every note scheduled against
+    // it would queue in the past and never sound. Chrome parks as "suspended"
+    // until the first gesture; Safari parks as "interrupted" after a phone
+    // call or a background tab. `!== "running"` covers both, plus whatever the
+    // next browser invents.
+    if (c.state !== "running") await c.resume()
+
+    // 5ms of headroom. `currentTime` is the START of the last rendered audio
+    // quantum, so scheduling exactly at it can land in the past and clip the
+    // attack ramp off the front of the tick.
+    const t = c.currentTime + 0.005
+
+    // Each voice has its own gain envelope, and those connect straight to the
+    // destination — a shared unity-gain node in between would only add a node.
+    const out = c.destination
 
     // Body — 2kHz triangle falling to 1.5kHz, 30ms decay.
     const o1 = c.createOscillator()

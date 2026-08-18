@@ -16,15 +16,24 @@ import { cn } from "@/lib/utils"
    animated property on hover, which also kills the press spring on release
    (the pointer is still over the button when the finger lifts). Here the
    duration is a four-value list matched 1:1 to the property list, so only the
-   three colour/shadow lanes snap. `transform` keeps its 150ms spring in both
+   three colour/shadow lanes snap. `scale` keeps its 150ms spring in both
    directions — press AND release.
+
+   The first lane is `scale`, NOT `transform`: `active:scale-[0.97]` compiles to
+   the standalone `scale` property in Tailwind 4, so a `transform` lane would
+   transition nothing and the press would jump instead of spring.
 
    Written as arbitrary properties rather than Tailwind's `transition-*`
    shorthand on purpose: `transition-[...]` also emits its own duration and
    timing-function declarations, which would fight the explicit ones below.
+
+   CALLERS: never pass `transition-*` or `duration-*` classes through
+   `className`. tailwind-merge cannot dedupe a utility against an arbitrary
+   property, so both declarations survive and the winner is whichever CSS rule
+   sorts last — the press spring breaks unpredictably.
    ------------------------------------------------------------------------- */
 const BUTTON_MOTION = [
-  "[transition-property:transform,background-color,box-shadow,color]",
+  "[transition-property:scale,background-color,box-shadow,color]",
   "[transition-duration:var(--duration-fast)]",
   "[transition-timing-function:var(--motion-spring),var(--motion-glide),var(--motion-glide),var(--motion-glide)]",
   "hover:[transition-duration:var(--duration-fast),0ms,0ms,0ms]",
@@ -91,6 +100,8 @@ function Button({
   variant = "primary",
   size = "default",
   asChild = false,
+  type,
+  disabled,
   ...props
 }: React.ComponentProps<"button"> &
   VariantProps<typeof buttonVariants> & {
@@ -98,13 +109,48 @@ function Button({
   }) {
   const Comp = asChild ? Slot.Root : "button"
 
+  // `disabled` and `type` are native <button> attributes. With `asChild` the
+  // rendered element is usually an <a> or a Link, where React would emit them
+  // as bogus DOM attributes that do nothing — so they are dropped and
+  // `aria-disabled` carries the state instead (the styling hook is already
+  // there: `aria-disabled:pointer-events-none aria-disabled:opacity-50`).
+  const nativeProps = asChild
+    ? disabled
+      ? { "aria-disabled": true as const }
+      : {}
+    : { type: type ?? "button", disabled }
+
+  // pointer-events:none stops the mouse, but an aria-disabled control is still
+  // focusable and still fires on Enter/Space and on programmatic clicks. When
+  // the button is inert, a swallowing handler replaces whatever the caller
+  // passed and kills the default action too (a Slot child is often a link).
+  //
+  // The handler is attached ONLY in the inert case. A function prop cannot
+  // cross the RSC boundary, so attaching one unconditionally would break every
+  // `<Button>` rendered from a Server Component with
+  // "Event handlers cannot be passed to Client Component props". Corollary:
+  // an aria-disabled Button — with or without `asChild` — must be rendered
+  // from a Client Component. A plain (non-disabled) Button stays server-safe.
+  const ariaDisabled = props["aria-disabled"] ?? (asChild && disabled)
+  const isInert = ariaDisabled === true || ariaDisabled === "true"
+
+  const inertProps = isInert
+    ? {
+        onClick: (event: React.MouseEvent<HTMLButtonElement>) => {
+          event.preventDefault()
+        },
+      }
+    : {}
+
   return (
     <Comp
       data-slot="button"
       data-variant={variant}
       data-size={size}
-      className={cn(buttonVariants({ variant, size, className }))}
+      {...nativeProps}
       {...props}
+      {...inertProps}
+      className={cn(buttonVariants({ variant, size, className }))}
     />
   )
 }

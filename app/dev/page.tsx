@@ -8,6 +8,8 @@
    Add `?theme=dark` to render the whole page inside a forced `.dark` wrapper.
    ========================================================================== */
 
+import { notFound } from "next/navigation";
+
 import { Button } from "@/components/ui/button";
 import { Kbd, KbdGroup } from "@/components/ui/kbd";
 import { ArrowUpRight, Copy, Plus, Search } from "@/lib/icons";
@@ -146,6 +148,10 @@ export default async function DevSpecimenPage({
 }: {
   searchParams: Promise<{ theme?: string }>;
 }) {
+  // Belt and braces against the "delete before cutover" note being missed: the
+  // specimen never renders in a production build, only in `bun dev`.
+  if (process.env.NODE_ENV === "production") notFound();
+
   const { theme } = await searchParams;
   const dark = theme === "dark";
 
