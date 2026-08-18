@@ -37,7 +37,7 @@ const aeonik = localFont({
   fallback: ["system-ui", "-apple-system", "sans-serif"],
 });
 
-// metadataBase is a PLACEHOLDER until the production domain is decided. It only
+// metadataBase: ionmesca.com, confirmed by Ion 2026-08-18. It only
 // resolves relative OG/twitter asset URLs, so it is harmless to be wrong now,
 // but it must be corrected before launch.
 const SITE_URL = "https://ionmesca.com";
