@@ -30,12 +30,17 @@ import { ArrowLeft } from "@/lib/icons"
 const ACTIVE_LINE = 0.4
 const LENS = [1, 0.75, 0.59, 0.47] as const
 
-/** The wheel itself is `hidden … xl:flex`. Below `xl` there is nothing on
+/** The wheel itself is `hidden … lg:flex`. Below `lg` there is nothing on
  *  screen for the six scroll/wheel/touch/key/pointer listeners to drive, so
- *  they are not attached at all. Tailwind's `xl` is 80rem; the query is
+ *  they are not attached at all. Tailwind's `lg` is 64rem; the query is
  *  written in `rem` for the same reason the utility is — a reader who has
- *  raised their base font size gets the same breakpoint the CSS gives them. */
-const RAIL_QUERY = "(min-width: 80rem)"
+ *  raised their base font size gets the same breakpoint the CSS gives them.
+ *
+ *  This number MUST track the rail's visibility breakpoint in rail-shell.tsx.
+ *  It was 80rem while the rail only appeared at `xl`; the rail now survives
+ *  real laptop windows (1024–1279), and a gate left at 80rem would show a
+ *  wheel that never lights up on exactly those windows. */
+const RAIL_QUERY = "(min-width: 64rem)"
 
 function lens(distance: number) {
   return LENS[Math.min(distance, LENS.length - 1)]
@@ -56,12 +61,17 @@ export type SectionNavItem = { id: string; nav: string }
  * the page's wheel lists; `label` names the nav for a screen reader.
  *
  * The rail box is 263 wide in the frames but its contents are 200, and it sits
- * 272px to the left of the centred 640 column; the letter and collection pages
- * reproduce that with a symmetric 272/640/272 grid. What lives here is only
- * what is inside the rail:
+ * 272px to the left of the centred 640 column; `rail-shell.tsx` reproduces that
+ * with a symmetric 272/640/272 grid, and compresses the rail column to its 200
+ * of content on laptop-width windows. What lives here is only what is inside
+ * the rail:
  *
- *   Button "Home"   85x32 secondary, ArrowLeft 16 — the Button primitive's
- *                   `secondary` + `default` size is this component byte for byte.
+ *   Button "Home"   85x32, ArrowLeft 16, `default` size. Drawn `secondary` in
+ *                   the frames; ghost per Ion's review (2026-08-18) — on a flat
+ *                   `bg-background` page a card-filled, shadowed button reads
+ *                   as a control floating in the margin, and the rail wants a
+ *                   quiet exit. Call-site variant only; the Button set is
+ *                   untouched.
  *   112px gap       hand-placed in the frame (the rail has no auto-layout).
  *   Section wheel   rows 200x32, `rounded-md` (12), 12px vertical gap,
  *                   4/12 padding, label at the Subhead step, active row on
@@ -188,8 +198,8 @@ export function SectionRail({
   }
 
   return (
-    <div className="flex flex-col items-start xl:sticky xl:top-34 xl:self-start">
-      <Button variant="secondary" asChild>
+    <div className="flex flex-col items-start lg:sticky lg:top-34 lg:self-start">
+      <Button variant="ghost" asChild>
         <Link href="/">
           <ArrowLeft />
           Home
@@ -197,10 +207,10 @@ export function SectionRail({
       </Button>
 
       {/* The wheel is a desktop convenience: it needs the rail column, and the
-          frame has no mobile letter yet. Below xl the page falls back to the
+          frame has no mobile letter yet. Below lg the page falls back to the
           document's own heading order, and "Home" stays. Flagged in the report
           as a judgement call, not a rule inferred from the frame. */}
-      <nav aria-label={label} className="mt-28 hidden flex-col gap-3 xl:flex">
+      <nav aria-label={label} className="mt-28 hidden flex-col gap-3 lg:flex">
         {sections.map((section, i) => {
           const isActive = i === active
           return (
@@ -216,6 +226,8 @@ export function SectionRail({
               // Same footgun documented in components/ui/kbd.tsx. There is no
               // incoming className to merge here, so twMerge buys nothing.
               className={clsx(
+                // w-50 is 200 — the frame's row width at `xl`, and the whole
+                // rail column at `lg`, where the column IS the row width.
                 "flex h-8 w-50 items-center rounded-md px-3 py-1",
                 "text-subhead text-foreground",
                 // The hover-snap rule: background in at 0ms, out over 150ms
@@ -236,7 +248,7 @@ export function SectionRail({
         })}
       </nav>
 
-      <p className="mt-4 hidden px-3 text-xs text-muted-foreground xl:block">
+      <p className="mt-4 hidden px-3 text-xs text-muted-foreground lg:block">
         scroll →
       </p>
     </div>
