@@ -130,13 +130,32 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
       )
     },
 
-    /* Inline code only. A fenced block would land here too, unhighlighted —
-       acceptable, and flagged: syntax highlighting is a later ticket. */
-    code: ({ children }) => (
-      <code className="rounded-sm bg-muted px-1 py-0.5 text-sm">{children}</code>
+    /* ── Code ────────────────────────────────────────────────────────────
+       Both tags arrive here, and markdown gives an inline span and a fenced
+       block the SAME tag — the only difference is the <pre> around it, which a
+       component map cannot see. So this map paints the inline chip and lets
+       `.code-block > code` in globals.css undo it for a block.
+
+       The chip is stone and never coloured: `useMemo` in a sentence is a name,
+       not a program.
+
+       `pre` SPREADS ITS PROPS, and that is load-bearing. Shiki has already run
+       by the time this renders (build time, `@shikijs/rehype` in next.config.ts)
+       and it hands the element back with `style` carrying the block's ground
+       and ink — every colour in the feature — plus `tabindex="0"` so a keyboard
+       can reach the horizontal scroll. Dropping props, as this did while there
+       was nothing to drop, would throw all of that away. The class is MERGED
+       rather than replaced for the same reason. */
+    code: ({ children, ...props }) => (
+      <code {...props} className="rounded-sm bg-muted px-1 py-0.5 text-sm">
+        {children}
+      </code>
     ),
-    pre: ({ children }) => (
-      <pre className="overflow-x-auto rounded-xl bg-muted p-4 text-sm">
+    pre: ({ children, className, ...props }) => (
+      <pre
+        {...props}
+        className={className ? `code-block ${className}` : "code-block"}
+      >
         {children}
       </pre>
     ),

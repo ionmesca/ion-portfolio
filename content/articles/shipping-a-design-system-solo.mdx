@@ -25,8 +25,31 @@ Filler. A middle section, so the wheel has three rows on this page and the lens
 ladder can be seen falling off rather than merely being described.
 
 Filler, second paragraph, with a `code span` in it so the inline treatment is
-exercised somewhere. Fenced code blocks are deliberately absent: syntax
-highlighting is not wired yet, and an unstyled block would read as a bug.
+exercised somewhere. The block below is the other half of that: filler code,
+standing in for the check this section claims to describe.
+
+```ts
+import { readFileSync } from "node:fs"
+
+// Filler, like every other word on this page.
+type Token = { name: string; value: string }
+
+/** Every custom property the stylesheet declares, in source order. */
+export function readTokens(file: string): Token[] {
+  const source = readFileSync(file, "utf8")
+  const out: Token[] = []
+
+  for (const line of source.split("\n")) {
+    const match = /^\s*(--[a-z-]+):\s*(.+);/.exec(line)
+    if (match) out.push({ name: match[1], value: match[2].trim() })
+  }
+
+  return out
+}
+```
+
+Filler after the block, so the spacing below a code block is exercised as well
+as the spacing above it.
 
 ## What survives
 

@@ -90,6 +90,44 @@
      semantic variable kbd-foreground. */
   --kbd-foreground: oklch(0.444 0.011 73.639); /* stone-600 #57534e */
 
+  /* -- new role: code syntax — the ONLY colour in the system ----------------
+     POR-35. Colour lives INSIDE code blocks and nowhere else. A code block is
+     CONTENT, not chrome, so it is allowed ink the rest of the site is not; the
+     stone system around it stays pure.
+
+     FOUR ROLES, NOT SEVEN. Shiki hands us dozens of TextMate scopes and they
+     collapse onto four hues, plus muted for comments and foreground for
+     punctuation, operators and plain identifiers. The scope map is in
+     next.config.ts, next to the theme that spends these tokens.
+
+     ONE LIGHTNESS (0.5), ONE CHROMA (0.08–0.09), FOUR HUES. No role shouts
+     louder than its neighbours, so the block reads as one texture instead of a
+     fruit salad. The chroma sits a notch above the stone ramp (0.001–0.013)
+     and well below --status-available (0.14), which stays the loudest ink on
+     the site. The hues are stone-adjacent earth tones on purpose.
+
+     DELIBERATELY NOT IN @theme (section 4). There is no `text-code-keyword`
+     utility, because the moment one exists somebody paints a badge with it and
+     the no-accent rule is over. The code theme is the only consumer. */
+  --code-keyword: oklch(0.5 0.09 55); /* clay       — keywords, storage */
+  --code-string: oklch(0.5 0.08 135); /* moss       — strings */
+  --code-function: oklch(0.5 0.08 250); /* slate-blue — functions, tags */
+  --code-constant: oklch(0.5 0.08 330); /* plum       — types, constants */
+
+  /* The block's chrome spends ratified stone roles rather than inventing
+     values; it is named here only so the theme object in next.config.ts can
+     speak one vocabulary instead of reaching past it.
+
+     These three are ALIASES and are not restated in .dark. `.dark` lands on
+     <html>, which IS the :root element (lib/theme.ts), so both declarations
+     apply to the same element, the cascade resolves --muted to its dark value
+     first, and the alias computes from it. If the theme class ever moves to
+     <body>, these three must be restated in .dark or a dark code block will
+     wear the light background. */
+  --code-background: var(--muted); /* stone-100 — the block's ground */
+  --code-foreground: var(--foreground); /* stone-950 — punctuation, plain */
+  --code-muted: var(--muted-foreground); /* stone-500 — comments */
+
   /* -- motion ---------------------------------------------------------------
      Declared here, not in @theme, on purpose. Tailwind v4 has an --ease-*
      theme namespace but NO --duration-* namespace, and @theme inline prunes
@@ -214,6 +252,16 @@
   --status-available: oklch(0.72 0.15 152); /* #4dbf74 */
   --scrim: oklch(0 0 0 / 50%);
   --kbd-foreground: oklch(0.869 0.005 56.366); /* stone-300 #d6d3d1 */
+
+  /* code syntax — same four hues, lightness flipped for a dark ground.
+     L 0.5 -> 0.78 and C 0.08/0.09 -> 0.07: the same chroma reads brighter at
+     high lightness, and these have to stay quiet against stone-800. The HUES
+     are identical to light, so a block does not change its mind about what a
+     keyword is when the theme flips. --status-available is not touched. */
+  --code-keyword: oklch(0.78 0.07 55); /* clay */
+  --code-string: oklch(0.78 0.07 135); /* moss */
+  --code-function: oklch(0.78 0.07 250); /* slate-blue */
+  --code-constant: oklch(0.78 0.07 330); /* plum */
 
   /* -- elevation — dark ------------------------------------------------------
      Same four black layers as light. Only the 5th layer, the hairline ring,
@@ -1309,6 +1357,64 @@
     .group:hover .btn-orbit > [data-orbit="trail"] {
       translate: -100% 100% !important;
     }
+  }
+
+  /* -- code block (POR-35) ---------------------------------------------------
+     The chrome around highlighted code. The COLOUR is not here: Shiki writes
+     `style="color:var(--code-…)"` onto every span at BUILD time, so this rule
+     only has to draw the box. Nothing on this surface costs a byte of JS.
+
+     Quiet stone, and every value is an existing token:
+
+       ground   --code-background (= --muted), painted by Shiki's own inline
+                style off the theme's `colors`, not by this rule
+       edge     1px, colour from the base `* { border-color }` rule in
+                section 5 — the same hairline every other surface wears
+       radius   --radius-xl (21px), the prose MEDIA radius. A code block sits
+                in the flow exactly where `Photo` does in letter/prose.tsx, so
+                it takes the media corner rather than a control's.
+       type     --text-small (13px) on the system mono stack, at the letter's
+                own 170% leading, so code lines rhyme with the prose measure
+                they interrupt.
+
+     WHY THE PADDING IS SPLIT. The horizontal padding is on the <code>, not on
+     the scrolling <pre>: a scroll container drops its trailing padding once the
+     content overflows, so a long line would run flush into the right edge.
+     `width: fit-content` + `min-width: 100%` makes the code box as wide as its
+     longest line — the padding is then INSIDE the scrollable width and travels
+     with the content — while still filling the block when the code is short. */
+  .code-block {
+    overflow-x: auto;
+    border-width: 1px;
+    border-radius: var(--radius-xl);
+    padding-block: 1.25rem;
+    font-family: var(--font-mono);
+    font-size: var(--text-small);
+    line-height: 1.7;
+    /* Firefox/Safari: the block is focusable (Shiki sets tabindex="0" so a
+       keyboard can reach the scroll), and a focus ring on a 21px radius wants
+       the radius to follow it. */
+    outline-offset: 2px;
+  }
+
+  /* The code box, and the inline chip undone.
+
+     `mdx-components.tsx` maps every <code> through ONE component, and markdown
+     gives a fenced block the same tag as an inline span — the only difference
+     is the <pre> around it, which a component map cannot see but a selector
+     can. So the chip's own utilities are reset here rather than conditioned
+     there. Specificity does it: `.code-block > code` (0-1-1) out-ranks the
+     Tailwind chip utilities (0-1-0) in the same layer, whatever their order. */
+  .code-block > code {
+    display: block;
+    width: fit-content;
+    min-width: 100%;
+    padding-inline: 1.25rem;
+    padding-block: 0;
+    border-radius: 0;
+    background-color: transparent;
+    font-size: inherit;
+    line-height: inherit;
   }
 
 }
