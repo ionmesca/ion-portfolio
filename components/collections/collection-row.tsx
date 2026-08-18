@@ -1,9 +1,10 @@
 "use client"
 
 import * as React from "react"
+import Link from "next/link"
 
 import type { ArticleEntry, CollectionEntry } from "@/content/collections"
-import { ArrowUpRight } from "@/lib/icons"
+import { ArrowRight, ArrowUpRight } from "@/lib/icons"
 import { cn } from "@/lib/utils"
 
 import { InstallChip } from "./install-chip"
@@ -26,7 +27,49 @@ import { usePreviewAnchor } from "./preview-popover"
    as the Button and the section wheel. `data-active` holds the same fill while
    this row's preview card is open, including when the pointer has walked into
    the card itself.
+
+   ── ROW-ACTION SIGNATURES (Ion, 2026-08-18) ────────────────────────────────
+
+   "The navigation is not really clear." Every row now says what it will do
+   BEFORE it is clicked, and it says it with the same glyph in the same place —
+   the far right, muted at rest, foreground on hover:
+
+     →   ArrowRight     goes somewhere on this site (article rows)
+     ↗   ArrowUpRight   leaves for another site, in a new tab (stack rows,
+                        "Skills I use" rows, the group header's GitHub link)
+     chip                copies an install command; does not navigate at all
+                        (Ion's own skills — already the clearest of the three,
+                        and unchanged)
+
+   There is NO fourth state. A row with no affordance would be a row a reader
+   has to click to discover, which is the complaint. The article row used to be
+   exactly that: no glyph, `href="#"`, and a click handler that cancelled
+   itself. It is a real internal link now.
+
+   The distinction is the point, not the decoration: ↗ has always meant "you
+   are leaving" on this site, so giving internal rows the SAME arrow would have
+   made both meaningless. The two glyphs are declared together in lib/icons.ts.
    ------------------------------------------------------------------------- */
+
+/** The far-right affordance glyph, both arrows. Colour only — the row's own
+ *  fill is the movement, and a second moving part in a 48px row is noise.
+ *  Same snap-in / ease-out timing as everything else in the pattern.
+ *
+ *  `stroke-width: 1.5` is the icon contract (token-contract.md 3.9,
+ *  lib/icons.ts). It was MISSING here: the row is not a `<Button>`, so nothing
+ *  was setting it and the ↗ rendered at lucide's default 2 — half a pixel
+ *  heavier than every other icon on the site. Fixed rather than matched,
+ *  because the two arrows have to read as one family for the distinction
+ *  between them to mean anything. Flagged in the report as a visible change to
+ *  an already-shipped glyph. */
+const AFFORDANCE = cn(
+  "size-4 shrink-0 text-muted-foreground [&]:[stroke-width:1.5]",
+  "[transition-property:color]",
+  "[transition-duration:var(--duration-fast)]",
+  "[transition-timing-function:var(--motion-glide)]",
+  "group-hover:text-foreground group-hover:[transition-duration:0ms]",
+  "group-data-[active=true]:text-foreground"
+)
 
 const ROW = cn(
   "group flex h-12 items-center gap-3 rounded-md px-3",
@@ -87,17 +130,7 @@ export function CollectionRow({
       {entry.install ? (
         <InstallChip name={entry.install} />
       ) : (
-        <ArrowUpRight
-          aria-hidden="true"
-          className={cn(
-            "size-4 shrink-0 text-muted-foreground",
-            "[transition-property:color]",
-            "[transition-duration:var(--duration-fast)]",
-            "[transition-timing-function:var(--motion-glide)]",
-            "group-hover:text-foreground group-hover:[transition-duration:0ms]",
-            "group-data-[active=true]:text-foreground"
-          )}
-        />
+        <ArrowUpRight aria-hidden="true" className={AFFORDANCE} />
       )}
     </>
   )
@@ -140,8 +173,23 @@ export function CollectionRow({
  *
  * The iconless flavour, ratified in the lab: no 20px mark (there is no brand to
  * stand in for, and an avatar would make the list louder than the writing), no
- * ↗, no one-liner. Title Subhead, and the date at the far right in the
- * palette's shortcut position. Articles go inward, so the row is quieter.
+ * one-liner. Title Subhead, then the date in the palette's shortcut position.
+ * Articles go inward, so the row is quieter than a Stack row.
+ *
+ * TWO CHANGES FROM THE FRAME, both from Ion's 2026-08-18 ruling:
+ *
+ *   the link    real. `next/link` to `/articles/<slug>`, and the row is
+ *               keyboard-reachable and prefetched like any other internal
+ *               navigation. It used to be `href="#"` with a click handler that
+ *               swallowed the click, because there was no detail page.
+ *   the arrow   a trailing `→`. The frame draws no glyph here — deliberately,
+ *               to keep the list quiet — but "quiet" turned into "you cannot
+ *               tell this is a link". `→` is the smallest thing that says
+ *               "this goes somewhere", and it says "somewhere HERE", which the
+ *               ↗ on every other page explicitly does not.
+ *
+ * The date sits BEFORE the arrow, so both row families read the same way left
+ * to right: what it is, what you need to know about it, what will happen.
  */
 export function ArticleRow({
   entry,
@@ -153,13 +201,9 @@ export function ArticleRow({
   const { attach, active, handlers } = usePreviewAnchor(previewKey)
 
   return (
-    <a
+    <Link
       ref={attach}
-      // The article detail template and its MDX pipeline are a later phase.
-      // A dead anchor is a smaller lie than a 404 — the same call the ⌘K
-      // palette's placeholder rows make.
-      href="#"
-      onClick={(event) => event.preventDefault()}
+      href={entry.href}
       data-active={active}
       className={ROW}
       {...handlers}
@@ -170,6 +214,7 @@ export function ArticleRow({
       <span className="shrink-0 text-xs text-muted-foreground">
         {entry.date}
       </span>
-    </a>
+      <ArrowRight aria-hidden="true" className={AFFORDANCE} />
+    </Link>
   )
 }

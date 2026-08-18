@@ -157,7 +157,10 @@ function Column<T>({
                 >
                   <GitHubGlyph className="size-3.5" />
                   <span>{group.link.label}</span>
-                  <ArrowUpRight className="size-3" />
+                  {/* The same "you are leaving" glyph as the rows, at the
+                      header's smaller step — and at the contract's 1.5 stroke,
+                      which nothing here was setting. */}
+                  <ArrowUpRight className="size-3 [&]:[stroke-width:1.5]" />
                 </a>
               )}
             </div>

@@ -39,6 +39,23 @@ export {
   Menu,
   // actions
   Search,
+  /**
+   * THE TWO ARROWS ARE A CONTRACT (Ion, 2026-08-18: "the navigation is not
+   * really clear"). Every row that leads somewhere ends in one of them, and
+   * which one it is tells the reader where they are about to land BEFORE they
+   * click:
+   *
+   *   ArrowRight    →   stays on this site. Article rows, and any internal
+   *                     row added later.
+   *   ArrowUpRight  ↗   leaves for another site, in a new tab. Stack rows,
+   *                     the "Skills I use" rows, the quiet GitHub link in a
+   *                     group header.
+   *
+   * A row with neither has a different, visible affordance instead — the
+   * install chip, which copies rather than navigates. There is no third case:
+   * a row with no affordance at all is a dead row, and there are none.
+   */
+  ArrowRight,
   ArrowUpRight,
   Copy,
   Check,
