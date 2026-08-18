@@ -589,6 +589,35 @@
     will-change: transform, width, height;
   }
 
+  /* NO FOCUS RING WHILE THE BOX IS MOVING.
+
+     THE DARK RING ON CLOSE (Ion, round 3) WAS THIS. The trigger is a
+     chip-sized button pinned to the surface's top-left corner — `measure()`
+     sets its width and height to the chip's, because at rest it IS the chip's
+     hit target. `closePalette()` hands focus back to it, which is correct: a
+     keyboard user pressing esc must land back on the control they opened.
+
+     But focus lands the instant the close begins, and `:focus-visible` then
+     paints `outline: 2px solid var(--color-foreground)` at `offset: 2px` —
+     a near-black rectangle at FINAL CHIP SIZE — inside a surface that is still
+     panel-sized and clips its contents. For the whole 400ms the panel shrinks
+     around a black ring that never moves, and the two only agree at the very
+     end. Frame-by-frame capture of the close: the ring is 171x42 in every
+     frame while the surface goes 382x395 -> 196x84. Read as a shadow flash; it
+     was never a shadow. The elevation lane, the hairline and the background
+     were all dumped per frame and all three are correct throughout.
+
+     The open direction already had a fix for the same element — `openPalette`
+     blurs the trigger, with a comment describing the identical artifact. This
+     is the close half of that ruling, expressed as paint rather than as focus:
+     focus STAYS where accessibility needs it, and only the ring waits for the
+     box to arrive. `data-morphing` is cleared on arrival, snap and cancel, so
+     the ring appears — in place, at the right size — the frame the chip lands,
+     and a user who never moves the box never loses it for an instant. */
+  .palette-surface[data-morphing="true"] [data-slot="palette-trigger"]:focus-visible {
+    outline: none;
+  }
+
   /* Hover on the closed chip is elevation and nothing else — no preview, no
      opening. Snaps in, eases out, like every other hover in the system.
 

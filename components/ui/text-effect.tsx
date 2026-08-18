@@ -7,7 +7,6 @@ import {
   type IntroGroup,
 } from "@/components/landing/intro-reveal"
 import { D_SLOW } from "@/lib/motion"
-import { cn } from "@/lib/utils"
 
 /* ============================================================================
    TextEffect — text resolving out of blur, one unit at a time.
@@ -285,7 +284,29 @@ export function TextEffect({
 
   return (
     <Tag
-      className={cn(className, "text-effect")}
+      /* NOT `cn` (Ion, round 3 — the sub-line animated in the wrong colour).
+
+         `cn` is tailwind-merge, and tailwind-merge reads `text-effect` as a
+         `text-<colour>` utility — the `text-` prefix is all it has to go on.
+         So it treated the hook class as a CONFLICT with the caller's own
+         colour and dropped it: `text-lg text-muted-foreground` + `text-effect`
+         came out as `text-lg text-effect`, with the size kept (different
+         group) and the colour gone. The sub-line then inherited `foreground`
+         and animated in the headline's near-black ink, turning muted only when
+         the teardown swapped the plain markup back in. Measured per frame:
+         colour identical to the `h1`'s for the whole entrance.
+
+         The headline hid it. Its class is `text-foreground`, which is what it
+         inherits anyway, so losing it changed nothing visible — which is why
+         removing `brightness(0%)` fixed one line and not the other.
+
+         There is nothing here to merge. `.text-effect` sets no property of its
+         own; it is a hook, and everything it does is in a descendant rule
+         (`.text-effect > [data-unit]`). So the hook is appended as plain text
+         and the caller's classes are passed through untouched. Rule: only
+         blur and opacity ever move — colour is the colour it rests at, from
+         the first frame. */
+      className={[className, "text-effect"].filter(Boolean).join(" ")}
       style={
         {
           "--intro-delay": `${base}ms`,
