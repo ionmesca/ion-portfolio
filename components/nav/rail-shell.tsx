@@ -1,4 +1,8 @@
-import { SectionRail, type SectionNavItem } from "@/components/nav/section-rail"
+import {
+  SectionRail,
+  type RailBack,
+  type SectionNavItem,
+} from "@/components/nav/section-rail"
 import { cn } from "@/lib/utils"
 
 /**
@@ -87,12 +91,23 @@ const FLUID_GUTTER =
 export function RailShell({
   nav,
   label,
+  back,
   gutter = "prose",
   children,
 }: {
   nav: SectionNavItem[]
   /** `aria-label` for the wheel — "Letter sections", "Stack sections", … */
   label: string
+  /**
+   * Where the rail's back button goes. Omitted is "← Home" — the letter and the
+   * three collections. An article detail page passes "← Articles".
+   *
+   * IMPORTANT for the conditional wheel: `children` must stay the grid's SECOND
+   * item, because `SectionRail` measures its own `nextElementSibling` to decide
+   * whether the page earns a wheel. Wrapping the children in anything is fine;
+   * putting a third element between the rail and them is not.
+   */
+  back?: RailBack
   /**
    * The narrow-screen gutter. `prose` is 24 (the letter). `rows` is 16 — a
    * 48px collection row carries 12px of its own padding and needs the width
@@ -113,7 +128,7 @@ export function RailShell({
           FLUID_GUTTER
         )}
       >
-        <SectionRail sections={nav} label={label} />
+        <SectionRail sections={nav} label={label} back={back} />
         {children}
       </div>
     </main>

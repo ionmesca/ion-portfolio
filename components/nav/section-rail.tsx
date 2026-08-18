@@ -81,6 +81,79 @@ const WHEEL_GAP = "mt-14"
  *  in rail-shell.tsx. */
 const RAIL_QUERY = "(min-width: 64rem)"
 
+/* ----------------------------------------------------------------------------
+   THE CONDITIONAL WHEEL — Ion's ruling, 2026-08-18.
+
+   The wheel answers "where am I in this?". On a page you can take in without
+   scrolling, that question has no content, and the answer is furniture. So the
+   wheel now has a condition: the reading column has to be longer than
+   `WHEEL_MIN_RATIO` viewports before it appears. The BACK BUTTON is
+   unconditional — "← Home" / "← Articles" is how you leave, and that is always
+   a live question.
+
+   In practice, today: the letter and the long articles keep their wheel; the
+   three collection pages and the short articles drop it and grow into it as
+   Ion's real content lands. Nothing is configured per page — the page's own
+   height decides.
+
+   ── WHAT IS MEASURED, and why it is not the document ───────────────────────
+
+   The READING COLUMN plus the page's own top and bottom padding — which is the
+   document's height, arrived at without ever asking the rail how tall it is.
+
+   `document.scrollHeight` would be the obvious thing to measure and is the one
+   thing that cannot be used: the rail and the reading column share a grid ROW,
+   so the row is as tall as the taller of the two. On a page with many short
+   sections the rail can be the taller one — and then removing the wheel
+   shortens the document, which drops it back under the threshold, which brings
+   the wheel back, which lengthens the document. A wheel that flickers on and
+   off forever is a worse bug than a wheel that should not be there. Leaving the
+   rail out of the sum removes the feedback loop by construction.
+
+   The padding is REAL and has to be counted. Dropping it cost the letter its
+   wheel in the first pass: 1382px of prose in a 945px window is 1.46 viewports
+   and fails, while the page the reader actually scrolls — 136 + 1382 + 136 —
+   is 1.75 and passes. The frame's own 136px top and bottom are page, not
+   margin.
+
+   ── NO LAYOUT SHIFT ────────────────────────────────────────────────────────
+
+   Two independent guarantees, because "reserve the space OR fade it in" is
+   cheap enough to do both:
+
+     1. The wheel is the LAST element in the rail's column and nothing follows
+        it, so its presence moves nothing — not the back button above it, not
+        the reading column beside it (a fixed 272px grid track), not the page.
+     2. It is in the DOM from the server render and stays in flow. Only
+        `opacity` changes. There is no mount, no unmount, and nothing to
+        reflow.
+
+   The server cannot know the viewport, so it renders the wheel at opacity 0 and
+   the measurement runs in a LAYOUT effect — before the browser paints the
+   hydrated tree — so a qualifying page never paints a frame with the wheel in
+   the wrong state. The 400ms fade is the grace on top of that: the wheel
+   arrives, it does not pop. Under `prefers-reduced-motion` the global rule in
+   globals.css collapses that transition to nothing, which is correct — the
+   ruling is about whether the wheel exists, not about how it moves.
+
+   A wheel that has not qualified is `inert` and `aria-hidden`: invisible to the
+   pointer, to the keyboard and to a screen reader. It is dropped in every sense
+   a reader can perceive; it simply keeps its 200px of empty rail column so the
+   geometry can never move.
+   ------------------------------------------------------------------------- */
+
+/** Reading column height, in viewports, above which the wheel earns its place.
+ *  1.5 is Ion's number: one screen you can see, plus half a screen you cannot,
+ *  is the shortest page where "where am I" is a real question. */
+const WHEEL_MIN_RATIO = 1.5
+
+/** Where the back button goes, and what it says. The letter and the three
+ *  collections go Home; an article goes back to its index. POR-27:
+ *  "destination-labelled back button". */
+export type RailBack = { href: string; label: string }
+
+const HOME: RailBack = { href: "/", label: "Home" }
+
 export type SectionNavItem = { id: string; nav: string }
 
 /** The two elements a row hands the wheel: itself, and its fill. */
@@ -123,7 +196,11 @@ const freshCache = (): RowCache => ({
  * that and carries the responsive reasoning. What lives here is only what is
  * inside the rail:
  *
- *   Button "Home"   85x32, ArrowLeft 16, `default` size, variant `secondary` —
+ *   Back button     85x32, ArrowLeft 16, `default` size, variant `secondary` —
+ *                   "Home" everywhere the frames draw it, "Articles" on an
+ *                   article detail page (POR-27: the label names the
+ *                   destination, not the gesture). Unconditional; the wheel
+ *                   beside it is not.
  *                   the frame's own variant. Round 1 made it `ghost`; Ion
  *                   reversed that for THIS button on 2026-08-18. Call-site
  *                   variant only; the Button set is untouched.
@@ -142,14 +219,20 @@ const freshCache = (): RowCache => ({
 export function SectionRail({
   sections,
   label,
+  back = HOME,
 }: {
   sections: SectionNavItem[]
   /** `aria-label` for the wheel — "Letter sections", "Stack sections", … */
   label: string
+  /** Defaults to "← Home". Articles pass "← Articles". */
+  back?: RailBack
 }) {
   const [active, setActive] = React.useState(0)
   const [visible, setVisible] = React.useState(false)
+  /** Is the reading column long enough to earn a wheel? See WHEEL_MIN_RATIO. */
+  const [longEnough, setLongEnough] = React.useState(false)
 
+  const railRef = React.useRef<HTMLDivElement>(null)
   const rowsRef = React.useRef<(RailRow | null)[]>([])
   const cachesRef = React.useRef<RowCache[]>([])
   const engineRef = React.useRef<WheelEngine | null>(null)
@@ -187,8 +270,65 @@ export function SectionRail({
     return () => mq.removeEventListener("change", sync)
   }, [])
 
+  /* Does this page qualify for a wheel? See the CONDITIONAL WHEEL note above.
+     A LAYOUT effect: it runs before the browser paints the hydrated tree, so a
+     qualifying page does not paint a frame without its wheel. */
+  React.useLayoutEffect(() => {
+    if (sections.length < 2) {
+      // One section is not a wheel, it is a label. Nothing to track.
+      setLongEnough(false)
+      return
+    }
+
+    /* The reading column is the rail's next sibling in the grid, and the grid
+       is the rail's parent — see rail-shell.tsx. Reading both off the DOM
+       rather than threading refs through three components keeps `RailShell`'s
+       children API exactly as it was. */
+    const column = railRef.current?.nextElementSibling as HTMLElement | null
+    const grid = railRef.current?.parentElement
+    if (!column || !grid) return
+
+    const measure = () => {
+      /* THE PAGE HEIGHT, AS IF THE RAIL WERE NOT THERE.
+         `column + the grid's own vertical padding` is the document height on
+         every page where the reading column is the taller of the two grid
+         items — which is every page — and it stays that number when it is not.
+         The rail's height is deliberately absent from the sum: include it and
+         a wheel could shorten the page below the threshold, which would bring
+         it back, which would lengthen the page again, forever.
+         (The 136px top/bottom padding is `py-34` above `lg`, `py-16` below, so
+         it is read rather than assumed.) */
+      const style = getComputedStyle(grid)
+      const padding =
+        parseFloat(style.paddingTop) + parseFloat(style.paddingBottom)
+      const height = padding + column.getBoundingClientRect().height
+      setLongEnough(height > window.innerHeight * WHEEL_MIN_RATIO)
+    }
+    measure()
+
+    /* Three things move the answer: the window resizing (both terms change),
+       the column reflowing at a width the window did not change for (an image
+       loading, a font swapping), and the webfont landing — which is the one
+       that reliably moves a page of prose across the line. */
+    const observer = new ResizeObserver(measure)
+    observer.observe(column)
+    window.addEventListener("resize", measure)
+    let cancelled = false
+    document.fonts?.ready.then(() => {
+      if (!cancelled) measure()
+    })
+
+    return () => {
+      cancelled = true
+      observer.disconnect()
+      window.removeEventListener("resize", measure)
+    }
+  }, [sections])
+
+  const showWheel = visible && longEnough
+
   React.useEffect(() => {
-    if (!visible) return
+    if (!showWheel) return
 
     /* The array itself is created once and only ever mutated in place by
        `slot`, so holding the reference for the effect's lifetime is safe — and
@@ -295,7 +435,7 @@ export function SectionRail({
         r.fill?.removeAttribute("style")
       }
     }
-  }, [sections, visible])
+  }, [sections, showWheel])
 
   const onSelect = (
     event: React.MouseEvent<HTMLAnchorElement>,
@@ -319,21 +459,38 @@ export function SectionRail({
   }
 
   return (
-    <div className="flex flex-col items-start lg:sticky lg:top-34 lg:self-start">
+    <div
+      ref={railRef}
+      className="flex flex-col items-start lg:sticky lg:top-34 lg:self-start"
+    >
       <Button variant="secondary" asChild>
-        <Link href="/">
+        <Link href={back.href}>
           <ArrowLeft />
-          Home
+          {back.label}
         </Link>
       </Button>
 
       {/* The wheel is a desktop convenience: it needs the rail column, and the
           frame has no mobile letter yet. Below lg the page falls back to the
-          document's own heading order, and "Home" stays. Flagged in the report
-          as a judgement call, not a rule inferred from the frame. */}
+          document's own heading order, and the back button stays. Flagged in
+          the report as a judgement call, not a rule inferred from the frame.
+
+          `opacity` and `inert` — never `display` — carry the conditional-wheel
+          ruling, so the element's box never changes and nothing can shift.
+          See the CONDITIONAL WHEEL note at the top of this file. */}
       <nav
         aria-label={label}
-        className={clsx(WHEEL_GAP, "hidden flex-col gap-3 lg:flex")}
+        aria-hidden={showWheel ? undefined : true}
+        inert={!showWheel}
+        data-wheel={showWheel ? "on" : "off"}
+        className={clsx(
+          WHEEL_GAP,
+          "hidden flex-col gap-3 lg:flex",
+          "[transition-property:opacity]",
+          "[transition-duration:var(--duration-slow)]",
+          "[transition-timing-function:var(--motion-glide)]",
+          showWheel ? "opacity-100" : "pointer-events-none opacity-0"
+        )}
       >
         {sections.map((section, i) => {
           const isActive = i === active
@@ -382,7 +539,15 @@ export function SectionRail({
                   isActive ? undefined : "opacity-0"
                 )}
               />
-              {section.nav}
+              {/* ONE LINE, ALWAYS. The letter's and the collections' labels
+                  are short by authorship, but an ARTICLE's wheel rows are its
+                  own h2s, and nobody writes a heading to fit a 200px rail. A
+                  wrapped label breaks the frame's 32px row and takes the 12px
+                  pitch with it, so a long label clips instead. The full text
+                  stays in the DOM, so a screen reader reads the whole heading.
+                  On its own span, not on the row: `text-overflow` needs a
+                  block container, and the row is a flex box. */}
+              <span className="min-w-0 truncate">{section.nav}</span>
             </a>
           )
         })}
