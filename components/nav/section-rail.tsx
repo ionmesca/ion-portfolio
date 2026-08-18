@@ -30,6 +30,13 @@ import { ArrowLeft } from "@/lib/icons"
 const ACTIVE_LINE = 0.4
 const LENS = [1, 0.75, 0.59, 0.47] as const
 
+/** The wheel itself is `hidden … xl:flex`. Below `xl` there is nothing on
+ *  screen for the six scroll/wheel/touch/key/pointer listeners to drive, so
+ *  they are not attached at all. Tailwind's `xl` is 80rem; the query is
+ *  written in `rem` for the same reason the utility is — a reader who has
+ *  raised their base font size gets the same breakpoint the CSS gives them. */
+const RAIL_QUERY = "(min-width: 80rem)"
+
 function lens(distance: number) {
   return LENS[Math.min(distance, LENS.length - 1)]
 }
@@ -85,7 +92,28 @@ export function SectionRail({
      events. (collection-lab rulebook: "A wheel click outranks the line".) */
   const lockedRef = React.useRef(false)
 
+  /** Is the wheel actually on screen? Nothing below is attached until it is. */
+  const [visible, setVisible] = React.useState(false)
+
   React.useEffect(() => {
+    let mq: MediaQueryList
+    try {
+      mq = window.matchMedia(RAIL_QUERY)
+    } catch {
+      // No matchMedia is a very old browser, not a narrow one: fall back to
+      // attaching, because a rail that never lights up is the worse failure.
+      setVisible(true)
+      return
+    }
+    const sync = () => setVisible(mq.matches)
+    sync()
+    mq.addEventListener("change", sync)
+    return () => mq.removeEventListener("change", sync)
+  }, [])
+
+  React.useEffect(() => {
+    if (!visible) return
+
     const computeActive = () => {
       const line = window.scrollY + window.innerHeight * ACTIVE_LINE
       let next = 0
@@ -140,7 +168,7 @@ export function SectionRail({
       window.removeEventListener("keydown", release)
       window.removeEventListener("pointerdown", release)
     }
-  }, [sections])
+  }, [sections, visible])
 
   const onSelect = (
     event: React.MouseEvent<HTMLAnchorElement>,

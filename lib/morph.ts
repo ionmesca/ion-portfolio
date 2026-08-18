@@ -139,10 +139,25 @@ export function createMorph(
     d?.()
   }
 
+  /**
+   * Abandon the tween where it stands.
+   *
+   * CANCEL MEANS ABANDONED. The `done` callback is dropped, never fired: it is
+   * the "we arrived" callback, and a cancelled tween did not arrive. Firing it
+   * would tell the caller a rect was reached that never was. `snap()` and
+   * `move()` both cancel first and then take responsibility for the new
+   * target, so nothing is lost by dropping it here.
+   *
+   * `data-morphing` is cleared too, and unconditionally: the attribute is what
+   * the stylesheet reads to hold `will-change` on for the duration of the
+   * motion, so a cancel that left it saying "true" would pin a compositing
+   * layer forever.
+   */
   const cancel = () => {
-    if (!raf) return
-    cancelAnimationFrame(raf)
+    if (raf) cancelAnimationFrame(raf)
     raf = 0
+    done = null
+    el.setAttribute("data-morphing", "false")
   }
 
   return {

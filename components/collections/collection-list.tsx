@@ -1,5 +1,7 @@
 "use client"
 
+import * as React from "react"
+
 import { GitHubGlyph } from "@/components/landing/brand-glyphs"
 import type {
   ArticleEntry,
@@ -39,12 +41,20 @@ export function CollectionList({
 }: {
   page: CollectionPage<CollectionEntry>
 }) {
-  const anchors: PreviewAnchor[] = page.groups.flatMap((group) =>
-    group.items.map((item) => ({
-      key: `${group.id}-${item.id}`,
-      title: item.name,
-      preview: item.preview,
-    }))
+  // A fresh array on every render is a fresh `anchors` prop, and `anchors` is
+  // a dependency of the preview engine's mount effect — which builds the morph,
+  // measures every card and re-registers the resize listener. The list is
+  // static data; it should be built once.
+  const anchors: PreviewAnchor[] = React.useMemo(
+    () =>
+      page.groups.flatMap((group) =>
+        group.items.map((item) => ({
+          key: `${group.id}-${item.id}`,
+          title: item.name,
+          preview: item.preview,
+        }))
+      ),
+    [page.groups]
   )
 
   return (
@@ -70,12 +80,17 @@ export function CollectionList({
    ------------------------------------------------------------------------- */
 
 export function ArticleList({ page }: { page: CollectionPage<ArticleEntry> }) {
-  const anchors: PreviewAnchor[] = page.groups.flatMap((group) =>
-    group.items.map((item) => ({
-      key: `${group.id}-${item.id}`,
-      title: item.title,
-      preview: item.preview,
-    }))
+  // Same reason as CollectionList above: the engine's mount effect keys on it.
+  const anchors: PreviewAnchor[] = React.useMemo(
+    () =>
+      page.groups.flatMap((group) =>
+        group.items.map((item) => ({
+          key: `${group.id}-${item.id}`,
+          title: item.title,
+          preview: item.preview,
+        }))
+      ),
+    [page.groups]
   )
 
   return (

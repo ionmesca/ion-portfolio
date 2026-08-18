@@ -221,6 +221,60 @@ export function CommandPalette() {
    * or the window resizes. Never runs while the palette is open — the frozen
    * atoms are the open state's header.
    */
+  /**
+   * Undo everything `measure()` wrote — the atoms' absolute positions, the
+   * surface's own box, and the pixel sizes pinned onto the slot, the trigger,
+   * the availability line, the rule and the face.
+   *
+   * Two callers. `measure()` runs it first so what it reads is the browser's
+   * own flex layout rather than last time's freeze. The mount effect runs it
+   * on the way out: below `lg` (or on a touch window) this component keeps
+   * rendering, and a chip left frozen at desktop pixel sizes is a chip that no
+   * longer answers the layout it now lives in.
+   */
+  const thaw = React.useCallback(() => {
+    const slot = slotRef.current
+    const surface = surfaceRef.current
+    const face = faceRef.current
+    const rule = ruleRef.current
+    const avail = availRef.current
+    const keycap = keycapRef.current
+    const trigger = triggerRef.current
+    if (!surface) return
+
+    const avatar = surface.querySelector<HTMLElement>('[data-slot="chip-avatar"]')
+    const name = surface.querySelector<HTMLElement>('[data-slot="chip-name"]')
+
+    for (const el of [avatar, name, keycap]) {
+      if (!el) continue
+      el.style.position = ""
+      el.style.left = ""
+      el.style.top = ""
+      el.style.transform = ""
+    }
+    surface.style.position = ""
+    surface.style.left = ""
+    surface.style.top = ""
+    surface.style.width = ""
+    surface.style.height = ""
+    surface.style.transform = ""
+    surface.style.borderRadius = ""
+    if (slot) {
+      slot.style.width = ""
+      slot.style.height = ""
+    }
+    if (trigger) {
+      trigger.style.width = ""
+      trigger.style.height = ""
+    }
+    if (avail) avail.style.height = ""
+    if (rule) rule.style.top = ""
+    if (face) {
+      face.style.top = ""
+      face.style.height = ""
+    }
+  }, [])
+
   const measure = React.useCallback(() => {
     const slot = slotRef.current
     const surface = surfaceRef.current
@@ -241,19 +295,7 @@ export function CommandPalette() {
 
     // 1 — thaw. Put the atoms back into the flex row and let the surface hug
     //     them again, so what we measure is the browser's own chip.
-    for (const el of atoms) {
-      el.style.position = ""
-      el.style.left = ""
-      el.style.top = ""
-      el.style.transform = ""
-    }
-    surface.style.position = ""
-    surface.style.width = ""
-    surface.style.height = ""
-    surface.style.transform = ""
-    surface.style.borderRadius = ""
-    slot.style.width = ""
-    slot.style.height = ""
+    thaw()
 
     // 2 — read. One layout pass, everything relative to the surface's box.
     const s = surface.getBoundingClientRect()
@@ -303,7 +345,7 @@ export function CommandPalette() {
     measureFace()
 
     morphRef.current?.snap(openRef.current ? openRect() : closedRect())
-  }, [closedRect, measureFace, openRect])
+  }, [closedRect, measureFace, openRect, thaw])
 
   /* --- mount: build the engine, measure, keep measuring when it matters ----
      A plain effect, not a layout effect: freezing the atoms where the flex box
@@ -349,8 +391,12 @@ export function CommandPalette() {
       window.removeEventListener("resize", onResize)
       morphRef.current?.cancel()
       morphRef.current = null
+      // The gate can close under a running chip — a window dragged narrow, a
+      // hybrid laptop switched to touch. Everything `measure()` froze is
+      // handed back before the engine goes away.
+      thaw()
     }
-  }, [enabled, measure, measureFace, openRect])
+  }, [enabled, measure, measureFace, openRect, thaw])
 
   /* --- open / close --------------------------------------------------------- */
 
@@ -545,6 +591,11 @@ export function CommandPalette() {
         type="button"
         data-slot="palette-esc"
         tabIndex={open ? 0 : -1}
+        // Closed, it is a crossfade partner sitting invisible under ⌘K.
+        // `tabIndex` alone keeps it off the tab ring but leaves it in the
+        // accessibility tree, so a screen reader read "Close command palette"
+        // off a chip that was not open.
+        aria-hidden={!open}
         aria-label="Close command palette"
         onClick={closePalette}
         // inline-flex, not the default inline: an inline box would take the

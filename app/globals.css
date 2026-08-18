@@ -483,6 +483,15 @@
     transition-property: box-shadow;
     transition-duration: var(--duration-fast);
     transition-timing-function: var(--ease-glide);
+  }
+
+  /* will-change for the duration of the morph and NOT one frame longer. The
+     hint is a promise to the compositor, and a permanent promise is a
+     permanent layer: the chip sits under the page's own text at rest, and a
+     layer there changes how that text is antialiased. `data-morphing` is
+     written by lib/morph.ts on every move and cleared on arrival, snap and
+     cancel — the same discipline use-wheel.ts applies per row. */
+  .palette-surface[data-morphing="true"] {
     will-change: transform, width, height;
   }
 
@@ -722,6 +731,14 @@
     height: 0;
     transform: translate3d(0, 0, 0);
     pointer-events: none;
+  }
+
+  /* Same rule as the palette chip: the hint lives only while the box is
+     actually moving. `data-morphing` covers the row-to-row tween; `data-open`
+     covers the open card, which re-snaps its rect on every scroll event. A
+     closed, idle card asks the compositor for nothing. */
+  .collection-pop[data-morphing="true"],
+  .collection-pop[data-open="true"] {
     will-change: transform, width, height;
   }
 

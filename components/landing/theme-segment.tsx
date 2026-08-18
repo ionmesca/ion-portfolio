@@ -93,30 +93,89 @@ export function ThemeSegment({
   )
 }
 
-/**
- * The theme state itself: read the stored preference after mount (the blocking
- * script in <head> already painted it), keep `system` resolving as the OS
- * flips, and write through `applyTheme` on every pick.
- *
- * Shared by the desktop palette and the mobile sheet so both stay in step with
- * one another and with localStorage.
- */
+/* ----------------------------------------------------------------------------
+   The theme state itself — ONE store for the whole page.
+
+   It used to be `React.useState` inside this hook, which meant every caller
+   owned a private copy. The desktop palette and the mobile sheet both mount on
+   a tablet-width window, so a pick in one left the other's segment pointing at
+   the old cell: two controls, one <html> class, two disagreeing opinions about
+   what it says.
+
+   A module-level store fixes that with no context plumbing. There is exactly
+   one theme on a page, it is a document-level fact (a class on <html> plus a
+   string in localStorage), and `useSyncExternalStore` is React's own way to
+   read a fact that lives outside React. Callers are unchanged.
+   ------------------------------------------------------------------------- */
+
+let current: Theme = "system"
+let hydrated = false
+let stopSystem: (() => void) | null = null
+const listeners = new Set<() => void>()
+
+const emit = () => {
+  for (const listener of listeners) listener()
+}
+
+/** `system` is the only value that has to keep resolving; the other two are
+ *  settled. The OS listener therefore exists only while it can matter, and
+ *  only while something is actually mounted to hear it. */
+const watchSystem = () => {
+  const want = current === "system" && listeners.size > 0
+  if (want && !stopSystem) {
+    stopSystem = subscribeSystemTheme(() => applyTheme("system"))
+  } else if (!want && stopSystem) {
+    stopSystem()
+    stopSystem = null
+  }
+}
+
+const subscribe = (listener: () => void) => {
+  listeners.add(listener)
+  watchSystem()
+  return () => {
+    listeners.delete(listener)
+    watchSystem()
+  }
+}
+
+const getSnapshot = () => current
+
+/** The server knows nothing about localStorage, and neither does the first
+ *  client render — which is the point: both say `system`, so hydration matches
+ *  and the real preference arrives in the effect below. */
+const getServerSnapshot = (): Theme => "system"
+
+/** Pick a theme: paint it, store it, tell every mounted control. */
+export function setTheme(next: Theme) {
+  current = next
+  applyTheme(next)
+  watchSystem()
+  emit()
+}
+
 export function useTheme() {
-  const [theme, setTheme] = React.useState<Theme>("system")
+  const theme = React.useSyncExternalStore(
+    subscribe,
+    getSnapshot,
+    getServerSnapshot
+  )
 
+  // Read the stored preference once per page, after mount. The blocking script
+  // in <head> has already painted it; this only teaches the controls what it
+  // painted.
   React.useEffect(() => {
-    setTheme(readTheme())
+    if (hydrated) return
+    hydrated = true
+    const stored = readTheme()
+    if (stored !== current) {
+      current = stored
+      emit()
+    }
+    watchSystem()
   }, [])
 
-  React.useEffect(() => {
-    if (theme !== "system") return
-    return subscribeSystemTheme(() => applyTheme("system"))
-  }, [theme])
-
-  const pickTheme = React.useCallback((next: Theme) => {
-    setTheme(next)
-    applyTheme(next)
-  }, [])
+  const pickTheme = React.useCallback((next: Theme) => setTheme(next), [])
 
   return { theme, pickTheme }
 }

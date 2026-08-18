@@ -63,8 +63,6 @@ export type PreviewAnchor = {
 type PreviewApi = {
   /** True when previews are live at all — false on touch and below lg. */
   enabled: boolean
-  /** The row whose card is open. Drives the row's held `muted` background. */
-  activeKey: string | null
   register: (key: string, el: HTMLElement | null) => void
   enter: (key: string) => void
   leave: () => void
@@ -75,11 +73,25 @@ type PreviewApi = {
 const PreviewContext = React.createContext<PreviewApi | null>(null)
 
 /**
+ * The open row's key, on its OWN context.
+ *
+ * It used to sit on `PreviewApi`, which meant the api object was a new object
+ * on every hover — and `attach` below is a `useCallback` keyed on that object.
+ * Walking a list therefore handed every row a new callback ref on every move,
+ * so React detached and re-attached the ref of every row in the list, several
+ * times a second, to answer a question about one of them. Split out, the api
+ * is built once and the churn is gone; what remains is a single boolean per
+ * row, which is the fact that actually changed.
+ */
+const PreviewActiveContext = React.createContext<string | null>(null)
+
+/**
  * What a row needs to become a preview anchor. Safe to spread onto any element;
  * with previews disabled every handler is a no-op and `ref` is unused.
  */
 export function usePreviewAnchor(key: string) {
   const api = React.useContext(PreviewContext)
+  const activeKey = React.useContext(PreviewActiveContext)
 
   const attach = React.useCallback(
     (el: HTMLElement | null) => api?.register(key, el),
@@ -95,7 +107,7 @@ export function usePreviewAnchor(key: string) {
      *  hook's return value trips react-hooks/refs, which cannot tell a
      *  callback ref from a ref object read during render. */
     attach,
-    active: api.activeKey === key,
+    active: activeKey === key,
     handlers: {
       onMouseEnter: () => api.enter(key),
       onMouseLeave: () => api.leave(),
@@ -139,6 +151,9 @@ export function PreviewProvider({
   const morphRef = React.useRef<Morph | null>(null)
   const openRef = React.useRef(false)
   const keyRef = React.useRef<string | null>(null)
+  /** Which side of the row the open card sits on. The scroll handler's only
+   *  question — see "the card stays glued" below. */
+  const belowRef = React.useRef(true)
   const reducedRef = React.useRef(false)
   const tIn = React.useRef<ReturnType<typeof setTimeout> | null>(null)
   const tOut = React.useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -235,6 +250,7 @@ export function PreviewProvider({
       // edge the card shrinks toward on close, and a card that flipped above
       // must shrink downward. (The lab sets it once — it only ever opens
       // below. Documented refinement, flagged in the report.)
+      belowRef.current = target.below
       if (innerRef.current) {
         innerRef.current.style.transformOrigin = target.below
           ? "50% 0%"
@@ -269,19 +285,57 @@ export function PreviewProvider({
     // row it belonged to.
   }, [])
 
-  /* --- the card stays glued while the page scrolls ------------------------- */
+  /* --- the card stays glued while the page scrolls -------------------------
+     The card is positioned against the STAGE, so scrolling moves the two
+     together for free and there is nothing to correct. The one thing a scroll
+     can change is the above/below decision, which reads the viewport.
+
+     So the handler does two things it did not do before. It runs at most once
+     per frame, on the same rAF gate the wheel and the mobile controller use —
+     unthrottled it was doing three `getBoundingClientRect()` reads and a full
+     morph paint per scroll EVENT, which on a trackpad is several per frame.
+     And it returns the moment it sees the side has not flipped, so the common
+     case costs the reads and nothing else.
+
+     Resize is different and stays unconditional: it moves the stage itself,
+     so the card's x, its width budget and its height all have to be retaken. */
   React.useEffect(() => {
     if (!enabled) return
-    const follow = () => {
+
+    let ticking = false
+    let raf = 0
+
+    const place = (force: boolean) => {
       if (!openRef.current || !keyRef.current) return
       const target = targetRect(keyRef.current)
-      if (target) morphRef.current?.snap(target.rect)
+      if (!target) return
+      if (!force && target.below === belowRef.current) return
+      belowRef.current = target.below
+      if (innerRef.current) {
+        innerRef.current.style.transformOrigin = target.below
+          ? "50% 0%"
+          : "50% 100%"
+      }
+      morphRef.current?.snap(target.rect)
     }
-    window.addEventListener("scroll", follow, { passive: true })
-    window.addEventListener("resize", follow)
+
+    const onScroll = () => {
+      if (ticking) return
+      ticking = true
+      raf = requestAnimationFrame(() => {
+        ticking = false
+        raf = 0
+        place(false)
+      })
+    }
+    const onResize = () => place(true)
+
+    window.addEventListener("scroll", onScroll, { passive: true })
+    window.addEventListener("resize", onResize)
     return () => {
-      window.removeEventListener("scroll", follow)
-      window.removeEventListener("resize", follow)
+      window.removeEventListener("scroll", onScroll)
+      window.removeEventListener("resize", onResize)
+      if (raf) cancelAnimationFrame(raf)
     }
   }, [enabled, targetRect])
 
@@ -296,7 +350,6 @@ export function PreviewProvider({
   const api = React.useMemo<PreviewApi>(
     () => ({
       enabled,
-      activeKey,
       register(key, el) {
         if (el) rows.current.set(key, el)
         else rows.current.delete(key)
@@ -323,44 +376,46 @@ export function PreviewProvider({
       },
       dismiss: hide,
     }),
-    [activeKey, enabled, hide, show]
+    [enabled, hide, show]
   )
 
   return (
     <PreviewContext.Provider value={api}>
-      <div ref={stageRef} className="relative">
-        {children}
+      <PreviewActiveContext.Provider value={activeKey}>
+        <div ref={stageRef} className="relative">
+          {children}
 
-        {enabled && (
-          <div
-            ref={popRef}
-            className="collection-pop"
-            data-open="false"
-            aria-hidden="true"
-            onMouseEnter={() => {
-              if (tOut.current) clearTimeout(tOut.current)
-            }}
-            onMouseLeave={api.leave}
-          >
-            <div ref={innerRef} className="collection-pop-inner">
-              {anchors.map((anchor) => (
-                <div
-                  key={anchor.key}
-                  ref={(el) => {
-                    if (el) faces.current.set(anchor.key, el)
-                    else faces.current.delete(anchor.key)
-                  }}
-                  className="collection-pop-face"
-                  data-on={anchor.key === shownKey}
-                  style={{ width: CARD_W }}
-                >
-                  <PreviewCard title={anchor.title} preview={anchor.preview} />
-                </div>
-              ))}
+          {enabled && (
+            <div
+              ref={popRef}
+              className="collection-pop"
+              data-open="false"
+              aria-hidden="true"
+              onMouseEnter={() => {
+                if (tOut.current) clearTimeout(tOut.current)
+              }}
+              onMouseLeave={api.leave}
+            >
+              <div ref={innerRef} className="collection-pop-inner">
+                {anchors.map((anchor) => (
+                  <div
+                    key={anchor.key}
+                    ref={(el) => {
+                      if (el) faces.current.set(anchor.key, el)
+                      else faces.current.delete(anchor.key)
+                    }}
+                    className="collection-pop-face"
+                    data-on={anchor.key === shownKey}
+                    style={{ width: CARD_W }}
+                  >
+                    <PreviewCard title={anchor.title} preview={anchor.preview} />
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
+      </PreviewActiveContext.Provider>
     </PreviewContext.Provider>
   )
 }
