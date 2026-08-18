@@ -3,9 +3,11 @@
 import * as React from "react"
 import Link from "next/link"
 
+import { IconSwap } from "@/components/ui/icon-swap"
 import { Kbd } from "@/components/ui/kbd"
-import { Check, Copy, ICON_STROKE, Search, Sun } from "@/lib/icons"
+import { Check, Copy, ICON_STROKE, Sun } from "@/lib/icons"
 import { createMorph, type Morph, type MorphRect } from "@/lib/morph"
+import { useHoverCorridor } from "@/lib/morph-preview"
 import { useCopyToClipboard } from "@/lib/use-copy"
 import { cn } from "@/lib/utils"
 
@@ -49,9 +51,33 @@ import {
      header    the chip's own row + a 1px `border` rule under it
      avail     inline in the header row at x 194, fades in
      esc       right edge at panel − 12
-     body      search 48 · Navigate 209 · Actions 201 · Preferences 81 ·
-               footer 40  =  579
      rows      366 wide (inset 8), 32 tall, radius 12
+
+   THE LEAN PANEL (Ion, 2026-08-18). Four things were cut from the frame and
+   none of them is coming back:
+
+     · the SEARCH ROW. "Search or jump to" over ten rows you can already see
+       is a search box for a haystack with no needles in it. The input, the
+       filtering, the empty state and the panel's re-fit went with it.
+     · the GROUP LABEL ROWS (Navigate / Actions / Preferences). The groups
+       stay; the captions were naming what the icons already say.
+     · the FOOTER HINT BAR (↑↓ / ↵ / esc). A legend for three keys everyone
+       already owns.
+     · therefore ~170px of height: body was 579, it is 409.
+
+   THE SEAM — flagged taste call. Removing the caption rows took 32px of air
+   out of each cluster with it, and 8px of padding is not a cluster boundary.
+   Navigate and Actions are now separated by RHYTHM (8 + 8 = 16px of padding
+   against 0 between rows inside a group), because they are the same kind of
+   thing — commands. Preferences is separated by the 1px full-bleed `border`
+   rule, because it is not: it holds a control, it sits outside the listbox
+   and outside the ↑/↓ ring. The frame's own vocabulary for "a different kind
+   of region starts here" is exactly that rule — it is what already sits under
+   the header — so it is reused once, where it is true, rather than three
+   times, which would have made a 451px panel read as a table.
+
+     body      Navigate 176 · Actions 176 · rule 1 · Preferences 56  =  409
+     panel     42 header + 409  =  451
 
    BEHAVIOUR LAW — a FLIP container on one rAF lerp with a JS bezier glide
    solver, 400ms symmetric, no scrim. The content does not animate: it rides
@@ -59,6 +85,19 @@ import {
    growing clip. Feel reference: Colin Lienard's menu (Ion, "really smooth"),
    which docs/design/popover-lab.html demo 1 no longer outranks on timing —
    the lab's geometry law still stands unchanged.
+
+   U2, RESOLVED. The morph clock is 400ms and it is NOT the preview family's
+   200. That is not an inconsistency, it is the family's rule: duration scales
+   with the distance the surface travels. The small preview cards move ~260px
+   of box and take `--duration-base` 200; this one grows from a 171x42 chip to
+   a 382x451 panel — an order of magnitude more area — and takes
+   `--duration-slow` 400. Same easing, same engine, same law.
+
+   HOVER OPENS IT (Ion, 2026-08-18, reversing the click-only ruling). The chip
+   answers a hovering pointer on the popover family's own corridor — INTENT
+   150ms in, GRACE 140ms out — through `useHoverCorridor`, which was factored
+   out of `lib/morph-preview.ts` for this and which the previews now share.
+   There is no third copy of those timers and no second pair of numbers.
    ========================================================================== */
 
 /** Figma 13:2673 panel width. The one hardcoded dimension: it is a design
@@ -95,12 +134,17 @@ const MIN_PANEL_H = 240
 const D_BASE = 400
 const D_FAST = 400
 
-/** The panel re-fitting itself as the list filters is not the morph — it is a
- *  correction, and a correction that took the morph's 400ms would lag behind
- *  the typing that caused it. `--duration-base`. */
-const D_REFIT = 200
-
 const OPTION_DOM_ID = (id: string) => `palette-option-${id}`
+
+/**
+ * Every row, in ring order.
+ *
+ * A module constant now, not a memo. It was derived from a filtered copy of
+ * the groups; with the search row gone the list is a fact about the file that
+ * imports it and can never change at runtime, which also retires the effect
+ * that used to keep the selection pointing at something that still existed.
+ */
+const OPTIONS = PALETTE_GROUPS.flatMap((group) => group.items)
 
 type ChipRect = { w: number; h: number }
 
@@ -113,7 +157,6 @@ export function CommandPalette() {
   const availRef = React.useRef<HTMLSpanElement>(null)
   const keycapRef = React.useRef<HTMLSpanElement>(null)
   const triggerRef = React.useRef<HTMLButtonElement>(null)
-  const inputRef = React.useRef<HTMLInputElement>(null)
   const listRef = React.useRef<HTMLDivElement>(null)
 
   const morphRef = React.useRef<Morph | null>(null)
@@ -128,44 +171,26 @@ export function CommandPalette() {
   const [enabled, setEnabled] = React.useState(false)
   const [open, setOpen] = React.useState(false)
   const openRef = React.useRef(false)
-  const [query, setQuery] = React.useState("")
+  /**
+   * PINNED — the panel is staying until it is dismissed.
+   *
+   * A hover-opened panel closes when the pointer leaves it. Anything that is a
+   * DECISION rather than a drift pins it, and a pinned panel ignores the
+   * pointer entirely: only Escape, the esc keycap or a click outside will
+   * close it. Three things pin — clicking the chip, pressing ⌘K, and clicking
+   * anywhere inside the open panel (you reached in; you meant to stay).
+   *
+   * A ref and not state: nothing on screen renders differently, and a pointer
+   * crossing the chip must not cost a render.
+   */
+  const pinnedRef = React.useRef(false)
   /* Theme state + the OS-flip subscription live in `theme-segment.tsx` now:
      the mobile menu sheet renders the same control and must stay in step. */
   const { theme, pickTheme } = useTheme()
 
-  /* --- filtering ---------------------------------------------------------- */
-  const groups = React.useMemo(() => {
-    const q = query.trim().toLowerCase()
-    if (!q) return PALETTE_GROUPS
-    return PALETTE_GROUPS.map((g) => ({
-      ...g,
-      items: g.items.filter((i) => i.label.toLowerCase().includes(q)),
-    })).filter((g) => g.items.length > 0)
-  }, [query])
-
-  const showPreferences = React.useMemo(() => {
-    const q = query.trim().toLowerCase()
-    return !q || "theme preferences".includes(q)
-  }, [query])
-
-  const options = React.useMemo(
-    () => groups.flatMap((g) => g.items),
-    [groups]
-  )
-
   const [activeId, setActiveId] = React.useState<string | null>(
-    PALETTE_GROUPS[0]?.items[0]?.id ?? null
+    OPTIONS[0]?.id ?? null
   )
-
-  // Keep the selection on something that exists. Filtering to nothing leaves
-  // activeId null, which is what makes Enter a no-op rather than a surprise.
-  React.useEffect(() => {
-    setActiveId((current) =>
-      current && options.some((o) => o.id === current)
-        ? current
-        : (options[0]?.id ?? null)
-    )
-  }, [options])
 
   /* --- desktop gate -------------------------------------------------------
      None of this exists on mobile — zero shortcuts there, and the mobile phase
@@ -422,38 +447,94 @@ export function CommandPalette() {
 
   /* --- open / close --------------------------------------------------------- */
 
-  const openPalette = React.useCallback(() => {
-    if (openRef.current || !morphRef.current) return
-    openRef.current = true
-    setOpen(true)
-    measureFace()
-    morphRef.current.move(openRect(), reduced() ? 0 : D_BASE)
-    // The trigger is about to become inert; drop its focus ring NOW rather than
-    // letting it stay painted until the input takes focus a frame later. It is
-    // a 42px black rounded rect sitting inside the growing panel, and after a
-    // keyboard close (which returns focus here, focus-visible and all) it
-    // flashed on every single reopen.
-    triggerRef.current?.blur()
-    // After the state flush, so the face is no longer inert.
-    // `preventScroll` is the whole ballgame — see the surface's `overflow-clip`.
-    requestAnimationFrame(() =>
-      inputRef.current?.focus({ preventScroll: true })
-    )
-  }, [measureFace, openRect, reduced])
+  const openPalette = React.useCallback(
+    (pin: boolean) => {
+      if (openRef.current || !morphRef.current) return
+      openRef.current = true
+      pinnedRef.current = pin
+      setOpen(true)
+      measureFace()
+      morphRef.current.move(openRect(), reduced() ? 0 : D_BASE)
+      // The trigger is about to become inert; drop its focus ring NOW rather
+      // than letting it stay painted until the list takes focus a frame later.
+      // It is a 42px black rounded rect sitting inside the growing panel, and
+      // after a keyboard close (which returns focus here, focus-visible and
+      // all) it flashed on every single reopen.
+      triggerRef.current?.blur()
+      // After the state flush, so the face is no longer inert.
+      //
+      // THE LISTBOX IS THE FOCUS TARGET now that the search input is gone. It
+      // is a real tab stop while open (`tabIndex={open ? 0 : -1}`) and it
+      // reports its selection through `aria-activedescendant`, which is the
+      // same listbox contract the input used to hold on the list's behalf —
+      // arrow keys have to reach a handler on the first press, including on a
+      // panel that a pointer opened.
+      // `preventScroll` is the whole ballgame — see the surface's overflow.
+      requestAnimationFrame(() => listRef.current?.focus({ preventScroll: true }))
+    },
+    [measureFace, openRect, reduced]
+  )
 
   const closePalette = React.useCallback(() => {
     if (!openRef.current || !morphRef.current) return
     openRef.current = false
+    pinnedRef.current = false
     setOpen(false)
-    setQuery("")
     morphRef.current.move(closedRect(), reduced() ? 0 : D_FAST)
-    triggerRef.current?.focus({ preventScroll: true })
+    // Only take focus back if we still hold it. A hover-close is not a
+    // keyboard event and must not move the caret out of wherever the reader
+    // actually is; an Escape close is, and has to hand the ring back to the
+    // chip it was launched from.
+    if (
+      surfaceRef.current &&
+      document.activeElement instanceof Node &&
+      surfaceRef.current.contains(document.activeElement)
+    ) {
+      triggerRef.current?.focus({ preventScroll: true })
+    }
   }, [closedRect, reduced])
 
   const toggle = React.useCallback(() => {
     if (openRef.current) closePalette()
-    else openPalette()
+    else openPalette(true)
   }, [closePalette, openPalette])
+
+  /* --- the hover corridor ---------------------------------------------------
+     ONE pair of handlers on the SURFACE, not two pairs on a chip and a panel,
+     because the chip and the panel are the same element — that is the whole
+     zero-jump law. So there is no gap to cross, no corridor geometry to solve,
+     and `hold()` is only ever needed for a re-entry during the grace window.
+
+     The clock is `useHoverCorridor` (lib/morph-preview.ts): INTENT 150 in,
+     GRACE 140 out, the same two numbers the social previews and the collection
+     rows answer to. */
+  const corridor = useHoverCorridor()
+
+  const onSurfacePointerEnter = React.useCallback(() => {
+    if (!enabled) return
+    // Re-entering during the grace window: drop the pending close. Nothing to
+    // reopen — it never closed.
+    if (openRef.current) {
+      corridor.hold()
+      return
+    }
+    corridor.serve(() => openPalette(false))
+  }, [corridor, enabled, openPalette])
+
+  const onSurfacePointerLeave = React.useCallback(() => {
+    if (!enabled) return
+    if (pinnedRef.current) {
+      corridor.cancel()
+      return
+    }
+    corridor.release(closePalette)
+  }, [closePalette, corridor, enabled])
+
+  /** Reaching into the panel is a decision. From here the pointer is free to
+   *  leave; only Escape, the esc keycap or an outside click will close it. */
+  const pin = React.useCallback(() => {
+    if (openRef.current) pinnedRef.current = true
+  }, [])
 
   /* --- copy email ----------------------------------------------------------
      A commit action: the one place in the palette that earns Sound A, and the
@@ -519,43 +600,25 @@ export function CommandPalette() {
     return () => document.removeEventListener("click", onClick)
   }, [closePalette, open])
 
-  /* --- the panel re-fits itself as the list filters -------------------------
-     Filtering changes the content height, so the panel follows it — the same
-     retargetable engine, at the close duration.
-
-     The latch matters: this effect also fires on the render that OPENS the
-     palette, and without it that pass would retarget the 200ms open morph to
-     150ms a few milliseconds in. (Measured: the open tween fitted D≈150ms
-     before the latch was added.) The open move owns the first pass. */
-  const refitRef = React.useRef(false)
-  React.useEffect(() => {
-    if (!open) {
-      refitRef.current = false
-      return
-    }
-    if (!refitRef.current) {
-      refitRef.current = true
-      return
-    }
-    if (!morphRef.current) return
-    measureFace()
-    morphRef.current.move(openRect(), reduced() ? 0 : D_REFIT)
-  }, [groups, showPreferences, measureFace, open, openRect, reduced])
+  /* The panel used to re-fit itself as the list filtered — a second, shorter
+     move on the same engine, latched so it could not retarget the open morph
+     it was racing. Nothing filters any more, so the panel has exactly one
+     height and the whole mechanism went with the search row. `measureFace()`
+     still runs on open and on resize; that is all it was ever for. */
 
   /* --- listbox navigation --------------------------------------------------- */
 
   const moveActive = React.useCallback(
     (delta: number) => {
-      if (options.length === 0) return
-      const at = options.findIndex((o) => o.id === activeId)
-      const next = (at + delta + options.length) % options.length
-      const id = options[next].id
+      const at = OPTIONS.findIndex((o) => o.id === activeId)
+      const next = (at + delta + OPTIONS.length) % OPTIONS.length
+      const id = OPTIONS[next].id
       setActiveId(id)
       listRef.current
         ?.querySelector(`#${CSS.escape(OPTION_DOM_ID(id))}`)
         ?.scrollIntoView({ block: "nearest" })
     },
-    [activeId, options]
+    [activeId]
   )
 
   /**
@@ -597,10 +660,11 @@ export function CommandPalette() {
       return
     }
 
-    // Enter commits the active OPTION — but only from the search field. From
-    // the esc keycap or a theme radio, Enter belongs to the control that has
-    // focus, not to the list.
-    if (e.key === "Enter" && e.target === inputRef.current) {
+    // Enter commits the active OPTION — but only from the LISTBOX. From the
+    // esc keycap or a theme radio, Enter belongs to the control that has
+    // focus, not to the list. (It used to read `inputRef`; the listbox is the
+    // focus holder now, and the test is the same test.)
+    if (e.key === "Enter" && e.target === listRef.current) {
       if (!activeId) return
       e.preventDefault()
       document.getElementById(OPTION_DOM_ID(activeId))?.click()
@@ -656,6 +720,14 @@ export function CommandPalette() {
         aria-modal={open ? true : undefined}
         aria-label={open ? "Command palette" : undefined}
         onKeyDown={onSurfaceKeyDown}
+        // The chip and the panel are one element, so ONE enter/leave pair
+        // covers the whole corridor — see the hover block above.
+        onPointerEnter={onSurfacePointerEnter}
+        onPointerLeave={onSurfacePointerLeave}
+        // `pointerdown`, not `click`: it fires before anything the click might
+        // do, so a row that navigates or a theme radio that re-renders cannot
+        // get in front of the pin.
+        onPointerDown={pin}
         // The surface must never scroll — see `pinScroll` in lib/morph.ts.
         // `overflow-hidden` (not `clip`): `clip` is the semantically right
         // answer, but it drops this box out of the slot's `z-40` stacking and
@@ -733,106 +805,74 @@ export function CommandPalette() {
           data-slot="palette-face"
           className="absolute left-0 flex w-[382px] flex-col"
         >
-          {/* search — group 0 */}
-          <div
-            className="palette-group flex h-12 shrink-0 items-center gap-2 border-b border-border px-4"
-          >
-            <Search
-              className="size-4 shrink-0 text-muted-foreground"
-              strokeWidth={ICON_STROKE}
-            />
-            <input
-              ref={inputRef}
-              type="text"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search or jump to…"
-              role="combobox"
-              aria-expanded={open}
-              aria-controls="palette-listbox"
-              aria-activedescendant={
-                activeId ? OPTION_DOM_ID(activeId) : undefined
-              }
-              aria-autocomplete="list"
-              aria-label="Search commands"
-              autoComplete="off"
-              spellCheck={false}
-              className="h-full min-w-0 flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground"
-            />
-          </div>
-
           <div className="min-h-0 flex-1 overflow-y-auto">
-            <div ref={listRef} role="listbox" id="palette-listbox" aria-label="Commands">
-              {groups.map((group, index) => (
-                <section
+            {/* THE LISTBOX HOLDS FOCUS. The search input used to, and reported
+                the list's selection on its behalf through
+                `aria-activedescendant`; with the input gone the attribute
+                moves onto the listbox itself, which is where the ARIA pattern
+                puts it when there is no textbox. The rows stay `tabIndex={-1}`
+                pointer targets — DOM focus never leaves this element, so
+                arrow-keying down ten rows is one focus event, not ten. */}
+            <div
+              ref={listRef}
+              role="listbox"
+              id="palette-listbox"
+              aria-label="Commands"
+              aria-activedescendant={
+                open && activeId ? OPTION_DOM_ID(activeId) : undefined
+              }
+              tabIndex={open ? 0 : -1}
+              className="outline-none"
+            >
+              {PALETTE_GROUPS.map((group) => (
+                /* No caption row, but still a GROUP: `aria-label` carries what
+                   the deleted text row carried, so a screen reader still hears
+                   "Navigate" without a sighted reader being told what five
+                   labelled icons already say. `py-2` on every cluster is the
+                   seam — 8 + 8 against 0 between rows inside one. */
+                <div
                   key={group.id}
                   role="group"
-                  aria-labelledby={`palette-group-${group.id}`}
-                  className={cn("palette-group", index === 0 && "pt-2")}
+                  aria-label={group.label}
+                  className="palette-group px-2 py-2"
                 >
-                  <div
-                    id={`palette-group-${group.id}`}
-                    className="px-4 pt-3 pb-1 text-xs text-muted-foreground"
-                  >
-                    {group.label}
-                  </div>
-                  <div className="px-2 pb-2">
-                    {group.items.map((item) => (
-                      <Row
-                        key={item.id}
-                        item={item}
-                        active={item.id === activeId}
-                        copied={copied}
-                        onPointerEnter={() => setActiveId(item.id)}
-                        onClick={() => onRowClick(item)}
-                      />
-                    ))}
-                  </div>
-                </section>
+                  {group.items.map((item) => (
+                    <Row
+                      key={item.id}
+                      item={item}
+                      active={item.id === activeId}
+                      copied={copied}
+                      onPointerEnter={() => setActiveId(item.id)}
+                      onClick={() => onRowClick(item)}
+                    />
+                  ))}
+                </div>
               ))}
             </div>
 
-            {showPreferences && (
-              <section
-                aria-labelledby="palette-group-preferences"
-                className="palette-group"
-              >
-                <div
-                  id="palette-group-preferences"
-                  className="px-4 pt-3 pb-1 text-xs text-muted-foreground"
-                >
-                  Preferences
-                </div>
-                <div className="px-2 pb-2">
-                  <div className="flex h-10 items-center gap-2 rounded-md pr-3 pl-2">
-                    <Sun
-                      className="size-4 shrink-0 text-muted-foreground"
-                      strokeWidth={ICON_STROKE}
-                    />
-                    <span className="min-w-0 flex-1 truncate text-sm text-foreground">
-                      Theme
-                    </span>
-                    <ThemeSegment value={theme} onPick={pickTheme} />
-                  </div>
-                </div>
-              </section>
-            )}
+            {/* The one rule inside the body. Preferences is not a command —
+                see the seam note in the header comment. */}
+            <span
+              aria-hidden="true"
+              className="palette-reveal block h-px w-full bg-border"
+            />
 
-            {groups.length === 0 && !showPreferences && (
-              <p className="px-4 py-8 text-center text-sm text-muted-foreground">
-                No matches
-              </p>
-            )}
-          </div>
-
-          {/* footer hints — last group */}
-          <div
-            className="palette-group flex h-10 shrink-0 items-center gap-3 border-t border-border px-3"
-            aria-hidden="true"
-          >
-            <Hint keys="↑↓" word="navigate" />
-            <Hint keys="↵" word="open" />
-            <Hint keys="esc" word="close" />
+            <div
+              role="group"
+              aria-label="Preferences"
+              className="palette-group px-2 py-2"
+            >
+              <div className="flex h-10 items-center gap-2 rounded-md pr-3 pl-2">
+                <Sun
+                  className="size-4 shrink-0 text-muted-foreground"
+                  strokeWidth={ICON_STROKE}
+                />
+                <span className="min-w-0 flex-1 truncate text-sm text-foreground">
+                  Theme
+                </span>
+                <ThemeSegment value={theme} onPick={pickTheme} />
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -862,20 +902,11 @@ function Row({
   const inner = (
     <>
       {item.action === "copy-email" ? (
-        <span className="relative size-4 shrink-0">
-          {/* icon swap — scale .6↔1 with 4px blur on the spring, per the
-              motion contract's copy→check recipe */}
-          <Copy
-            data-on={!copied}
-            className="icon-swap absolute inset-0 size-4 text-muted-foreground"
-            strokeWidth={ICON_STROKE}
-          />
-          <Check
-            data-on={copied}
-            className="icon-swap absolute inset-0 size-4 text-muted-foreground"
-            strokeWidth={ICON_STROKE}
-          />
-        </span>
+        /* copy → check: scale .6↔1 with a 4px blur, on a REAL spring since
+           2026-08-18 — the recipe and its driver both live in
+           `components/ui/icon-swap.tsx` now, shared with the install chip and
+           the mobile menu. */
+        <IconSwap on={copied} from={Copy} to={Check} className="size-4" />
       ) : (
         <Icon className="size-4 shrink-0 text-muted-foreground" />
       )}
@@ -958,24 +989,24 @@ function Row({
   )
 }
 
-function Hint({ keys, word }: { keys: string; word: string }) {
-  return (
-    <span className="flex items-center gap-1.5">
-      <Kbd className="text-small leading-[1.45]">{keys}</Kbd>
-      <span className="text-xs text-muted-foreground">{word}</span>
-    </span>
-  )
-}
-
 /* ============================================================================
    Helpers
    ========================================================================== */
 
+/**
+ * The Tab ring inside the open panel.
+ *
+ * `input` was the first selector; there is no input any more, and the LISTBOX
+ * took its place in the ring — it is the element that holds focus and answers
+ * the arrow keys. The rest is unchanged: rows are `tabIndex={-1}` pointer
+ * targets reached by ↑/↓, so the ring is the listbox, the esc keycap and
+ * whichever theme radio is currently selected.
+ */
 function focusableIn(root: HTMLElement | null): HTMLElement[] {
   if (!root) return []
   return Array.from(
     root.querySelectorAll<HTMLElement>(
-      'input, button:not([tabindex="-1"]), [href]:not([tabindex="-1"])'
+      '[role="listbox"], button:not([tabindex="-1"]), [href]:not([tabindex="-1"])'
     )
   ).filter((el) => el.tabIndex !== -1 && !el.hasAttribute("inert"))
 }
