@@ -13,6 +13,7 @@ export const metadata: Metadata = {
   title: "A letter — Ion Mesca",
   description:
     "Who I am, how I got here, and what I think an AI-native interface owes the person using it.",
+  alternates: { canonical: "/letter" },
 }
 
 /**
