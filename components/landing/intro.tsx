@@ -3,7 +3,8 @@ import { cn } from "@/lib/utils"
 import { ArrowUpRight } from "@/lib/icons"
 
 import { Reveal } from "./intro-reveal"
-import { SOCIALS } from "./socials"
+import { LedgyMention } from "./ledgy-preview"
+import { SocialPreviews } from "./social-previews"
 
 /**
  * Intro — the positioning block: headline, subline, and the actions row.
@@ -15,8 +16,15 @@ import { SOCIALS } from "./socials"
  *
  * PLACEHOLDER COPY — verbatim from the Figma frame.
  *
- * The socials list now lives in `./socials` — the mobile hero renders the same
- * three destinations at the same glyph sizes.
+ * The socials list lives in `./socials` — the mobile hero renders the same
+ * three destinations at the same glyph sizes. On a desktop pointer the three
+ * anchors are rendered by `SocialPreviews`, which adds the hover previews
+ * (POR-24, popover-lab Demo 2) and nothing else: at rest, and on touch, the
+ * markup and every class are exactly what they were.
+ *
+ * The Ledgy mention is `LedgyMention` for the same reason — it gains the
+ * external-site preview (Demo 3) and becomes a real link to ledgy.com, and is
+ * otherwise the same underlined word.
  *
  * The two blocks are the second and third groups of the first-load entrance
  * (intro-reveal.tsx). `Reveal` is a client wrapper, so the copy inside stays
@@ -32,7 +40,7 @@ export function Intro() {
             It is what breaks the line after "heart," and after "and". */}
         <p className="w-[255px] text-lg text-muted-foreground">
           Curious generalist at heart, building AI native software and fintech
-          systems at <span className="underline">Ledgy</span>
+          systems at <LedgyMention />
         </p>
       </Reveal>
 
@@ -59,24 +67,7 @@ export function Intro() {
           <ArrowUpRight />
         </a>
 
-        <div className="flex items-center gap-4">
-          {SOCIALS.map(({ label, href, Glyph, size }) => (
-            <a
-              key={label}
-              href={href}
-              target="_blank"
-              rel="noreferrer noopener"
-              aria-label={label}
-              // Figma's Social link components are bare glyphs — no button
-              // chrome, no padding. Their only state change is the fill:
-              // muted-foreground → foreground. Hover snaps in and eases out
-              // over 150ms, the same rule the Button follows.
-              className="flex size-5 items-center justify-center text-muted-foreground [transition:color_var(--duration-fast)_var(--motion-glide)] hover:text-foreground hover:[transition-duration:0ms] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
-            >
-              <Glyph className={size} />
-            </a>
-          ))}
-        </div>
+        <SocialPreviews className="flex items-center gap-4" />
       </Reveal>
     </div>
   )

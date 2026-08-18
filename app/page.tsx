@@ -67,7 +67,14 @@ export default function Home() {
             The 263 rail and the 24 right gutter are Figma and do not move;
             the media column is `flex-1` and takes what is left. */}
         <div className="hidden min-h-screen gap-12 pt-[136px] pr-6 pb-6 pl-[clamp(40px,164px_-_(1512px_-_100vw)*0.25,164px)] lg:flex">
-          <div className="sticky top-[136px] flex h-[700px] max-h-[calc(100dvh-160px)] w-[263px] shrink-0 flex-col gap-16 self-start">
+          <div
+            // `data-rail` is what the hover previews (POR-24) bound themselves
+            // to vertically: a preview may overhang this column sideways — a
+            // 264-wide card on a 263-wide rail is meant to — but it may never
+            // float above the rail's top edge, where the identity chip is.
+            data-rail
+            className="sticky top-[136px] flex h-[700px] max-h-[calc(100dvh-160px)] w-[263px] shrink-0 flex-col gap-16 self-start"
+          >
             <div className="flex flex-col gap-6">
               {/* The identity chip, and — on a desktop pointer — the ⌘K palette
                   it morphs into. The chip's slot holds its place in the flow,
