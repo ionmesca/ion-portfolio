@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+
+import { THEME_INIT_SCRIPT } from "@/lib/theme";
+
 import "./globals.css";
 
 /**
@@ -68,7 +71,20 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={aeonik.variable}>
+    // suppressHydrationWarning: the script below writes `class="dark"` onto
+    // <html> before React sees the document, so the server's markup and the
+    // client's differ by design on exactly this one attribute.
+    <html lang="en" className={aeonik.variable} suppressHydrationWarning>
+      <head>
+        {/* The no-FOUC theme script. It must be inline and BLOCKING — a
+            deferred or bundled version resolves the theme after the first
+            paint, which is the white flash it exists to prevent. The palette's
+            Preferences group is the only thing that writes the stored value;
+            see lib/theme.ts. */}
+        <script
+          dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }}
+        />
+      </head>
       <body className="font-sans antialiased">
         {children}
         <Analytics />

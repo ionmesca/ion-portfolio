@@ -1,5 +1,5 @@
 import { ActiveProjectProvider } from "@/components/landing/active-project";
-import { IdentityChip } from "@/components/landing/identity-chip";
+import { CommandPalette } from "@/components/landing/command-palette";
 import { Intro } from "@/components/landing/intro";
 import { MediaColumn } from "@/components/landing/media-column";
 import { ProjectList } from "@/components/landing/project-list";
@@ -26,7 +26,10 @@ export default function Home() {
       <main className="flex min-h-screen gap-12 bg-background pt-[136px] pr-6 pb-6 pl-[164px]">
         <div className="flex h-[700px] w-[263px] shrink-0 flex-col gap-16">
           <div className="flex flex-col gap-6">
-            <IdentityChip />
+            {/* The identity chip, and — on a desktop pointer — the ⌘K palette
+                it morphs into. The chip's slot holds its place in the flow, so
+                the panel growing out of it never moves this column. */}
+            <CommandPalette />
             <Intro />
           </div>
 

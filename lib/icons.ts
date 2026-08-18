@@ -28,6 +28,8 @@ export {
   FileText,
   Layers,
   Package,
+  // The ⌘K palette's "Agents & Skills" row (Figma 13:2926 draws lucide's bot).
+  Bot,
   ChevronRight,
   // The letter's "← Home" button (Figma 13:2943 draws lucide's arrow-left).
   ArrowLeft,
@@ -46,6 +48,11 @@ export {
   ArrowUp,
   ArrowDown,
   CornerDownLeft,
+  // theme: the Preferences row's glyph and its three segment options
+  // (Figma 13:2866 / 13:2877 — sun, moon, monitor).
+  Sun,
+  Moon,
+  Monitor,
 } from "lucide-react"
 
 export type { LucideIcon } from "lucide-react"

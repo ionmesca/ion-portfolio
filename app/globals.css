@@ -104,6 +104,13 @@
   --duration-slow: 400ms; /* entrances, scroll reveals        == duration-400 */
 
   --stagger-delay: 50ms; /* one unit of list-entrance offset */
+  /* Half a stagger unit. Offsets GROUPS, not rows: five blocks entering 50ms
+     apart would outlast the 200ms morph they are supposed to ride inside.
+     Lifted from popover-lab.html, which named it the same thing. */
+  --stagger-group: 25ms;
+
+  /* Transition garnish. Blur is a state-change lane, never a resting style. */
+  --blur-garnish: 2px;
 
   /* -- elevation ----------------------------------------------------------- */
   /* Layered smooth shadow. Per step: size s, base intensity i.
@@ -457,6 +464,159 @@
     filter: blur(0);
     transform: translateY(0);
     transition-delay: 100ms;
+  }
+
+  /* -- ⌘K morph palette ------------------------------------------------------
+     The identity chip IS the palette. `components/landing/command-palette.tsx`
+     owns the geometry — the container FLIP runs on rAF, because a CSS
+     transition cannot be sampled per frame to carry the keycap with it. What
+     lives here is everything that is pure state: the crossfades, the group
+     stagger, and the elevation.
+
+     Written as CSS rather than Tailwind utilities for two reasons. Every
+     transition names its properties explicitly (Tailwind 4 compiles `scale-*`
+     to the standalone `scale` property, so a `transform` lane would animate
+     nothing), and the reduced-motion carve-out at the bottom has to out-rank
+     the blanket `*` rule in section 8, which a variant cannot do. */
+
+  .palette-surface {
+    transition-property: box-shadow;
+    transition-duration: var(--duration-fast);
+    transition-timing-function: var(--ease-glide);
+    will-change: transform, width, height;
+  }
+
+  /* Hover on the closed chip is elevation and nothing else — no preview, no
+     opening. Snaps in, eases out, like every other hover in the system. */
+  .palette-surface[data-open="false"]:hover {
+    box-shadow: var(--shadow-raised);
+    transition-duration: 0ms;
+  }
+
+  .palette-surface[data-open="true"] {
+    box-shadow: var(--shadow-overlay);
+  }
+
+  /* ⌘K and esc share one travelling cell and crossfade in place. Their travel
+     is the cell's, not their own — the one pair whose individual movement
+     would not be convincing, so it is a straight 150ms swap. */
+  .palette-keycap {
+    transition-property: opacity, filter;
+    transition-duration: var(--duration-fast);
+    transition-timing-function: var(--ease-glide);
+  }
+
+  .palette-surface[data-open="false"] [data-slot="palette-esc"],
+  .palette-surface[data-open="true"] [data-slot="palette-cmd"] {
+    opacity: 0;
+    filter: blur(var(--blur-garnish));
+  }
+
+  .palette-surface[data-open="false"] [data-slot="palette-esc"] {
+    pointer-events: none;
+  }
+
+  .palette-esc:hover kbd {
+    color: var(--color-foreground);
+  }
+
+  /* The availability line and the header rule: they appear in space the panel
+     opened up, so they push on nothing that was already there. */
+  .palette-reveal {
+    opacity: 0;
+    transform: translateY(-3px);
+    filter: blur(var(--blur-garnish));
+    transition-property: opacity, transform, filter;
+    transition-duration: var(--duration-fast);
+    transition-timing-function: var(--ease-glide);
+  }
+
+  .palette-surface[data-open="true"] .palette-reveal {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+
+  /* Content groups — fade + 4px rise + 2px blur, one group per 25ms. */
+  .palette-group {
+    opacity: 0;
+    transform: translateY(4px);
+    filter: blur(var(--blur-garnish));
+    transition-property: opacity, transform, filter;
+    transition-duration: var(--duration-fast);
+    transition-timing-function: var(--ease-glide);
+    transition-delay: 0ms;
+  }
+
+  .palette-surface[data-open="true"] .palette-group {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+    transition-delay: calc(var(--i, 0) * var(--stagger-group));
+  }
+
+  /* One highlight, not two: pointing at a row makes it the selection, so the
+     hover state and the active state are the same state. */
+  .palette-row {
+    transition-property: background-color;
+    transition-duration: var(--duration-fast);
+    transition-timing-function: var(--ease-glide);
+  }
+
+  .palette-row[data-active="true"] {
+    background-color: var(--color-muted);
+    transition-duration: 0ms;
+  }
+
+  /* copy → check, on the icon-swap recipe: scale .6↔1 with 4px blur, spring. */
+  .palette-icon {
+    transition-property: opacity, transform, filter;
+    transition-duration: var(--duration-base);
+    transition-timing-function: var(--ease-spring);
+  }
+
+  .palette-icon[data-on="false"] {
+    opacity: 0;
+    transform: scale(0.6);
+    filter: blur(4px);
+  }
+
+  .palette-icon[data-on="true"] {
+    opacity: 1;
+    transform: scale(1);
+    filter: blur(0);
+  }
+
+  .palette-thumb {
+    transition-property: transform;
+    transition-duration: var(--duration-base);
+    transition-timing-function: var(--ease-glide);
+  }
+
+  /* Reduced motion: no travel, no blur, no stagger — a 150ms opacity crossfade
+     in place. The container's own FLIP is skipped in JS (duration 0), so the
+     panel simply is the panel. `!important` is not decoration here: section 8
+     collapses every transition on the page to 0.01ms, and this carve-out is
+     the ratified exception to it. */
+  @media (prefers-reduced-motion: reduce) {
+    .palette-keycap,
+    .palette-reveal,
+    .palette-group,
+    .palette-icon {
+      transition-duration: var(--duration-fast) !important;
+      transition-delay: 0ms !important;
+    }
+
+    .palette-reveal,
+    .palette-group,
+    .palette-icon {
+      transform: none !important;
+      filter: none !important;
+    }
+
+    .palette-thumb {
+      transition-duration: 0ms !important;
+    }
   }
 
   /* -- capability tooltip (timeline) ---------------------------------------- */

@@ -199,6 +199,18 @@ The system is mostly tonal and bordered, with shadow used sparingly to separate 
 - **Motion:** expansion uses width, height, opacity, blur, and translate. The blur is intentional here as a state transition, not as decorative glass.
 - **Focus:** use semantic focus rings and keep keyboard escape behavior.
 
+### Command Palette (⌘K Morph)
+
+Ratified in POR-32; behaviour law is `docs/design/popover-lab.html` demo 1, geometry law is Figma 13:2673.
+
+- **One Surface:** the identity chip IS the palette. It is not a chip that opens a panel; it is a container that grows from 171x42 into 382x621 and back. There is no scrim — the page stays visible, and clicking it dismisses.
+- **Zero Jump:** avatar, name, and keycap are measured once from the live flex layout and then frozen. They must not move by a pixel when the panel opens. The keycap is the one exception and it travels on x only, to the panel's right edge, crossfading ⌘K into `esc`.
+- **Radius:** static at 15 in both states. It never animates — chip and panel share the `lg` step.
+- **Timing:** 200ms in, 150ms out, both on `--ease-glide`, driven by a rAF lerp (`lib/morph.ts`) because the keycap has to ride the container's own clock. Content enters as groups: fade + 4px rise + 2px blur, `--stagger-group` (25ms) apart.
+- **Reduced Motion:** the container snaps; content crossfades over 150ms with no travel and no blur. This is the one documented exception to the blanket transition kill in globals.css section 8.
+- **Desktop Only:** gated on `(hover: hover) and (pointer: fine)`. On touch the component renders the static chip and attaches nothing; mobile ships its own menu.
+- **Sound:** the commit tick fires on Copy email and nowhere else. Never on open.
+
 ### Buttons
 
 - **shadcn Base:** use `Button` for standard actions and keep shadcn composition patterns.
