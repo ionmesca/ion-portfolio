@@ -62,13 +62,26 @@ function Spans({ spans }: { spans: LetterSpan[] }) {
  * Figma), `bg-muted`. The rect is decorative until there is a real image, so it
  * is hidden from the accessibility tree and the caption carries the meaning.
  */
-function Photo({ caption }: { caption: string }) {
+export function Photo({ caption }: { caption: string }) {
   return (
     <figure className="flex flex-1 flex-col gap-3">
       <div className="h-55 w-full rounded-xl bg-muted" aria-hidden="true" />
       <figcaption className="text-xs text-muted-foreground">{caption}</figcaption>
     </figure>
   )
+}
+
+/**
+ * A row of media slots — the frame's side-by-side photo pair, and the shape an
+ * MDX article reaches for. `Block`'s `photos` case renders exactly this; it is
+ * named and exported so the article pipeline can use the letter's slot rather
+ * than growing a second one that drifts from it.
+ *
+ * EXPORTED FOR ARTICLES (wave 1B). The letter's own rendering is unchanged —
+ * `Photo` simply stopped being module-private.
+ */
+export function PhotoRow({ children }: { children: React.ReactNode }) {
+  return <div className="flex gap-4">{children}</div>
 }
 
 function Block({ block }: { block: LetterBlock }) {

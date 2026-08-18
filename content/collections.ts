@@ -71,6 +71,13 @@ export type ArticleEntry = {
   title: string
   /** "Mar 2026" — the far-right caption, in the palette's shortcut position. */
   date: string
+  /**
+   * `/articles/<slug>`. REQUIRED, and internal by construction — an article row
+   * that cannot navigate is a dead row, and Ion ruled those out on 2026-08-18.
+   * The list is built from the files in `content/articles/` by
+   * `lib/articles.ts`, so a row exists only when the page it points at does.
+   */
+  href: string
   preview: Extract<CollectionPreview, { kind: "excerpt" }>
 }
 
@@ -367,97 +374,20 @@ export const agentsPage: CollectionPage<CollectionEntry> = {
 
 /* ----------------------------------------------------------------------------
    /articles — Figma 20:1363
-   ------------------------------------------------------------------------- */
 
-export const articlesPage: CollectionPage<ArticleEntry> = {
-  title: "Articles",
-  intro: "Notes from building things that ship.",
-  footnote: FOOTNOTE,
-  groups: [
-    {
-      id: "2026",
-      label: "2026",
-      items: [
-        {
-          id: "the-wheel-is-the-nav",
-          title: "The wheel is the nav",
-          date: "Mar 2026",
-          preview: {
-            kind: "excerpt",
-            excerpt:
-              "A list of links tells you where you can go. A wheel tells you where you are, which is the question people actually have.",
-            readTime: "6 min read",
-          },
-        },
-        {
-          id: "sound-in-interfaces-quietly",
-          title: "Sound in interfaces, quietly",
-          date: "Feb 2026",
-          // The one preview the frame draws open (20:1584) — verbatim.
-          preview: {
-            kind: "excerpt",
-            excerpt:
-              "A tick is not a sound effect. It is the smallest confirmation that the machine noticed you — nothing more.",
-            readTime: "4 min read",
-          },
-        },
-        {
-          id: "placeholder-is-a-feature",
-          title: "Placeholder is a feature",
-          date: "Jan 2026",
-          preview: {
-            kind: "excerpt",
-            excerpt:
-              "Real copy arrives last. Building the shape first, and saying out loud that it is a shape, is faster than pretending otherwise.",
-            readTime: "5 min read",
-          },
-        },
-      ],
-    },
-    {
-      id: "2025",
-      label: "2025",
-      items: [
-        {
-          id: "shipping-a-design-system-solo",
-          title: "Shipping a design system solo",
-          date: "Nov 2025",
-          preview: {
-            kind: "excerpt",
-            excerpt:
-              "One person cannot govern a system. One person can make every decision twice — once in Figma, once in the stylesheet — and keep the two honest.",
-            readTime: "8 min read",
-          },
-        },
-        {
-          id: "what-agents-actually-automate",
-          title: "What agents actually automate",
-          date: "Jun 2025",
-          preview: {
-            kind: "excerpt",
-            excerpt:
-              "Not the thinking. The fetching, the checking and the writing-down — which is most of the day, and none of the fun.",
-            readTime: "7 min read",
-          },
-        },
-      ],
-    },
-    {
-      id: "2024",
-      label: "2024",
-      items: [
-        {
-          id: "notes-on-a-first-design-system",
-          title: "Notes on a first design system",
-          date: "Nov 2024",
-          preview: {
-            kind: "excerpt",
-            excerpt:
-              "It was mostly wrong, and that was fine. The parts that survived were the parts somebody had to use on a deadline.",
-            readTime: "6 min read",
-          },
-        },
-      ],
-    },
-  ],
-}
+   THE ARTICLES LIST IS NOT HERE ANY MORE. It used to be a hand-written array
+   of nine titles copied off the frame, every one of them pointing at
+   `href="#"`, because there were no article pages to point at. Ion, 2026-08-18:
+   "the navigation is not really clear" — a row that does nothing is the worst
+   case of that.
+
+   The list is now DERIVED from `content/articles/*.mdx` by
+   `lib/articles.ts` (`getArticlesPage()`): one file, one row, one page it
+   navigates to, and the year groups fall out of the dates. A row cannot exist
+   without its article, and an article cannot exist without appearing here.
+
+   Three of the frame's titles survive as the placeholder articles, including
+   "Sound in interfaces, quietly" — the one whose excerpt the frame draws open
+   (20:1584), kept verbatim. The other six went with the dead rows; they come
+   back as files when Ion writes them.
+   ------------------------------------------------------------------------- */
