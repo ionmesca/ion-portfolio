@@ -1,4 +1,6 @@
 import { buttonVariants } from "@/components/ui/button"
+import { PressSpring } from "@/components/ui/press-spring"
+import { TextEffect } from "@/components/ui/text-effect"
 import { cn } from "@/lib/utils"
 import { ArrowUpRight } from "@/lib/icons"
 
@@ -26,46 +28,114 @@ import { SocialPreviews } from "./social-previews"
  * external-site preview (Demo 3) and becomes a real link to ledgy.com, and is
  * otherwise the same underlined word.
  *
- * The two blocks are the second and third groups of the first-load entrance
- * (intro-reveal.tsx). `Reveal` is a client wrapper, so the copy inside stays
- * server-rendered — and stays visible — whether or not React ever hydrates.
+ * ── THE HERO GROUP NO LONGER RISES; IT RESOLVES ────────────────────────────
+ *
+ * The headline and the positioning line used to be a `<Reveal group="hero">`
+ * wrapper doing a fade and a 4px rise, like every other group. Ion replaced
+ * that with motion-primitives' `TextEffect` blur variant: the text arrives
+ * out of `blur(10px)`, one unit at a time. So the wrapper is a plain `<div>`
+ * now — one entrance per group, and the text's own is richer than a rise.
+ * `TextEffect` still takes the hero GROUP, so it starts when the choreography
+ * says the hero starts; see components/ui/text-effect.tsx for the clock, the
+ * bundle reasoning, and why the headline splits per character while the line
+ * below it splits per word.
+ *
+ * `Reveal` (still used by the actions row) is a client wrapper, so the copy
+ * inside stays server-rendered — and stays visible — whether or not React ever
+ * hydrates. The same is true of `TextEffect`: its resting style is the settled
+ * text.
  */
+
+/** The positioning line, split per word by `TextEffect`. Written out here as
+ *  one string because it IS one sentence — the trailing space before the Ledgy
+ *  link is part of it, and losing it would run "at" into "Ledgy". */
+const POSITIONING =
+  "Curious generalist at heart, building AI native software and fintech systems at "
 
 export function Intro() {
   return (
     <div className="flex flex-col gap-6">
-      <Reveal group="hero" className="flex flex-col pl-1">
-        <h1 className="text-lg text-foreground">Software Designer</h1>
+      <div className="flex flex-col pl-1">
+        {/* Per CHARACTER, and safe to be: a heading's role accepts a name, so
+            `aria-label` restates the string for assistive tech and the split
+            spans are hidden from it. */}
+        <TextEffect
+          as="h1"
+          group="hero"
+          text="Software Designer"
+          className="text-lg text-foreground"
+        />
+
         {/* 255px is the measured wrap width from Figma (259 hug − 4 indent).
-            It is what breaks the line after "heart," and after "and". */}
-        <p className="w-[255px] text-lg text-muted-foreground">
-          Curious generalist at heart, building AI native software and fintech
-          systems at <LedgyMention />
-        </p>
-      </Reveal>
+            It is what breaks the line after "heart," and after "and". The
+            per-word split keeps that break: the spaces stay in normal flow as
+            plain text nodes, so the line box is measured exactly as it was
+            before the text was split at all. */}
+        <TextEffect
+          as="p"
+          per="word"
+          group="hero"
+          // Half a stagger unit behind the headline (`--stagger-group`), so the
+          // heading leads its own sub-line instead of racing it.
+          offset={25}
+          text={POSITIONING}
+          className="w-[255px] text-lg text-muted-foreground"
+        >
+          <LedgyMention />
+        </TextEffect>
+      </div>
 
       <Reveal group="actions" className="flex items-center gap-4 pl-1">
         {/* `buttonVariants` on a plain anchor rather than `<Button asChild>`:
             Button attaches an onClick for its inert/aria-disabled guard, and a
             function prop cannot cross a Server Component boundary — asChild
             here fails the prerender. The variants carry the whole look and the
-            press/hover motion, so the anchor is visually identical and this
-            block stays a Server Component.
+            hover motion, so the anchor is visually identical and this block
+            stays a Server Component.
+
+            `PressSpring` wraps it without changing that. It renders no element
+            of its own (it is a `Slot`), and what crosses the boundary is this
+            element as a description, not as a rendered node. It brings the
+            press and release onto the real spring; `btn-spring` is what takes
+            `scale` off the primitive's transition list so the two clocks do
+            not fight. `active:scale-[0.97]` stays underneath as the no-JS
+            press. See components/ui/press-spring.tsx.
+
+            `group` is for the arrow's orbit, below.
 
             The 70% on the glyph is Figma's, not the Button primitive's —
             measured off the reference export (#7e7976 = stone-400 at 70% over
             stone-900). Flagged in the report as a system question. */}
-        <a
-          href="https://cal.com/"
-          target="_blank"
-          rel="noreferrer noopener"
-          data-slot="button"
-          data-variant="primary"
-          className={cn(buttonVariants(), "[&_svg]:opacity-70")}
-        >
-          Book a call
-          <ArrowUpRight />
-        </a>
+        <PressSpring>
+          <a
+            href="https://cal.com/"
+            target="_blank"
+            rel="noreferrer noopener"
+            data-slot="button"
+            data-variant="primary"
+            className={cn(
+              buttonVariants(),
+              "group btn-spring [&_svg]:opacity-70"
+            )}
+          >
+            Book a call
+            {/* THE ORBIT (Amicro btn-32, retimed and rethemed — see
+                `.btn-orbit` in globals.css section 6). Two copies of the same
+                arrow in a 16px box that clips: on hover the leading one exits
+                along the direction it points, up and to the right, and the
+                trailing one arrives from the opposite corner. At rest the
+                trailing copy sits a full box outside the clip, so it paints
+                nothing and the button is pixel-identical to what it was.
+
+                Both copies are decorative and neither is announced: lucide
+                marks its icons `aria-hidden`, and the accessible name of this
+                link is its text. */}
+            <span className="btn-orbit size-4 shrink-0">
+              <ArrowUpRight data-orbit="lead" />
+              <ArrowUpRight data-orbit="trail" />
+            </span>
+          </a>
+        </PressSpring>
 
         <SocialPreviews className="flex items-center gap-4" />
       </Reveal>
