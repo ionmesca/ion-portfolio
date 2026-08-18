@@ -399,7 +399,16 @@ export function CommandPalette() {
   }, [closePalette, openPalette])
 
   /* --- copy email ----------------------------------------------------------
-     A commit action: the one place in the palette that earns Sound A. */
+     A commit action: the one place in the palette that earns Sound A, and the
+     one place catalog ruling #4's text swap is adopted. The row's icon becomes
+     a check and its label becomes "Copied" for the same 1.5s window.
+
+     ⌘⇧C works with the palette CLOSED, where there is no surface to show any
+     of that — the tick alone is the feedback. RULING: the `copied` state is
+     still set, and its clock starts at the copy, so reopening inside the
+     window shows the Copied state mid-flight and it reverts on the original
+     schedule. It is true (you did just copy) and it needs no extra state to
+     suppress. A second copy restarts the 1.5s. */
   const copyTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const copyEmail = React.useCallback(async () => {
@@ -822,9 +831,36 @@ function Row({
       ) : (
         <Icon className="size-4 shrink-0 text-muted-foreground" />
       )}
-      <span className="min-w-0 flex-1 truncate text-sm text-foreground">
-        {item.label}
-      </span>
+      {item.action === "copy-email" ? (
+        /* Text states swap, per catalog ruling #4 — the "Copied" state is the
+           one place the pattern is adopted. Re-cut as a STACKED crossfade,
+           exactly as motion-lab.html re-cut it: the original recipe animates
+           the element's width, and a label that resizes mid-swap is a layout
+           shift inside a fixed-width row. "Copy email" stays in flow and owns
+           the box; "Copied" rides on top of it and never touches the layout. */
+        <span className="relative min-w-0 flex-1 text-sm text-foreground">
+          <span
+            data-on={!copied}
+            data-dir="out"
+            aria-hidden={copied}
+            className="palette-label block truncate"
+          >
+            {item.label}
+          </span>
+          <span
+            data-on={copied}
+            data-dir="in"
+            aria-hidden={!copied}
+            className="palette-label absolute inset-0 block truncate"
+          >
+            Copied
+          </span>
+        </span>
+      ) : (
+        <span className="min-w-0 flex-1 truncate text-sm text-foreground">
+          {item.label}
+        </span>
+      )}
       {item.shortcut && (
         <span className="text-small shrink-0 text-muted-foreground">
           {item.shortcut}

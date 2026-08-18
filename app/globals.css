@@ -587,6 +587,34 @@
     filter: blur(0);
   }
 
+  /* The row LABEL swaps with the icon — catalog ruling #4, "Copied" state
+     only. Blurred up-and-down: the resting label leaves upward, the new one
+     arrives from below, both in a box the resting label owns. */
+  .palette-label {
+    transition-property: opacity, transform, filter;
+    transition-duration: var(--duration-fast);
+    transition-timing-function: var(--ease-glide);
+  }
+
+  .palette-label[data-on="true"] {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+
+  .palette-label[data-on="false"] {
+    opacity: 0;
+    filter: blur(var(--blur-garnish));
+  }
+
+  .palette-label[data-on="false"][data-dir="out"] {
+    transform: translateY(-4px);
+  }
+
+  .palette-label[data-on="false"][data-dir="in"] {
+    transform: translateY(4px);
+  }
+
   .palette-thumb {
     transition-property: transform;
     transition-duration: var(--duration-base);
@@ -602,14 +630,16 @@
     .palette-keycap,
     .palette-reveal,
     .palette-group,
-    .palette-icon {
+    .palette-icon,
+    .palette-label {
       transition-duration: var(--duration-fast) !important;
       transition-delay: 0ms !important;
     }
 
     .palette-reveal,
     .palette-group,
-    .palette-icon {
+    .palette-icon,
+    .palette-label {
       transform: none !important;
       filter: none !important;
     }
