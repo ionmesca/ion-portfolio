@@ -204,6 +204,32 @@ export const SWAP_TRAVEL = 6
 export const SWAP_BLUR = 2
 
 /**
+ * ms. How long the OUTGOING half of a sequential label swap owns the box.
+ *
+ * Ion ruled on 2026-08-18 (round 3) that the mobile indicator's label must be a
+ * STRICT swap — the old name leaves, and only then does the new one arrive —
+ * rather than the direction-aware crossfade that had both moving at once. A
+ * strict swap needs a hand-off instant, and a spring does not have a duration
+ * to offer one, so the number is DERIVED FROM THE SPRING rather than picked.
+ *
+ * It is when `SPRING_CELL` has covered 95% of its travel. Integrated with
+ * `createSpring`'s own solver (semi-implicit Euler, 1/240 sub-step), the shelf's
+ * two families arrive like this:
+ *
+ *   fraction of travel   0.5   0.8   0.9  0.95  0.99
+ *   SPRING_CELL           50   100   133   171   254   ms
+ *   SPRING_CROSSFADE     100   200   271   342   508   ms
+ *
+ * 95% is the threshold and not 99% because this is an EXIT: the lane being
+ * watched is opacity, and the last 5% of a fade is the difference between
+ * invisible and invisible. Waiting for 254ms would buy nothing but a pause.
+ *
+ * 170, not 171: the rounding is under a frame at 60Hz and a round number
+ * survives being read out loud.
+ */
+export const SWAP_EXIT_MS = 170
+
+/**
  * ms. When an entrance's animation classes are dropped.
  *
  * THE CLASS-DROP RULE (rule 4, components/landing/intro-reveal.tsx). An

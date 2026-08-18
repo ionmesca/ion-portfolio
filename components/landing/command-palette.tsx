@@ -143,14 +143,47 @@ const CLOSE_MS = D_SLOW
 const OPTION_DOM_ID = (id: string) => `palette-option-${id}`
 
 /**
- * Every row, in ring order.
+ * Each group, split into the rows it draws full width and the icons it
+ * collapses into one compact row at its end.
  *
- * A module constant now, not a memo. It was derived from a filtered copy of
- * the groups; with the search row gone the list is a fact about the file that
- * imports it and can never change at runtime, which also retires the effect
- * that used to keep the selection pointing at something that still existed.
+ * Module constants, not memos. With the search row gone the lists are facts
+ * about the file that imports them and can never change at runtime, which is
+ * also what retired the effect that used to keep the selection pointing at
+ * something that still existed.
  */
-const OPTIONS = PALETTE_GROUPS.flatMap((group) => group.items)
+const LAYOUT = PALETTE_GROUPS.map((group) => ({
+  group,
+  rows: group.items.filter((item) => !group.compact?.includes(item.id)),
+  icons: group.compact
+    ? group.compact.flatMap((id) => group.items.filter((i) => i.id === id))
+    : [],
+}))
+
+/** Every option, flat, for id → item lookups. Ring order. */
+const OPTIONS = LAYOUT.flatMap(({ rows, icons }) => [...rows, ...icons])
+
+/**
+ * THE ↑/↓ RING IS A RING OF STOPS, NOT OF OPTIONS (Ion, round 3).
+ *
+ * Every stop is one option, except the social row, which is one stop holding
+ * three. ↑/↓ walk the stops; ←/→ walk inside one. That is the standard
+ * two-dimensional composite: the vertical axis is the menu, the horizontal axis
+ * is whatever the current line happens to hold, and a reader who never presses
+ * ← still passes every destination exactly once.
+ *
+ * Ten options, eight stops.
+ */
+const STOPS: string[][] = LAYOUT.flatMap(({ rows, icons }) => [
+  ...rows.map((item) => [item.id]),
+  ...(icons.length ? [icons.map((item) => item.id)] : []),
+])
+
+/** Which stop an option sits in. −1 for an id that is not in the ring. */
+const stopOf = (id: string | null) =>
+  id === null ? -1 : STOPS.findIndex((stop) => stop.includes(id))
+
+/** The ids in the compact row, in visual order. Empty if there is no row. */
+const ICON_IDS = STOPS.find((stop) => stop.length > 1) ?? []
 
 type ChipRect = { w: number; h: number }
 
@@ -197,6 +230,26 @@ export function CommandPalette() {
   const [activeId, setActiveId] = React.useState<string | null>(
     OPTIONS[0]?.id ?? null
   )
+
+  /**
+   * WHICH ICON THE COMPACT ROW IS PARKED ON — the roving tabindex's "one".
+   *
+   * A composite widget keeps exactly one of its members reachable by Tab, and
+   * remembers which one it was on the last time you were in it. That is what
+   * this holds, and it does two jobs with one number: it is the icon that
+   * carries `tabIndex={0}`, and it is the icon ↓ lands on when the selection
+   * walks into the row from the option above.
+   *
+   * State and not a ref, because the render reads it — the roving tabindex has
+   * to be correct in the markup, not applied afterwards.
+   */
+  const [iconId, setIconId] = React.useState<string | null>(ICON_IDS[0] ?? null)
+
+  /** Select an option, and remember it if it lives in the compact row. */
+  const select = React.useCallback((id: string) => {
+    setActiveId(id)
+    if (ICON_IDS.includes(id)) setIconId(id)
+  }, [])
 
   /* --- desktop gate -------------------------------------------------------
      None of this exists on mobile — zero shortcuts there, and the mobile phase
@@ -614,17 +667,54 @@ export function CommandPalette() {
 
   /* --- listbox navigation --------------------------------------------------- */
 
-  const moveActive = React.useCallback(
+  const reveal = React.useCallback((id: string) => {
+    listRef.current
+      ?.querySelector(`#${CSS.escape(OPTION_DOM_ID(id))}`)
+      ?.scrollIntoView({ block: "nearest" })
+  }, [])
+
+  /** ↑/↓ — one STOP at a time. Walking into the compact row lands on whichever
+   *  icon it was parked on, which is the roving tabindex's memory. */
+  const moveStop = React.useCallback(
     (delta: number) => {
-      const at = OPTIONS.findIndex((o) => o.id === activeId)
-      const next = (at + delta + OPTIONS.length) % OPTIONS.length
-      const id = OPTIONS[next].id
-      setActiveId(id)
-      listRef.current
-        ?.querySelector(`#${CSS.escape(OPTION_DOM_ID(id))}`)
-        ?.scrollIntoView({ block: "nearest" })
+      const at = stopOf(activeId)
+      const next = (at + delta + STOPS.length) % STOPS.length
+      const stop = STOPS[next]
+      const id =
+        stop.length > 1 && iconId && stop.includes(iconId) ? iconId : stop[0]
+      select(id)
+      reveal(id)
     },
-    [activeId]
+    [activeId, iconId, reveal, select]
+  )
+
+  /**
+   * ←/→ — one option at a time INSIDE the current stop.
+   *
+   * Returns the id it moved to, or NULL when the stop holds a single option —
+   * which is the caller's signal to leave the key alone: on every ordinary row
+   * ← and → still belong to the browser, and inside the Preferences group they
+   * belong to the theme segment's own ring. It returns the id rather than a
+   * boolean because the caller may have to move DOM focus to it, and the
+   * `activeId` in its own closure is still the previous render's.
+   *
+   * It does NOT wrap. A three-icon row is short enough to see in full, so
+   * wrapping would only ever surprise someone who pressed → once too often;
+   * stopping at the end is how a toolbar behaves.
+   */
+  const moveWithinStop = React.useCallback(
+    (delta: number): string | null => {
+      const at = stopOf(activeId)
+      const stop = at < 0 ? null : STOPS[at]
+      if (!stop || stop.length < 2 || !activeId) return null
+      const i = stop.indexOf(activeId)
+      const next = Math.min(Math.max(i + delta, 0), stop.length - 1)
+      const id = stop[next]
+      select(id)
+      reveal(id)
+      return id
+    },
+    [activeId, reveal, select]
   )
 
   /**
@@ -662,7 +752,42 @@ export function CommandPalette() {
     // the list even while the segment holds focus.
     if (e.key === "ArrowDown" || e.key === "ArrowUp") {
       e.preventDefault()
-      moveActive(e.key === "ArrowDown" ? 1 : -1)
+      moveStop(e.key === "ArrowDown" ? 1 : -1)
+      return
+    }
+
+    /* ←/→ move INSIDE the compact icon row.
+
+       THE GUARD IS ABOUT WHO HAS FOCUS, and it is the only guard: the branch
+       runs for the LISTBOX and for the icons, and for nothing else, so the
+       theme segment keeps its own left/right ring intact.
+
+       IT SWALLOWS THE KEY EVEN WHEN THERE IS NOWHERE TO GO. On an ordinary row
+       ←/→ mean nothing, and the browser's default for them on a focused element
+       is to SCROLL its nearest scrollable ancestor — which here is the palette
+       surface, a box that is `overflow: hidden` only so it can clip the morph
+       and whose scroll offset lib/morph.ts pins at 0 on every frame. Letting
+       the default through sets up exactly the fight `pinScroll` was written to
+       prevent, and it wedged the renderer hard enough to hang a headless run.
+       A listbox that swallows ↑/↓ and lets ←/→ scroll its own clip box was
+       never consistent anyway. */
+    if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
+      const el = e.target as HTMLElement | null
+      const fromRing =
+        el === listRef.current ||
+        (el instanceof HTMLElement && ICON_IDS.includes(el.dataset.option ?? ""))
+      if (!fromRing) return
+      e.preventDefault()
+      const moved = moveWithinStop(e.key === "ArrowRight" ? 1 : -1)
+      if (!moved) return
+      // Focus follows the roving tabindex only when focus was already IN the
+      // row. From the listbox the selection is virtual and DOM focus must not
+      // move — that is the whole aria-activedescendant contract.
+      if (el !== listRef.current) {
+        document
+          .getElementById(OPTION_DOM_ID(moved))
+          ?.focus({ preventScroll: true })
+      }
       return
     }
 
@@ -749,7 +874,14 @@ export function CommandPalette() {
           // `popover` and `card` resolve to the same value in both themes, so
           // the chip's fill and the panel's fill are one colour and there is
           // nothing to crossfade.
-          "bg-card shadow-subtle"
+          //
+          // NO `shadow-subtle` HERE — the elevation lane is owned end to end by
+          // `.palette-surface` in globals.css. A Tailwind shadow utility emits
+          // four empty `rgba(0,0,0,0) 0 0 0 0` slots ahead of the real layers,
+          // and this surface's other two elevation states are hand-written
+          // five-layer values, so the two could never interpolate against each
+          // other. See the elevation block in section 6 for the whole story.
+          "bg-card"
         )}
       >
         {/* the chip's own row — measured once, then frozen where it landed */}
@@ -830,7 +962,7 @@ export function CommandPalette() {
               tabIndex={open ? 0 : -1}
               className="outline-none"
             >
-              {PALETTE_GROUPS.map((group) => (
+              {LAYOUT.map(({ group, rows, icons }) => (
                 /* No caption row, but still a GROUP: `aria-label` carries what
                    the deleted text row carried, so a screen reader still hears
                    "Navigate" without a sighted reader being told what five
@@ -842,16 +974,45 @@ export function CommandPalette() {
                   aria-label={group.label}
                   className="palette-group px-2 py-2"
                 >
-                  {group.items.map((item) => (
+                  {rows.map((item) => (
                     <Row
                       key={item.id}
                       item={item}
                       active={item.id === activeId}
                       copied={copied}
-                      onPointerEnter={() => setActiveId(item.id)}
+                      onPointerEnter={() => select(item.id)}
                       onClick={() => onRowClick(item)}
                     />
                   ))}
+
+                  {icons.length > 0 && (
+                    /* THE COMPACT ICON ROW (Ion, round 3).
+                       `role="presentation"` because this box is layout and
+                       nothing else: it must not come between the group and the
+                       options it owns in the accessibility tree, which is the
+                       one thing a bare <div> inside a listbox would do. The
+                       three anchors stay `role="option"`, exactly as they were
+                       when they had a row each — so the ↑/↓ ring, Enter, and
+                       every screen reader announcement are unchanged. Only the
+                       geometry moved. */
+                    <div
+                      role="presentation"
+                      className="flex h-10 items-center gap-1"
+                    >
+                      {icons.map((item) => (
+                        <IconTarget
+                          key={item.id}
+                          item={item}
+                          active={item.id === activeId}
+                          roving={item.id === iconId}
+                          open={open}
+                          onPointerEnter={() => select(item.id)}
+                          onFocus={() => select(item.id)}
+                          onClick={() => onRowClick(item)}
+                        />
+                      ))}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -889,6 +1050,94 @@ export function CommandPalette() {
 /* ============================================================================
    Pieces
    ========================================================================== */
+
+/**
+ * One target in the compact icon row.
+ *
+ * IT IS STILL AN OPTION. Everything that made the three socials work as rows —
+ * `role="option"`, the `palette-option-*` id the listbox points
+ * `aria-activedescendant` at, the `data-active` fill, Enter committing through
+ * a synthetic `.click()` — is unchanged. What changed is that three 366x32 rows
+ * carrying one glyph and one short word became three 32x32 glyphs on one 40px
+ * line, which is 96px of ink instead of 96px of row plus 1000px of empty.
+ *
+ * THE NAME IS NOT LOST. The label that used to be visible text is now
+ * `aria-label`, so the accessible name is the same string it always was and a
+ * screen reader still hears "GitHub, link". A sighted reader gets the mark,
+ * which is what a brand glyph is for.
+ *
+ * ALIGNMENT IS NOT A COINCIDENCE. A 32px target with a 16px glyph centred puts
+ * that glyph's centre 16px from the target's left edge; a full-width row puts
+ * its icon's centre at `pl-2` (8) + half of 16 = 16 from ITS left edge. Both
+ * boxes start at the group's `px-2`, so the first social sits in exactly the
+ * same icon column as Home, Letter and Book a call. The row reads as the last
+ * line of the same list rather than as a widget bolted underneath it.
+ *
+ * 40 TALL, NOT 32. It is the height the Preferences theme row already uses, and
+ * for the same reason: a line that holds controls rather than text needs the
+ * air. `size-8` targets centred in it leave 4px above and below, which is what
+ * keeps three adjacent hover fills from reading as one bar.
+ *
+ * ROVING TABINDEX. Exactly one of the three is a tab stop at any moment — the
+ * one the row is parked on. That is what makes Tab treat the row as a single
+ * destination instead of three, and it is why `iconId` is state rather than
+ * something derived at the last moment.
+ */
+function IconTarget({
+  item,
+  active,
+  roving,
+  open,
+  onPointerEnter,
+  onFocus,
+  onClick,
+}: {
+  item: PaletteItem
+  active: boolean
+  /** True for the one target that currently carries the tab stop. */
+  roving: boolean
+  open: boolean
+  onPointerEnter: () => void
+  onFocus: () => void
+  onClick: () => void
+}) {
+  const Icon = item.icon
+
+  return (
+    <a
+      id={OPTION_DOM_ID(item.id)}
+      role="option"
+      aria-selected={active}
+      aria-label={item.label}
+      data-active={active}
+      // `data-option` is what the surface's ←/→ handler reads to know the key
+      // came from inside the row. A dataset lookup rather than a class or an id
+      // prefix, because it is a fact about the element's ROLE in the ring and
+      // should not be inferred from how it is styled or named.
+      data-option={item.id}
+      // Exactly what `Row` does for an external item, and deliberately no more:
+      // no `target="_blank"`. Whether the palette's outbound links should open
+      // a tab is a question about all of them — Book a call included — and
+      // answering it for three of them here would just make the panel
+      // inconsistent with itself. Flagged in the round-3 report.
+      href={item.external ?? "#"}
+      // Roving: one tab stop for the whole row, and none of them while the
+      // panel is shut (the face is `inert` then, but the Tab ring is computed
+      // from `tabIndex` and must agree with it).
+      tabIndex={open && roving ? 0 : -1}
+      onPointerEnter={onPointerEnter}
+      onFocus={onFocus}
+      onClick={onClick}
+      className={cn(
+        "palette-row grid size-8 shrink-0 place-items-center rounded-md",
+        "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground",
+        "[&_svg]:[stroke-width:1.5]"
+      )}
+    >
+      <Icon className="size-4 text-muted-foreground" />
+    </a>
+  )
+}
 
 function Row({
   item,

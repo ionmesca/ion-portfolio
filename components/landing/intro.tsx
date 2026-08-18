@@ -52,6 +52,11 @@ import { SocialPreviews } from "./social-previews"
 const POSITIONING =
   "Curious generalist at heart, building AI native software and fintech systems at "
 
+/** The headline. A constant because the sub-line QUEUES BEHIND IT and is handed
+ *  this exact string to measure — see `after` in components/ui/text-effect.tsx.
+ *  Editing the copy in one place moves the hand-off with it. */
+const HEADLINE = "Software Designer"
+
 export function Intro() {
   return (
     <div className="flex flex-col gap-6">
@@ -62,7 +67,7 @@ export function Intro() {
         <TextEffect
           as="h1"
           group="hero"
-          text="Software Designer"
+          text={HEADLINE}
           className="text-lg text-foreground"
         />
 
@@ -75,9 +80,12 @@ export function Intro() {
           as="p"
           per="word"
           group="hero"
-          // Half a stagger unit behind the headline (`--stagger-group`), so the
-          // heading leads its own sub-line instead of racing it.
-          offset={25}
+          // STACKED, not offset (Ion, round 3). It used to start 25ms behind the
+          // headline — four characters on a 10ms step, which is two sweeps at
+          // once. `after` queues this line behind the headline's LAST unit, so
+          // the eye follows one sweep that runs to the end of the first line and
+          // then starts the second. The string, not a number: see text-effect.tsx.
+          after={{ text: HEADLINE }}
           text={POSITIONING}
           className="w-[255px] text-lg text-muted-foreground"
         >

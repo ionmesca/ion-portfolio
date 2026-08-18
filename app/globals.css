@@ -439,6 +439,23 @@
    from the semantic roles above; there is no private alias layer any more.
    ========================================================================== */
 
+/* The ⌘K surface's elevation SIZE, registered so it can be transitioned.
+
+   An unregistered custom property is an untyped token string, and CSS will not
+   interpolate one — a transition on it cuts. `@property` gives it the `<length>`
+   type, which is what lets the closed chip's hover EASE back out instead of
+   snapping. See the `.palette-surface` elevation block below for why the whole
+   lane is expressed as one scalar in the first place.
+
+   Top level and not inside `@layer utilities`: `@property` is not a style rule,
+   it takes no part in the cascade, and putting it in a layer only makes a
+   reader wonder whether it does. */
+@property --elev-s {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 4px;
+}
+
 @layer utilities {
   /* -- ⌘K morph palette ------------------------------------------------------
      The identity chip IS the palette. `components/landing/command-palette.tsx`
@@ -453,10 +470,113 @@
      nothing), and the reduced-motion carve-out at the bottom has to out-rank
      the blanket `*` rule in section 8, which a variant cannot do. */
 
+  /* -- the elevation lane, on the morph's own clock -------------------------
+     ROUND 3, Ion 2026-08-18: "after the palette morphs closed a dark shadow
+     flashes for a beat once it settles." Two defects, both in this lane, both
+     gone by construction.
+
+     DEFECT 1 — THE LAYER COUNTS DID NOT MATCH, so the shadow never actually
+     interpolated between two elevation steps. The resting value came from the
+     Tailwind utility `shadow-subtle` in the component's className, and Tailwind
+     4 composes every shadow utility as five slots —
+     `inset-shadow, inset-ring, ring-offset, ring, <the shadow>` — so it emits
+     NINE layers: four `rgba(0,0,0,0) 0 0 0 0` no-ops followed by the five real
+     ones. The open and hover values were hand-written `var(--shadow-overlay)` /
+     `var(--shadow-raised)`, which are FIVE. CSS pads the shorter list with
+     transparent shadows and interpolates POSITIONALLY, so a close ran:
+
+       position 1     overlay's `0 2px 2px` drop  ->  transparent
+       position 5     overlay's 1px HAIRLINE RING ->  subtle's `0 .5px .5px` drop
+       positions 6-9  transparent                 ->  subtle's four real layers
+
+     The chip's crisp 1px edge ring was being cross-faded into a blurred drop
+     shadow while a SECOND ring grew in at position 9, and for the whole 150ms
+     the element carried a partial copy of both stacks — more ink than either
+     end. In dark mode it is worse: position 5 interpolates the WHITE 18% ring
+     into a BLACK 4% shadow, so the chip's edge inverts to dark and back. That
+     is the dark artifact, and it fired on every state change of this surface.
+
+     Measured, not reasoned: `getComputedStyle` on the resting chip returns nine
+     layers, on the open panel five. mk-verify's own SHADOW check has been
+     stripping those four no-ops since round 2 to compare the ends — the
+     mismatch was known at rest and never connected to the motion between.
+
+     DEFECT 2 — IT WAS THE LAST LANE ON ITS OWN CLOCK. Every other lane on this
+     surface rides `--morph-p`, the container's own 0->1 channel, for the reason
+     stated all over this file: one clock, so the lanes cannot desynchronise
+     from each other or from an interruption. The elevation ran a 150ms CSS
+     transition against a 400ms box. On close it was fully back to Subtle by
+     165ms with 250ms of shrink still to go; on open the box wore a full Overlay
+     before it was half grown. The elevation was never the elevation of the box
+     actually on screen.
+
+     THE FIX IS THE RATIFIED GENERATOR, EVALUATED AT p. The four elevation steps
+     are not four values, they are one formula at four points (see section 2):
+
+       y     = 0.125 / 0.375 / 0.75 / 1.25  x s
+       blur  = 0.125 / 0.25  / 0.375 / 0.5  x s
+       alpha = i / 0.75i / 0.5i / 0.25i
+
+       Subtle   s 4   i 4%
+       Raised   s 8   i 4%
+       Overlay  s 16  i 5%
+
+     So Subtle -> Overlay is a straight line in (s, i), and the surface's
+     elevation is that line sampled at the container's own p. NOTHING IS
+     INVENTED HERE and no token moved: at p = 0 this evaluates layer for layer
+     to `--elevation-subtle`, at p = 1 to `--elevation-overlay`, and the probe
+     `SHADOW: the resting chip wears exactly shadow-subtle` still compares it
+     against a `var(--shadow-subtle)` reference element and still passes.
+
+     Five layers at every value of p, so there is no interpolation to get wrong;
+     no transition on `box-shadow` at all, so there is no second clock. The
+     shadow is now a function of the box, which is what it always claimed to be.
+
+     `shadow-subtle` came OFF the className to make this true — the utility was
+     the only thing putting the four Tailwind no-ops on the box. The resting
+     elevation is stated here instead, next to the two states it has to agree
+     with, which is where it should have been all along. */
   .palette-surface {
-    transition-property: box-shadow;
+    --elev-s: calc(4px + 12px * var(--morph-p, 0));
+    --elev-i: calc(0.04 + 0.01 * var(--morph-p, 0));
+    /* The hairline ring is the one layer the generator does not scale — it is
+       constant across all four steps (section 2: "The ring is CONSTANT, not
+       intensity-scaled"). Spelled here rather than read off a token because the
+       four `--elevation-*` values keep it inline and factoring it out would
+       edit ratified values to serve this block. */
+    --elev-ring: rgb(0 0 0 / 0.05);
+    box-shadow:
+      0 calc(0.125 * var(--elev-s)) calc(0.125 * var(--elev-s)) 0
+        rgb(0 0 0 / calc(1 * var(--elev-i))),
+      0 calc(0.375 * var(--elev-s)) calc(0.25 * var(--elev-s)) 0
+        rgb(0 0 0 / calc(0.75 * var(--elev-i))),
+      0 calc(0.75 * var(--elev-s)) calc(0.375 * var(--elev-s)) 0
+        rgb(0 0 0 / calc(0.5 * var(--elev-i))),
+      0 calc(1.25 * var(--elev-s)) calc(0.5 * var(--elev-s)) 0
+        rgb(0 0 0 / calc(0.25 * var(--elev-i))),
+      0 0 0 1px var(--elev-ring);
+    /* The ONLY thing that transitions is the hover step, and only while the
+       box is still. `--elev-s` is a registered `<length>` (top of this section)
+       so it interpolates instead of cutting. */
+    transition-property: --elev-s;
     transition-duration: var(--duration-fast);
     transition-timing-function: var(--ease-glide);
+  }
+
+  /* Dark keeps the same four black layers and flips only the ring to white 18%
+     — exactly what the `--elevation-*` dark block does, one line instead of
+     four repeated values. */
+  .dark .palette-surface {
+    --elev-ring: rgb(255 255 255 / 0.18);
+  }
+
+  /* WHILE THE BOX IS MOVING THERE IS NO TRANSITION AT ALL. `--elev-s` is a
+     function of `--morph-p`, which lib/morph.ts rewrites every frame; a
+     transition on top of a per-frame write is a second clock chasing the
+     first — the same rule `.icon-swap` and `.hover-pop-inner` state for their
+     own channels. */
+  .palette-surface[data-morphing="true"] {
+    transition-property: none;
   }
 
   /* will-change for the duration of the morph and NOT one frame longer. The
@@ -470,15 +590,21 @@
   }
 
   /* Hover on the closed chip is elevation and nothing else — no preview, no
-     opening. Snaps in, eases out, like every other hover in the system. */
+     opening. Snaps in, eases out, like every other hover in the system.
+
+     RAISED IS s 8, i 4% — the same intensity as Subtle, only bigger — so the
+     hover is one scalar moving and the four layers stay layer-for-layer with
+     the resting value. That is the whole point of expressing the lane this way:
+     a hover that used to swap a five-layer list onto a nine-layer one now moves
+     a single length. */
   .palette-surface[data-open="false"]:hover {
-    box-shadow: var(--shadow-raised);
+    --elev-s: 8px;
     transition-duration: 0ms;
   }
 
-  .palette-surface[data-open="true"] {
-    box-shadow: var(--shadow-overlay);
-  }
+  /* The open panel needs NO rule of its own any more. `--morph-p` is 1 when the
+     container has arrived, so `--elev-s` is already 16px and `--elev-i` 5% —
+     Overlay, reached by growing rather than by being told. */
 
   /* ⌘K and esc share one travelling cell and crossfade in place. Their travel
      is the cell's, not their own — the one pair whose individual movement
@@ -961,8 +1087,30 @@
 
   /* -- text effect — the hero resolving out of blur --------------------------
      Ion's reference is motion-primitives' `TextEffect`, blur-per-character
-     preset: each unit starts at `blur(10px)` with `brightness(0)` and zero
-     opacity and resolves to clear, one `--text-effect-step` after the last.
+     preset: each unit starts at `blur(10px)` with zero opacity and resolves to
+     clear, one `--text-effect-step` after the last.
+
+     THE COLOUR NEVER CHANGES (Ion, round 3, 2026-08-18). The preset's `from`
+     also carried `brightness(0)`, which forces every unit to BLACK and then
+     lifts it to its real colour over the 400ms. Ion sees that lift: "the
+     characters start black then shift to their real colour", worst on the
+     muted sub-line, where the travel is from #000 all the way up to
+     `muted-foreground` and the eye reads it as the text changing colour rather
+     than as the text arriving.
+
+     It was never load-bearing. `brightness` was in the preset because the
+     preset was written against a dark background, where lifting out of black
+     reads as a fade. On a light surface it reads as a recolour. The entrance is
+     BLUR AND OPACITY ONLY now, and the rule is stated so it does not creep
+     back: a unit's colour at every instant of this animation is the colour it
+     rests at. Only its sharpness and its presence move.
+
+     THE TWO LINES ARE STACKED (same ruling). The sub-line's stagger begins one
+     step after the headline's last unit begins, so the hero reads as one sweep
+     running to the end of the first line and then starting the second. The
+     hand-off is arithmetic in text-effect.tsx — the `--intro-delay` this rule
+     reads already carries it — because only the component knows how many units
+     the line above it cut.
 
      IT IS CSS, NOT MOTION. `TextEffect` imports `motion/react`. CLAUDE.md's
      bundle ruling allows ~3KB gz on `/` and the measured cost of putting
@@ -994,7 +1142,7 @@
      measured rather than reasoned:
 
        - During a `forwards` fill Chrome does not compute this to the literal
-         `none`; it retains the identity list `blur(0px) brightness(1)`.
+         `none`; it retains the identity list `blur(0px)`.
        - That identity list renders text BYTE-IDENTICALLY to no filter. Two
          clones of this headline, one filtered and one not: 0 of 10800
          subpixels differed by more than 2, max delta 1, mean luminance equal
@@ -1007,7 +1155,7 @@
   @keyframes text-effect {
     from {
       opacity: 0;
-      filter: blur(10px) brightness(0);
+      filter: blur(10px);
     }
     to {
       opacity: 1;

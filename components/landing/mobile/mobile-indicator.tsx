@@ -9,6 +9,7 @@ import {
   SPRING_CELL,
   SPRING_CROSSFADE,
   SWAP_BLUR,
+  SWAP_EXIT_MS,
   SWAP_TRAVEL,
 } from "@/lib/motion"
 import type { Project } from "@/lib/projects"
@@ -54,6 +55,52 @@ import { INDICATOR_H, TOPBAR_H } from "./use-mobile-scroll"
    movement at all. 6px is docs/design/mobile-lab.html's own number, which the
    CSS port had deviated from — the spring hands it back. The 2px garnish blur
    survives unchanged.
+
+   ── ROUND 3 (Ion, 2026-08-18): THE LABEL IS A STRICT SWAP ─────────────────
+
+   "I prefer a strict text swap." The name line was a SIMULTANEOUS crossfade —
+   the outgoing name and the incoming name moved at the same instant, one up and
+   one from below, and at the midpoint the box held two half-faded names 12px
+   apart. Now it is the three-phase recipe: THE OLD NAME LEAVES, and only then
+   does the new one arrive.
+
+   ONLY THE NAME LINE. The counter and the meter are untouched — they are the
+   readout, they report where you are, and a readout that waits for an animation
+   before telling you the truth is a broken readout.
+
+   THE DIRECTION WAS ALREADY RIGHT and did not have to be rewritten. It falls
+   out of POSITION, not out of a scroll-direction flag: lines above the active
+   one rest at −TRAVEL and lines below rest at +TRAVEL, so scrolling FORWARD
+   makes the outgoing line the one above (it leaves upward) and the incoming
+   line the one below (it arrives from below), and scrolling BACK reverses both
+   without a single conditional. Sequencing it changed when the two halves run,
+   not which way they point.
+
+   THE HAND-OFF IS A DELAY, NOT A CALLBACK. The incoming line's transition
+   carries `delay: SWAP_EXIT_MS`; nothing waits on an `onAnimationComplete` and
+   there is no phase state machine. That matters for interruption, which is the
+   whole reason this bar is on springs at all: crossing two project boundaries
+   in one flick just retargets both lines mid-flight, exactly as before. A state
+   machine would have had to decide what a half-finished exit means.
+
+   THE TWO HALVES TAKE THE TWO FAMILIES, AND THAT IS NOT A SHORTCUT. A strict
+   swap is only affordable if the first phase is quick: on `SPRING_CROSSFADE`
+   the exit alone is 342ms to 95%, so an exit-then-enter would put the new name
+   684ms behind the boundary and it would still be swapping when the next one
+   arrived. So:
+
+     EXIT   SPRING_CELL       the departure is a READOUT. "That project is
+                              behind you" is the same fact the meter and the
+                              counter report, and it leaves on their clock.
+     ENTER  SPRING_CROSSFADE  the arrival is CONTENT, unchanged, still the
+                              slower family, still landing a beat after the
+                              readout — which is the split this bar was built
+                              around.
+
+   That EXTENDS the carousel's readout/content split rather than collapsing it:
+   the split was always about the JOB, and a label on its way out is doing the
+   readout's job. FLAGGED in the round-3 report as a taste call — it is the one
+   place a single element's motion is split across two families.
    ========================================================================== */
 
 /** The digit is one character wide and moves less than the name line does. */
@@ -112,8 +159,21 @@ export function MobileIndicator({
   // Under reduced motion the meter tracks scroll exactly — no spring at all.
   const scaleX = reduced ? progress : sprung
 
-  const swap = reduced ? REDUCED_CROSSFADE : SPRING_CROSSFADE
   const snap = reduced ? REDUCED_CROSSFADE : SPRING_CELL
+
+  /* THE NAME LINE'S TWO HALVES. `on` is the line arriving; everything else is
+     either leaving or already gone. See the header for why they take different
+     families and why the hand-off is a delay.
+
+     Under reduced motion there is NO sequence: the ratified carve-out is a
+     150ms opacity crossfade in place, and stretching that into two 150ms phases
+     would be 300ms of a reader waiting for nothing. Same transition, no delay,
+     both ways. */
+  const labelSwap = (on: boolean) => {
+    if (reduced) return REDUCED_CROSSFADE
+    if (!on) return SPRING_CELL
+    return { ...SPRING_CROSSFADE, delay: SWAP_EXIT_MS / 1000 }
+  }
 
   return (
     <MotionProvider>
@@ -130,7 +190,10 @@ export function MobileIndicator({
             active one leave upward, lines below arrive from below — which is
             direction-aware in both scroll directions without reading the scroll
             direction, because scrolling back makes the outgoing line the one
-            BELOW the active index and it leaves downward on its own. */}
+            BELOW the active index and it leaves downward on its own.
+
+            STRICT SWAP (round 3): the line turning OFF starts immediately, the
+            line turning ON is delayed behind it. See `labelSwap` above. */}
         <div className="relative h-[21px] min-w-0 flex-1">
           {projects.map((project, i) => (
             <m.span
@@ -140,7 +203,7 @@ export function MobileIndicator({
               aria-hidden={i !== index}
               initial={false}
               animate={labelState(i === index, i < index, reduced)}
-              transition={swap}
+              transition={labelSwap(i === index)}
               className="absolute inset-0 flex items-center gap-2 whitespace-nowrap"
             >
               <ProjectIcon mark={project.mark} size={20} />

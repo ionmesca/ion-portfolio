@@ -71,14 +71,56 @@ const AFFORDANCE = cn(
   "group-data-[active=true]:text-foreground"
 )
 
-const ROW = cn(
+/* The shape and the fill, shared by both flavours. */
+const ROW_BOX = cn(
   "group flex h-12 items-center gap-3 rounded-md px-3",
+  "hover:bg-muted data-[active=true]:bg-muted",
+  "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
+)
+
+/**
+ * A row that does NOT navigate — the install flavour, whose only click target
+ * is the chip inside it. Colour only, exactly as before.
+ */
+const ROW = cn(
+  ROW_BOX,
   "[transition-property:background-color]",
   "[transition-duration:var(--duration-fast)]",
   "[transition-timing-function:var(--motion-glide)]",
-  "hover:bg-muted hover:[transition-duration:0ms]",
-  "data-[active=true]:bg-muted data-[active=true]:[transition-duration:0ms]",
-  "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
+  "hover:[transition-duration:0ms]",
+  "data-[active=true]:[transition-duration:0ms]"
+)
+
+/**
+ * A row that GOES SOMEWHERE, and now says so when it is pressed (Ion, round 3,
+ * 2026-08-18 — "collection rows get a subtle press acknowledgment matching the
+ * buttons").
+ *
+ * It is the Button's own press, not a new one: scale 0.97, `--motion-spring`,
+ * `--duration-fast`, both directions. And it is the Button's own refinement of
+ * it — the duration is a list matched 1:1 to the property list, so HOVER snaps
+ * the colour lane to 0ms while `scale` keeps its spring. Zeroing every lane on
+ * hover, which is what this row used to do with one duration, would kill the
+ * RELEASE: the pointer is still over the row when the finger comes up.
+ *
+ * `scale`, not `transform`: `active:scale-[0.97]` compiles to the standalone
+ * `scale` property in Tailwind 4, so a `transform` lane would transition
+ * nothing and the press would jump.
+ *
+ * THE INSTALL ROW DOES NOT GET THIS, deliberately. `:active` reaches an
+ * element and all of its ancestors, so pressing the install chip — a Button,
+ * which presses itself — would scale the chip inside a row that was scaling
+ * too, and 0.97 twice is 0.94. The row also does not navigate, so a press on
+ * it is not an action being acknowledged; there is nothing to acknowledge.
+ */
+const ROW_PRESS = cn(
+  ROW_BOX,
+  "[transition-property:scale,background-color]",
+  "[transition-duration:var(--duration-fast)]",
+  "[transition-timing-function:var(--motion-spring),var(--motion-glide)]",
+  "hover:[transition-duration:var(--duration-fast),0ms]",
+  "data-[active=true]:[transition-duration:var(--duration-fast),0ms]",
+  "active:scale-[0.97]"
 )
 
 /**
@@ -160,7 +202,7 @@ export function CollectionRow({
       target="_blank"
       rel="noreferrer"
       data-active={active}
-      className={ROW}
+      className={ROW_PRESS}
       {...handlers}
     >
       {inner}
@@ -205,7 +247,7 @@ export function ArticleRow({
       ref={attach}
       href={entry.href}
       data-active={active}
-      className={ROW}
+      className={ROW_PRESS}
       {...handlers}
     >
       <span className="text-subhead min-w-0 flex-1 truncate text-foreground">
