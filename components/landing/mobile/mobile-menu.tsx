@@ -16,6 +16,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet"
 import { Check, Copy, ICON_STROKE, Menu, Search, Sun } from "@/lib/icons"
+import { useCopyToClipboard } from "@/lib/use-copy"
 import { cn } from "@/lib/utils"
 
 import {
@@ -59,16 +60,17 @@ const SHEET_TOP_GAP = 76
 export function MobileMenu() {
   const [open, setOpen] = React.useState(false)
   const [query, setQuery] = React.useState("")
-  const [copied, setCopied] = React.useState(false)
+  const { copied, copy } = useCopyToClipboard()
   const { theme, pickTheme } = useTheme()
   const pathname = usePathname()
 
   // A fresh sheet every time: the search box should not remember the last
-  // visit's query, and "Copied" should not still be showing.
+  // visit's query. "Copied" is NOT reset here — it belongs to
+  // `useCopyToClipboard`, whose ratified ruling is that the 1.5s clock starts
+  // at the copy itself and runs out on its own schedule.
   React.useEffect(() => {
     if (open) return
     setQuery("")
-    setCopied(false)
   }, [open])
 
   const groups = React.useMemo(() => {
@@ -85,17 +87,11 @@ export function MobileMenu() {
     return !q || "theme preferences".includes(q)
   }, [query])
 
+  // One clock, one fallback, one sound rule — lib/use-copy.ts, exactly as the
+  // collection pages' install chip consumes it. A failed write shows nothing.
   const copyEmail = React.useCallback(() => {
-    const done = () => {
-      setCopied(true)
-      window.setTimeout(() => setCopied(false), 1600)
-    }
-    try {
-      navigator.clipboard.writeText(CONTACT_EMAIL).then(done, done)
-    } catch {
-      done()
-    }
-  }, [])
+    void copy(CONTACT_EMAIL)
+  }, [copy])
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -123,7 +119,7 @@ export function MobileMenu() {
         style={{ maxHeight: `calc(100svh - ${SHEET_TOP_GAP}px)` }}
         className="gap-0 pb-[max(24px,env(safe-area-inset-bottom))]"
       >
-        <SheetGrabber />
+        <SheetGrabber onClick={() => setOpen(false)} />
         <SheetTitle className="sr-only">Menu</SheetTitle>
         <SheetDescription className="sr-only">
           Navigate the site, copy contact details, and set the theme.
@@ -253,12 +249,12 @@ function MenuRow({
         <span className="relative size-4 shrink-0">
           <Copy
             data-on={!copied}
-            className="palette-icon absolute inset-0 size-4 text-muted-foreground"
+            className="icon-swap absolute inset-0 size-4 text-muted-foreground"
             strokeWidth={ICON_STROKE}
           />
           <Check
             data-on={copied}
-            className="palette-icon absolute inset-0 size-4 text-muted-foreground"
+            className="icon-swap absolute inset-0 size-4 text-muted-foreground"
             strokeWidth={ICON_STROKE}
           />
         </span>
@@ -272,7 +268,7 @@ function MenuRow({
             data-on={!copied}
             data-dir="out"
             aria-hidden={copied}
-            className="palette-label block truncate"
+            className="label-swap block truncate"
           >
             {item.label}
           </span>
@@ -280,7 +276,7 @@ function MenuRow({
             data-on={copied}
             data-dir="in"
             aria-hidden={!copied}
-            className="palette-label absolute inset-0 block truncate"
+            className="label-swap absolute inset-0 block truncate"
           >
             Copied
           </span>
@@ -308,14 +304,12 @@ function MenuRow({
     )
   }
 
+  // No `data-active` here: `selected` is `item.href === pathname` and an
+  // external row has no `href`, so the attribute was always false.
   if (item.external !== undefined) {
     return (
       <SheetClose asChild>
-        <a
-          href={item.external}
-          data-active={selected}
-          className={className}
-        >
+        <a href={item.external} className={className}>
           {inner}
         </a>
       </SheetClose>

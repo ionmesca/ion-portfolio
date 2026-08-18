@@ -187,7 +187,7 @@ export function MobileLanding({ projects }: { projects: Project[] }) {
    must never move the cards it is describing (mobile-lab.html made the same
    call). At rest it is absent — that is the design, not a missing state.
 
-   The name/year line uses the system's own text-swap recipe (`.palette-label`,
+   The name/year line uses the system's own text-swap recipe (`.label-swap`,
    catalog ruling #4): every project's line is mounted, and which one is `on`
    is what changes, so the crossfade needs no mount/unmount bookkeeping. Lines
    above the active one leave upward, lines below arrive from below, in both
@@ -211,7 +211,6 @@ function Indicator({
     <div
       data-slot="mobile-indicator"
       data-on={revealed}
-      aria-live="polite"
       className="mobile-indicator fixed inset-x-0 z-20 flex items-center gap-2 bg-background px-4"
       style={{ top: TOPBAR_H, height: INDICATOR_H }}
     >
@@ -222,7 +221,7 @@ function Indicator({
             data-on={i === index}
             data-dir={i < index ? "out" : "in"}
             aria-hidden={i !== index}
-            className="palette-label absolute inset-0 flex items-center gap-2 whitespace-nowrap"
+            className="label-swap absolute inset-0 flex items-center gap-2 whitespace-nowrap"
           >
             <ProjectIcon mark={project.mark} size={20} />
             <span className="text-subhead text-foreground">{project.name}</span>
@@ -233,7 +232,14 @@ function Indicator({
         ))}
       </div>
 
-      <span className="shrink-0 text-xs text-muted-foreground tabular-nums">
+      {/* The live region is the COUNTER alone. Every project's name line is
+          mounted at once (that is what makes the crossfade cheap), so putting
+          `aria-live` on the bar would read the whole stack out on every
+          change; "3 / 5" is the one honest announcement. */}
+      <span
+        aria-live="polite"
+        className="shrink-0 text-xs text-muted-foreground tabular-nums"
+      >
         {index + 1} / {projects.length}
       </span>
 

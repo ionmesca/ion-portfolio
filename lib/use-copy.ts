@@ -72,8 +72,14 @@ export function useCopyToClipboard(): CopyState {
 }
 
 /** execCommand is deprecated, not gone — and it is the only copy path that
- *  works without a secure context or a clipboard permission. */
+ *  works without a secure context or a clipboard permission.
+ *
+ *  `select()` moves focus to the throwaway textarea, and removing that
+ *  textarea leaves focus on `<body>`. The caller is a button the reader just
+ *  pressed, so the focus ring — and the keyboard's place on the page — must
+ *  come back to where it was. Captured before the swap, restored after. */
 function legacyCopy(text: string): boolean {
+  const previous = document.activeElement
   try {
     const area = document.createElement("textarea")
     area.value = text
@@ -87,5 +93,7 @@ function legacyCopy(text: string): boolean {
     return ok
   } catch {
     return false
+  } finally {
+    if (previous instanceof HTMLElement) previous.focus({ preventScroll: true })
   }
 }

@@ -182,17 +182,34 @@ function SheetDescription({
  * physical affordance rather than a semantic surface, and no role in the
  * contract sits between `border` (too faint at 4px) and `muted-foreground`
  * (too loud). The dark counterpart is its mirror on the ramp.
+ *
+ * It is a BUTTON, not a decoration: a handle that looks draggable and does
+ * nothing is a broken affordance, so a tap closes the sheet. The `before`
+ * pseudo element grows the hit area to the full 24px strip without moving a
+ * pixel of the handle, the same trick the mobile menu trigger uses.
+ *
+ * DEFERRED: drag-to-dismiss. Tap-to-close is the shipped behaviour; the
+ * rubber-banding drag gesture is a later ticket.
  */
-function SheetGrabber({ className, ...props }: React.ComponentProps<"div">) {
+function SheetGrabber({
+  className,
+  ...props
+}: React.ComponentProps<"button">) {
   return (
-    <div
+    <button
+      type="button"
       data-slot="sheet-grabber"
-      aria-hidden="true"
-      className={cn("flex shrink-0 justify-center pt-2", className)}
+      aria-label="Close menu"
+      className={cn(
+        "relative flex shrink-0 justify-center bg-transparent p-0 pt-2",
+        "before:absolute before:inset-x-0 before:-top-1 before:bottom-[-10px] before:content-['']",
+        "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground",
+        className
+      )}
       {...props}
     >
       <span className="h-1 w-8 rounded-full bg-stone-300 dark:bg-stone-600" />
-    </div>
+    </button>
   )
 }
 

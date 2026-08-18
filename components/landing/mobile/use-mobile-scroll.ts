@@ -81,8 +81,10 @@ export function useMobileScroll({
     let tops: number[] = []
     let maxScroll = 0
     let ticking = false
+    let raf = 0
     let lastScroll = -1
     let attached = false
+    let cancelled = false
 
     const cards = () =>
       Array.from(
@@ -143,8 +145,9 @@ export function useMobileScroll({
     const onScroll = () => {
       if (ticking) return
       ticking = true
-      requestAnimationFrame(() => {
+      raf = requestAnimationFrame(() => {
         ticking = false
+        raf = 0
         step()
       })
     }
@@ -155,8 +158,11 @@ export function useMobileScroll({
     }
 
     // The card stack's own size changes (webfont settling, an art asset
-    // landing) move every top under it, so watch the list itself as well as
-    // the window.
+    // landing) move every top under it — but so does anything ABOVE it, and
+    // the hero above it is the part that reflows when Aeonik lands. Watching
+    // the list alone measured a 2.3% meter drift and a stuck "1 / 5" that only
+    // a resize event healed, so the observed element is `document.body`: the
+    // one box whose height covers the hero, the list, and the footer at once.
     const observer =
       typeof ResizeObserver === "undefined" ? null : new ResizeObserver(onResize)
 
@@ -167,7 +173,18 @@ export function useMobileScroll({
       step()
       window.addEventListener("scroll", onScroll, { passive: true })
       window.addEventListener("resize", onResize)
-      if (listRef.current) observer?.observe(listRef.current)
+      observer?.observe(document.body)
+
+      // `display: swap` paints the fallback first. Its metrics are close, not
+      // equal, so every card top measured before Aeonik lands is a card top
+      // measured in the wrong font — the same re-measure the palette
+      // (command-palette.tsx) and the preview engine (preview-popover.tsx)
+      // already take.
+      document.fonts?.ready.then(() => {
+        if (cancelled || !attached) return
+        measure()
+        step()
+      })
     }
 
     const detach = () => {
@@ -176,6 +193,12 @@ export function useMobileScroll({
       window.removeEventListener("scroll", onScroll)
       window.removeEventListener("resize", onResize)
       observer?.disconnect()
+      // A frame is already booked when the last scroll event and the detach
+      // land together. Left alone it runs against a torn-down controller and
+      // leaves `ticking` true, which deafens the hook on the next attach.
+      if (raf) cancelAnimationFrame(raf)
+      raf = 0
+      ticking = false
       setState((prev) => (prev.revealed ? { ...prev, revealed: false } : prev))
     }
 
@@ -188,6 +211,7 @@ export function useMobileScroll({
     mq?.addEventListener("change", sync)
 
     return () => {
+      cancelled = true
       mq?.removeEventListener("change", sync)
       detach()
     }
