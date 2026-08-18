@@ -412,6 +412,10 @@ export function useMorphPreview<K extends string>({
    * instead of turning around.
    */
   const innerSpringRef = React.useRef<SpringDriver | null>(null)
+  /** Declared up here, above `attachInner`, because the ref callback reads it:
+   *  a surface can be re-attached while it is open, and the new driver has to
+   *  know which state to snap to. */
+  const openRef = React.useRef(false)
 
   const attachInner = React.useCallback((el: HTMLDivElement | null) => {
     innerRef.current = el
@@ -422,11 +426,19 @@ export function useMorphPreview<K extends string>({
       el.style.setProperty(POP_CHANNEL, String(p))
     })
     innerSpringRef.current = driver
-    // Snapped closed, never sprung: a card must not animate into existence on
-    // mount. It also writes `--pop-p` in the commit before the first paint, so
-    // the surface is invisible from frame one rather than relying on the CSS
-    // fallback for a frame.
-    driver.snap(0)
+    // Snapped, never sprung: a card must not animate into existence. It also
+    // writes `--pop-p` in the commit before the first paint, so the surface is
+    // invisible from frame one rather than relying on the CSS fallback.
+    //
+    // SNAPPED TO THE CURRENT STATE, not to zero. A surface can be re-attached
+    // while it is OPEN — the landing's entrance teardown drops its animation
+    // classes ~700ms after arrival, and that re-creates the subtree a portalled
+    // preview lives in. Snapping to zero there would leave an open card
+    // permanently invisible: `show()` has already aimed the old driver at 1,
+    // and the new one would sit at 0 with nothing left to tell it otherwise.
+    // Measured in the headless probe before this line said `openRef`: the
+    // Ledgy card opened, reported `data-open="true"`, and never faded in.
+    driver.snap(openRef.current ? 1 : 0)
   }, [])
 
   React.useEffect(() => () => innerSpringRef.current?.stop(), [])
@@ -435,7 +447,6 @@ export function useMorphPreview<K extends string>({
   const [shown, setShown] = React.useState<K | null>(null)
 
   const morphRef = React.useRef<Morph | null>(null)
-  const openRef = React.useRef(false)
   const keyRef = React.useRef<K | null>(null)
   const belowRef = React.useRef(true)
   /** The intent/grace clock. Shared with the ⌘K palette since 2026-08-18 —

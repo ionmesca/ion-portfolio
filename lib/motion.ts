@@ -89,37 +89,56 @@ export const SPRING_PRESS = SPRING_CELL
 /**
  * The hover-preview card's entrance and exit spring.
  *
- * IT IS `SPRING_CROSSFADE`, NOT A NEW FAMILY, and — like `SPRING_PRESS` above
- * — the alias is the record of the decision rather than a shortcut.
+ * IT IS `SPRING_CELL`, NOT A NEW FAMILY, and — like `SPRING_PRESS` above — the
+ * alias is the record of the decision rather than a shortcut.
  *
  * Ion ruled on 2026-08-18 that the preview family's INNER SURFACE moves onto
- * the spring shelf. The surface animates scale and opacity together (0.98 → 1
- * plus a 4px rise plus a fade). That is exactly the channel interior.dev puts
- * on CROSSFADE — "its slide scale/opacity", the CONTENT half of the carousel's
- * two-part split, as opposed to the READOUT half CELL drives. A preview card
- * is content: it is the thing being shown, not the control reporting a state.
- * So it takes the content family, unchanged.
+ * the spring shelf, so that crossing a row of icons fast turns the card around
+ * instead of restarting it. The ruling was about the INTERRUPTION. It was not a
+ * licence to make the card slower, and that is what decided which family.
  *
- *   ω      = √(k/m)     = √(260 / 0.8)  = 18.0 rad/s
- *   c_crit = 2√(km)     = 2√(260 × 0.8) = 28.8
- *   ζ      = c / c_crit = 34 / 28.8     = 1.18
+ * WHY NOT CROSSFADE, WHICH IS THE OBVIOUS READING. The surface animates scale
+ * and opacity together, and CROSSFADE is interior.dev's constant for exactly
+ * that — "its slide scale/opacity". It was built and measured first. On this
+ * build, headless, `--pop-p` reached 0.99 at:
  *
- * ζ above 1 is overdamped: the card never overshoots its resting size, which
- * matters because this surface carries readable text and a logo. A card that
- * grew past 100% and settled back would read as a wobble.
+ *   SPRING_CROSSFADE  260/34/0.8   ζ = 1.18    516ms   (0.49 at 100ms)
+ *   SPRING_CELL       520/34/0.45  ζ = 1.11    258ms   (0.80 at 100ms)
  *
- * WHAT THE SPRING BUYS OVER THE 200ms GLIDE IT REPLACES is the same thing it
- * bought the button press: the interruption. Crossing a row of social icons
- * fast — enter, leave, enter — used to restart the CSS curve from a standstill
- * on each reversal, so the card stuttered rather than turned around. The
- * integrator below never resets velocity on `set`, so the surface carries its
- * speed through every reversal.
+ * The entrance it replaces is a 200ms glide, and 200ms is `--duration-base` on
+ * the ratified ladder. CELL is at 97% by 200ms — the same card, arriving when
+ * it always did. CROSSFADE is at 80% there and does not finish until past
+ * 500ms, which is off the ladder entirely and is felt hardest on precisely
+ * this surface: a hover preview is a thing you wait for.
+ *
+ * SO THE MAPPING IS THE READOUT ONE, and it is honest rather than convenient.
+ * The carousel splits its motion into a READOUT that snaps and CONTENT that
+ * settles. A preview card looks like content — it has text and a logo in it —
+ * but its JOB is a readout: it answers "what is this link" and gets out of the
+ * way. That is the same job the pill indicator does, and the same argument
+ * `SPRING_PRESS` already makes for the button.
+ *
+ *   ω      = √(k/m)     = √(520 / 0.45)  = 34.0 rad/s
+ *   c_crit = 2√(km)     = 2√(520 × 0.45) = 30.6
+ *   ζ      = c / c_crit = 34 / 30.6      = 1.11
+ *
+ * ζ above 1 is overdamped: the card never overshoots its resting size. That
+ * matters here more than it does on a button — this surface carries readable
+ * text and a logo, and a card that grew past 100% and settled back would read
+ * as a wobble.
+ *
+ * WHAT THE SPRING BUYS OVER THE GLIDE is the reversal. A CSS transition
+ * restarts its curve when the target changes, so enter-leave-enter used to
+ * begin again from a standstill and stutter. `createSpring` never resets
+ * velocity on `set`, and the surface spends the first frame after a turn
+ * killing its outward speed rather than leaping back — measured in
+ * scratchpad/pop-verify2.mjs, which asserts exactly that signature.
  *
  * ONLY THE SURFACE. The container's anchor-to-anchor rect morph stays on
  * `lib/morph-preview.ts` / `lib/morph.ts` exactly as ratified — CLAUDE.md
  * keeps that system vanilla, and this ruling did not touch it.
  */
-export const SPRING_POP = SPRING_CROSSFADE
+export const SPRING_POP = SPRING_CELL
 
 /** The channel `.hover-pop-inner` reads. Same trick as `--swap-p` and the
  *  morph's `--morph-p`: one JS-owned 0→1 number, every visual lane derived
