@@ -342,9 +342,9 @@ to arrive with raw values (`bg-black/50`, hardcoded durations, `border-t`);
 |---|---|---|
 | `/` | `app/page.tsx` | Landing. Desktop rail + media column; mobile tree below `lg`. |
 | `/about` | `app/about/page.tsx` | The letter. Route and nav label are About; the prose is still a letter. |
-| `/stack` | `app/stack/page.tsx` | Collection flavour 1 — tools, site previews. |
-| `/agents` | `app/agents/page.tsx` | Collection flavour 2 — adds credit line, "How I use it", install chip. |
-| `/writing` | `app/writing/page.tsx` | Collection flavour 3 — iconless rows, wheel of years. |
+| `/stack` | `app/stack/page.tsx` | Collection flavour 1 — tools, screenshot previews, three-line blurb. |
+| `/agents` | `app/agents/page.tsx` | Collection flavour 2 — credit line, shared tool-preview face, install chip. |
+| `/writing` | `app/writing/page.tsx` | Collection flavour 3 — iconless rows, date swaps to →, wheel of years without visible year ears. |
 | `/writing/[slug]` | `app/writing/[slug]/page.tsx` | Article detail. The letter's chassis with one word changed. |
 | `/dev` | `app/dev/page.tsx` | **Dev-only specimen. `noindex`, unlinked, delete before cutover.** |
 
@@ -411,11 +411,12 @@ perceive — but keeps its 200px of rail column so the geometry cannot move.
 ### Row signatures
 
 - **Collection row** — h48, radius `md`, pad-x 12, gap 12. Icon 20 (raw r6),
-  name at `text-subhead`, one-liner at `text-base` muted and **truncating**,
-  ↗ 16 muted at the far right. One line per item is a rule: a collection row
-  never wraps and never grows. Everything else lives in the preview.
-- **Article row** — the iconless flavour: title + date, grouped by year, with an
-  excerpt-card preview.
+  name at `text-subhead`, one-liner at `text-base` muted and **truncating**.
+  ↗ 16 is hover and focus-visible only (snap in, 150ms out), and the same glyph
+  sits on the preview card. Install chips stay visible: they are the action.
+- **Article row** — the iconless flavour: title + date (`Mar 12`), no year
+  heading on the list (the wheel still has the year). On hover the date slot
+  swaps to →. Excerpt-card preview, three lines clamped.
 - **Install chip** — pad 4/8, gap 6, `muted` fill, 1px `border`, `rounded-sm`.
   On Ion's own skills only.
 - **Project row (landing)** — 24px mark at a raw concentric r8; the year renders
@@ -432,14 +433,15 @@ to go. The corridor is `INTENT` in / `GRACE` out; placement respects `GAP` and
 
 ### Content
 
-`content/letter.ts`, `content/collections.ts`, `lib/projects.ts` are
-**placeholder copy transcribed verbatim from the Figma frames.** Do not
-"improve" it — Ion curates the real lists after the build. `content/articles/
-*.mdx` is live: one file per slug, three frontmatter fields (`title`, quoted
-`date`, `summary`), indexed at build time by `lib/articles.ts` and rendered
-through `mdx-components.tsx` onto the letter's prose steps. `next.config.ts`
-wires `@next/mdx` with `remark-frontmatter` only; articles are *imported*, not
-routes, so `pageExtensions` is deliberately not extended.
+`content/letter.ts` and `lib/projects.ts` are still placeholder copy from the
+Figma frames. `content/collections.ts` Stack is the curated tool list (Ion,
+2026-08-19); Agents & skills still carries the frame's skill rows on the shared
+tool-preview face. `content/articles/*.mdx` is live: one file per slug, three
+frontmatter fields (`title`, quoted `date`, `summary`), indexed at build time by
+`lib/articles.ts` and rendered through `mdx-components.tsx` onto the letter's
+prose steps. `next.config.ts` wires `@next/mdx` with `remark-frontmatter` only;
+articles are *imported*, not routes, so `pageExtensions` is deliberately not
+extended.
 
 `content/work/*.mdx` is pre-rebuild case-study content with **no route and no
 importer**. Treat it as historical until a `/work` surface is ruled.

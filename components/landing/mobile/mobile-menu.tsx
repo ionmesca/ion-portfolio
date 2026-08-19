@@ -1,7 +1,6 @@
 "use client"
 
 import * as React from "react"
-import Image from "next/image"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 
@@ -16,7 +15,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet"
-import { Check, Copy, ICON_STROKE, Menu, Sun } from "@/lib/icons"
+import { AtSign, Check, Copy, ICON_STROKE, Menu, Sun } from "@/lib/icons"
 import { useCopyToClipboard } from "@/lib/use-copy"
 import { cn } from "@/lib/utils"
 
@@ -25,6 +24,7 @@ import {
   PALETTE_GROUPS,
   type PaletteItem,
 } from "../palette-items"
+import { SocialsSegment } from "../socials-segment"
 import { ThemeSegment, useTheme } from "../theme-segment"
 
 /* ============================================================================
@@ -47,6 +47,9 @@ import { ThemeSegment, useTheme } from "../theme-segment"
    - The current route's row is `Selected` (Figma shows Home selected). On
      touch there is no hover to carry the highlight, so "where I am" is the
      only honest use of that state.
+   - No identity header. The top bar already carries the avatar and name;
+     repeating them in the sheet (Ion, 2026-08-19) was leftover desktop
+     anatomy. Socials sit in the same muted track as Theme, not as rows.
 
    THE LEAN SHEET (Ion, 2026-08-18) — the desktop palette's cuts, applied here
    the same day and for the same reasons. "We forgot to clean up the menu on
@@ -62,11 +65,9 @@ import { ThemeSegment, useTheme } from "../theme-segment"
        screen reader, still visual clusters.
      · there was never a footer hint bar here to remove.
 
-   THE SEAM is the desktop panel's, transposed: Navigate and Actions are
-   separated by rhythm — 8 + 8 of padding against 0 between rows inside a
-   cluster — and Preferences by the 1px full-bleed rule, because it holds a
-   control rather than a command. The header keeps its own rule, which the
-   deleted search row used to carry.
+   THE SEAM is the desktop panel's: a 1px rule divides Actions from Navigate,
+   and another divides the command list from the control block (Socials +
+   Theme).
    ========================================================================== */
 
 /** Figma 20:693: the sheet stops 76px below the top of the screen. */
@@ -122,56 +123,51 @@ export function MobileMenu() {
           Navigate the site, copy contact details, and set the theme.
         </SheetDescription>
 
-        {/* header — the desktop palette's header anatomy at touch scale. The
-            rule under it used to belong to the search row; it moved here when
-            the search row was cut, so the header still reads as a header. */}
-        <div className="flex shrink-0 items-center gap-3 border-b border-border p-4">
-          <Image
-            src="/ion-avatar.png"
-            alt=""
-            width={24}
-            height={24}
-            className="size-6 rounded-[9px] object-cover"
-          />
-          <div className="flex min-w-0 flex-col">
-            <span className="text-subhead text-foreground">Ion Mesca</span>
-            <span className="flex items-center gap-1.5">
-              <span className="size-1.5 rounded-full bg-status-available" />
-              <span className="text-xs text-muted-foreground">
-                Available from October
-              </span>
-            </span>
-          </div>
-        </div>
-
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
-          {PALETTE_GROUPS.map((group) => (
-            /* No caption row, but still a GROUP: `aria-label` carries what the
-               deleted text row carried. `py-2` on every cluster is the seam —
-               8 + 8 against 0 between rows inside one. */
-            <div
-              key={group.id}
-              role="group"
-              aria-label={group.label}
-              className="px-2 py-2"
-            >
-              {group.items.map((item) => (
-                <MenuRow
-                  key={item.id}
-                  item={item}
-                  copied={copied}
-                  selected={item.href === pathname}
-                  onCopy={copyEmail}
+          {PALETTE_GROUPS.map((group, i) => (
+            <React.Fragment key={group.id}>
+              {i > 0 ? (
+                <span
+                  aria-hidden="true"
+                  className="block h-px w-full bg-border"
                 />
-              ))}
-            </div>
+              ) : null}
+              <div
+                role="group"
+                aria-label={group.label}
+                className="px-2 py-2"
+              >
+                {group.items.map((item) => (
+                  <MenuRow
+                    key={item.id}
+                    item={item}
+                    copied={copied}
+                    selected={item.href === pathname}
+                    onCopy={copyEmail}
+                  />
+                ))}
+              </div>
+            </React.Fragment>
           ))}
 
-          {/* The one rule inside the body. Preferences holds a control, not a
-              command — the same seam ruling as the desktop panel. */}
+          {/* The one rule inside the body. Socials and Theme are controls,
+              not commands — the same seam ruling as the desktop panel. */}
           <span aria-hidden="true" className="block h-px w-full bg-border" />
 
-          <div role="group" aria-label="Preferences" className="px-2 py-2">
+          <div role="group" aria-label="Socials" className="px-2 pt-2">
+            <div className="flex h-11 items-center gap-2 rounded-md pr-3 pl-2">
+              <AtSign
+                className="size-4 shrink-0 text-muted-foreground"
+                strokeWidth={ICON_STROKE}
+              />
+              <span className="min-w-0 flex-1 truncate text-sm text-foreground">
+                Socials
+              </span>
+              <SocialsSegment />
+            </div>
+          </div>
+
+          <div role="group" aria-label="Preferences" className="px-2 pb-2">
             <div className="flex h-11 items-center gap-2 rounded-md pr-3 pl-2">
               <Sun
                 className="size-4 shrink-0 text-muted-foreground"

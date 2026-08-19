@@ -737,16 +737,6 @@
     opacity: clamp(0, (var(--morph-p, 0) - 0.25) * 2, 1);
   }
 
-  /* The availability line is the one exception, and the keycap is the reason.
-     ⌘K/esc travel from the chip's right edge to the panel's, which takes them
-     straight across this text; before this window they were legible on top of
-     each other for ~50ms. So it writes itself in only once the cell has
-     arrived — last thing in, which is also where a piece of new information
-     belongs. */
-  .palette-availability {
-    opacity: clamp(0, (var(--morph-p, 0) - 0.88) * 8.4, 1);
-  }
-
   /* One highlight, not two: pointing at a row makes it the selection, so the
      hover state and the active state are the same state. */
   .palette-row {
@@ -841,7 +831,6 @@
     .palette-keycap,
     .palette-reveal,
     .palette-group,
-    .palette-availability,
     .icon-swap,
     .label-swap {
       transition-property: opacity, filter !important;
@@ -851,7 +840,6 @@
 
     .palette-reveal,
     .palette-group,
-    .palette-availability,
     .icon-swap,
     .label-swap {
       transform: none !important;
@@ -863,14 +851,12 @@
        it. Under reduced motion the content goes back to being a plain state
        crossfade off `data-open` — the ratified 150ms, no travel, no stagger. */
     .palette-reveal,
-    .palette-group,
-    .palette-availability {
+    .palette-group {
       opacity: 0 !important;
     }
 
     .palette-surface[data-open="true"] .palette-reveal,
-    .palette-surface[data-open="true"] .palette-group,
-    .palette-surface[data-open="true"] .palette-availability {
+    .palette-surface[data-open="true"] .palette-group {
       opacity: 1 !important;
     }
 
@@ -1253,36 +1239,20 @@
     }
   }
 
-  /* -- Book a call: the arrow's orbit ----------------------------------------
-     Ion approved Amicro `btn-32` for this. What that component actually is:
-     a fixed-height box with `overflow: hidden` holding TWO copies of the same
-     content stacked one unit apart, translated by exactly one unit on hover,
-     on a spring — its label rolls up and a duplicate rolls in behind it.
+  /* -- Button arrows: the orbit ------------------------------------------------
+     Ion approved Amicro `btn-32` for Book a call. Clipped 16px box, two copies
+     of the same arrow, translated by one full unit on hover. The leading copy
+     leaves along the direction it points; the trailing copy arrives from the
+     opposite corner.
 
-     WHAT IS TAKEN, WHAT IS REBUILT. The mechanism is taken verbatim: clipped
-     box, two copies, translate by one full unit. Everything else is rebuilt.
-     Amicro rolls the LABEL vertically and rotates the icon 45°; here the label
-     and the keycap are untouched — Figma's copy is the copy — and it is the
-     ARROW that travels. It leaves along the direction it points (↗, so up and
-     right, `translate(100%, -100%)`) and its replacement arrives from the
-     opposite corner. One clean orbit, not a bounce. Amicro drives it with
-     `motion/react` at stiffness 400 / damping 25 (ζ ≈ 0.63, so it overshoots);
-     Motion cannot come to `/` for 16px of arrow, so the clock is
-     `--duration-base` on `--ease-spring` — the token easing whose whole job is
-     "press, pop", and the only one of the two that behaves like the spring
-     Amicro actually uses.
-
-     `--ease-glide` WAS TRIED FIRST AND REJECTED, on evidence. It is an
-     expo-out: the headless strip caught the arrow 96% of the way through its
-     orbit 90ms into a 200ms travel, so the eye sees an arrow that has already
-     arrived and nothing in between. An orbit you cannot see is not an orbit.
-     `--ease-spring` overshoots by ~13% of the travel, which on 16px is about
-     2px past centre before it settles — the same small landing bounce the
-     reference has (ζ ≈ 0.63), at a size where it reads as a click rather than
-     as a wobble.
-
-     The box is exactly the icon's 16px, so `translate(±100%, ∓100%)` clears it
-     corner to corner with nothing left to peek. */
+     Clock (Ion, 2026-08-19): 600ms on `--ease-glide`. First cut was
+     `--duration-base` on `--ease-spring` — 200ms of expo-out put the arrow
+     96% of the way through at 90ms, so the orbit was a pop, and the spring
+     bezier overshot 2px on a 16px box. Second cut was `--duration-slow`
+     (400ms); still too quick. This is the one place the 400ms entrance
+     ceiling is waived: a 16px travel needs the extra time to read as a
+     pass, not a swap. This orbit is Book a call only — the rail's ← Home
+     stays a static glyph. */
   .btn-orbit {
     display: grid;
     place-items: center;
@@ -1292,8 +1262,8 @@
   .btn-orbit > * {
     grid-area: 1 / 1;
     transition-property: translate;
-    transition-duration: var(--duration-base);
-    transition-timing-function: var(--ease-spring);
+    transition-duration: 600ms;
+    transition-timing-function: var(--ease-glide);
   }
 
   .btn-orbit > [data-orbit="lead"] {

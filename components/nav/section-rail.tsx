@@ -152,7 +152,7 @@ const WHEEL_MIN_RATIO = 1.5
  *  "destination-labelled back button". */
 export type RailBack = { href: string; label: string }
 
-const HOME: RailBack = { href: "/", label: "Home" }
+export const RAIL_HOME: RailBack = { href: "/", label: "Home" }
 
 export type SectionNavItem = { id: string; nav: string }
 
@@ -219,7 +219,7 @@ const freshCache = (): RowCache => ({
 export function SectionRail({
   sections,
   label,
-  back = HOME,
+  back = RAIL_HOME,
 }: {
   sections: SectionNavItem[]
   /** `aria-label` for the wheel — "About sections", "Stack sections", … */
@@ -461,7 +461,7 @@ export function SectionRail({
   return (
     <div
       ref={railRef}
-      className="flex flex-col items-start lg:sticky lg:top-34 lg:self-start"
+      className="hidden flex-col items-start lg:flex lg:sticky lg:top-34 lg:self-start"
     >
       <Button variant="secondary" asChild>
         <Link href={back.href}>

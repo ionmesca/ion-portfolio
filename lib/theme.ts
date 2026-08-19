@@ -1,21 +1,19 @@
 /**
- * Theme — light / dark / system, hand-rolled.
+ * Theme — light / dark, hand-rolled.
  *
  * No `next-themes`. The whole mechanism is: a class on <html>, a string in
  * localStorage, and one blocking script in <head> so the first paint is already
  * correct (ratified in the ⌘K morph brief — the palette's Preferences group is
  * the only UI that writes it).
  *
- * `system` is the default and is not a third class: it resolves to light or
- * dark from `prefers-color-scheme` and keeps resolving as the OS flips.
+ * Light is the default. A leftover `system` value from an earlier build
+ * resolves to light.
  */
 
 export const THEME_STORAGE_KEY = "ion-theme"
 
-export const THEMES = ["light", "dark", "system"] as const
+export const THEMES = ["light", "dark"] as const
 export type Theme = (typeof THEMES)[number]
-
-const DARK_QUERY = "(prefers-color-scheme: dark)"
 
 /**
  * The no-FOUC script, inlined into <head> by app/layout.tsx.
@@ -30,55 +28,25 @@ const DARK_QUERY = "(prefers-color-scheme: dark)"
  */
 export const THEME_INIT_SCRIPT = `(function(){try{var s=localStorage.getItem(${JSON.stringify(
   THEME_STORAGE_KEY
-)});var d=s==="dark"||((s===null||s==="system")&&window.matchMedia(${JSON.stringify(
-  DARK_QUERY
-)}).matches);document.documentElement.classList.toggle("dark",d);}catch(e){}})();`
+)});document.documentElement.classList.toggle("dark",s==="dark");}catch(e){}})();`
 
-function prefersDark(): boolean {
-  if (typeof window === "undefined") return false
-  try {
-    return window.matchMedia(DARK_QUERY).matches
-  } catch {
-    return false
-  }
-}
-
-/** The stored preference, or `system` when nothing is stored or storage throws. */
+/** The stored preference, or light when nothing is stored or storage throws. */
 export function readTheme(): Theme {
-  if (typeof window === "undefined") return "system"
+  if (typeof window === "undefined") return "light"
   try {
-    const stored = localStorage.getItem(THEME_STORAGE_KEY)
-    return (THEMES as readonly string[]).includes(stored ?? "")
-      ? (stored as Theme)
-      : "system"
+    return localStorage.getItem(THEME_STORAGE_KEY) === "dark" ? "dark" : "light"
   } catch {
-    return "system"
+    return "light"
   }
 }
 
 /** Paint a theme and remember it. Storage failure must not stop the repaint. */
 export function applyTheme(theme: Theme): void {
   if (typeof document === "undefined") return
-  const dark = theme === "dark" || (theme === "system" && prefersDark())
-  document.documentElement.classList.toggle("dark", dark)
+  document.documentElement.classList.toggle("dark", theme === "dark")
   try {
     localStorage.setItem(THEME_STORAGE_KEY, theme)
   } catch {
     /* a session-only theme is better than a thrown error */
-  }
-}
-
-/**
- * Re-resolve `system` when the OS flips. Returns an unsubscribe function.
- * A no-op (still unsubscribable) where matchMedia is missing.
- */
-export function subscribeSystemTheme(onChange: () => void): () => void {
-  if (typeof window === "undefined") return () => {}
-  try {
-    const mq = window.matchMedia(DARK_QUERY)
-    mq.addEventListener("change", onChange)
-    return () => mq.removeEventListener("change", onChange)
-  } catch {
-    return () => {}
   }
 }

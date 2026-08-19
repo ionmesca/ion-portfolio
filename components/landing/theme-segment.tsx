@@ -2,18 +2,19 @@
 
 import * as React from "react"
 
-import { ICON_STROKE, Monitor, Moon, Sun } from "@/lib/icons"
+import { ICON_STROKE, Moon, Sun } from "@/lib/icons"
 import { SPRING_CELL, useSpringStyle } from "@/lib/motion"
-import { applyTheme, readTheme, subscribeSystemTheme, type Theme } from "@/lib/theme"
+import { applyTheme, readTheme, type Theme } from "@/lib/theme"
 import { cn } from "@/lib/utils"
 
 /**
- * ThemeSegment — the light / dark / system control.
+ * ThemeSegment — the light / dark control.
  *
- * Figma "Theme segment control" (13:2608): 108 x 32 track, radius `md`, fill
- * `muted`, 4px padding, 2px gap, three 32 x 24 cells at a raw 8px radius
- * (concentric: 12 outer − 4 pad). The selected cell is a `card` thumb that
- * TRAVELS — one element sliding under the glyphs, not three fills toggling.
+ * Two 32 x 24 cells at a raw 8px radius (concentric: 12 outer − 4 pad),
+ * inside a muted track with 4px padding. The selected cell is a `card` thumb
+ * that TRAVELS — one element sliding under the glyphs, not two fills toggling.
+ *
+ * System was removed (Ion, 2026-08-19). Light is the default.
  *
  * Lifted out of `command-palette.tsx` unchanged, because the mobile menu sheet
  * shows the identical control in its Preferences group (Figma 20:856). Markup,
@@ -24,13 +25,12 @@ import { cn } from "@/lib/utils"
 const THEME_OPTIONS = [
   { value: "light" as const, label: "Light", icon: Sun },
   { value: "dark" as const, label: "Dark", icon: Moon },
-  { value: "system" as const, label: "System", icon: Monitor },
 ]
 
 /** Segment item 32 wide + the 2px gap — the thumb's travel per step. */
 const SEGMENT_STEP = 34
 
-/** How close to its cell counts as arrived, in px. The channel is 0–68px, not
+/** How close to its cell counts as arrived, in px. The channel is 0–34px, not
  *  0–1, so the spring's default 0.002 epsilon would keep a rAF alive for a
  *  third of a second painting sub-pixel nothing. A twentieth of a pixel is
  *  already below what a 2x display can show. */
@@ -163,49 +163,32 @@ export function ThemeSegment({
    read a fact that lives outside React. Callers are unchanged.
    ------------------------------------------------------------------------- */
 
-let current: Theme = "system"
+let current: Theme = "light"
 let hydrated = false
-let stopSystem: (() => void) | null = null
 const listeners = new Set<() => void>()
 
 const emit = () => {
   for (const listener of listeners) listener()
 }
 
-/** `system` is the only value that has to keep resolving; the other two are
- *  settled. The OS listener therefore exists only while it can matter, and
- *  only while something is actually mounted to hear it. */
-const watchSystem = () => {
-  const want = current === "system" && listeners.size > 0
-  if (want && !stopSystem) {
-    stopSystem = subscribeSystemTheme(() => applyTheme("system"))
-  } else if (!want && stopSystem) {
-    stopSystem()
-    stopSystem = null
-  }
-}
-
 const subscribe = (listener: () => void) => {
   listeners.add(listener)
-  watchSystem()
   return () => {
     listeners.delete(listener)
-    watchSystem()
   }
 }
 
 const getSnapshot = () => current
 
 /** The server knows nothing about localStorage, and neither does the first
- *  client render — which is the point: both say `system`, so hydration matches
+ *  client render — which is the point: both say `light`, so hydration matches
  *  and the real preference arrives in the effect below. */
-const getServerSnapshot = (): Theme => "system"
+const getServerSnapshot = (): Theme => "light"
 
 /** Pick a theme: paint it, store it, tell every mounted control. */
 export function setTheme(next: Theme) {
   current = next
   applyTheme(next)
-  watchSystem()
   emit()
 }
 
@@ -227,7 +210,6 @@ export function useTheme() {
       current = stored
       emit()
     }
-    watchSystem()
   }, [])
 
   const pickTheme = React.useCallback((next: Theme) => setTheme(next), [])

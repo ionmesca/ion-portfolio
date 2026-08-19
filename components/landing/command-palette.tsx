@@ -5,7 +5,7 @@ import Link from "next/link"
 
 import { IconSwap } from "@/components/ui/icon-swap"
 import { Kbd } from "@/components/ui/kbd"
-import { AtSign, Check, Copy, ICON_STROKE, Sun, Volume2 } from "@/lib/icons"
+import { AtSign, Check, Copy, ICON_STROKE, Sun } from "@/lib/icons"
 import { D_SLOW } from "@/lib/motion"
 import { createMorph, type Morph, type MorphRect } from "@/lib/morph"
 import { useHoverCorridor } from "@/lib/morph-preview"
@@ -14,7 +14,6 @@ import { cn } from "@/lib/utils"
 
 import { IdentityChip } from "./identity-chip"
 import { SocialsSegment } from "./socials-segment"
-import { SoundSegment, useSound } from "./sound-segment"
 import { ThemeSegment, useTheme } from "./theme-segment"
 import {
   CONTACT_EMAIL,
@@ -49,12 +48,14 @@ import {
    GEOMETRY LAW — Figma 13:2673, hand-edited by Ion, extracted read-only to
    scratchpad/mk-palette-tree.json:
 
-     panel     382 wide, radius 15 (SAME as the chip — radius never animates),
+     panel     288 wide (Ion, 2026-08-19: the 382 Figma width was leftover
+               from the shortcut column and the search row; labels plus the
+               Socials track do not need it), radius 15 (SAME as the chip —
+               radius never animates),
                fill `popover`, effect `Overlay`
      header    the chip's own row + a 1px `border` rule under it
-     avail     inline in the header row at x 194, fades in
      esc       right edge at panel − 12
-     rows      366 wide (inset 8), 32 tall, radius 12
+     rows      272 wide (inset 8), 32 tall, radius 12
 
    THE LEAN PANEL (Ion, 2026-08-18). Four things were cut from the frame and
    none of them is coming back:
@@ -89,8 +90,7 @@ import {
    40px Socials line (96 → 136). One line moved from one side of the rule to
    the other, so 435 is 435 and the zero-jump morph has nothing new to do.
    (Actions is 80 and not 176 because its three socials are not rows here at
-   all; the block is 136 and not 40 because it holds THREE control lines —
-   Socials, Theme and Sound.)
+   all; the block holds Socials and Theme.)
 
    BEHAVIOUR LAW — a FLIP container on one rAF lerp with a JS bezier glide
    solver, 400ms symmetric, no scrim. The content does not animate: it rides
@@ -103,7 +103,7 @@ import {
    200. That is not an inconsistency, it is the family's rule: duration scales
    with the distance the surface travels. The small preview cards move ~260px
    of box and take `--duration-base` 200; this one grows from a 171x42 chip to
-   a 382x451 panel — an order of magnitude more area — and takes
+   a 288-wide panel — an order of magnitude more area — and takes
    `--duration-slow` 400. Same easing, same engine, same law.
 
    HOVER OPENS IT (Ion, 2026-08-18, reversing the click-only ruling). The chip
@@ -113,17 +113,13 @@ import {
    There is no third copy of those timers and no second pair of numbers.
    ========================================================================== */
 
-/** Figma 13:2673 panel width. The one hardcoded dimension: it is a design
- *  decision, not something the DOM can be asked for. */
-const PANEL_W = 382
+/** Open panel width. The one hardcoded dimension: it is a design decision,
+ *  not something the DOM can be asked for. 288 is the tightest canonical
+ *  step that still fits the 108px Socials track beside its label. */
+const PANEL_W = 288
 
-/** The esc keycap's inset from the panel's right edge (Figma: 341 + 29 = 370
- *  = 382 − 12). */
+/** The esc keycap's inset from the panel's right edge. */
 const PANEL_PAD_X = 12
-
-/** The availability line's x inside the header row (Figma 20:997). It is a
- *  free position — nothing else in the header may move to accommodate it. */
-const AVAIL_X = 194
 
 /** Never let the panel grow past the viewport; the list scrolls instead. */
 const VIEWPORT_MARGIN = 24
@@ -157,11 +153,6 @@ const OPTION_DOM_ID = (id: string) => `palette-option-${id}`
 /**
  * Each group's full-width rows.
  *
- * `compact` names the ids this surface does NOT draw as listbox rows — the
- * three socials, which are the Socials control row's business now. The field
- * still means what it always meant ("the desktop lays these out differently"),
- * and the mobile sheet still ignores it and renders all ten as touch rows.
- *
  * Module constants, not memos. With the search row gone the lists are facts
  * about the file that imports them and can never change at runtime, which is
  * also what retired the effect that used to keep the selection pointing at
@@ -169,7 +160,7 @@ const OPTION_DOM_ID = (id: string) => `palette-option-${id}`
  */
 const LAYOUT = PALETTE_GROUPS.map((group) => ({
   group,
-  rows: group.items.filter((item) => !group.compact?.includes(item.id)),
+  rows: group.items,
 }))
 
 /** Every option, flat, for id → item lookups. Ring order. */
@@ -182,8 +173,8 @@ const OPTIONS = LAYOUT.flatMap(({ rows }) => rows)
  * social row was one stop holding three. Ion's round-4 ruling moved those three
  * out of the listbox entirely and into the control block below the rule, so
  * every stop holds exactly one option once more and the second axis went with
- * them. ←/→ inside the panel now belong to the three control rows alone —
- * Socials, Theme, Sound — each of which owns its own ring and says so.
+ * them. ←/→ inside the panel now belong to the control rows alone —
+ * Socials and Theme — each of which owns its own ring and says so.
  *
  * Seven options, seven stops.
  */
@@ -200,7 +191,6 @@ export function CommandPalette() {
   const surfaceRef = React.useRef<HTMLDivElement>(null)
   const faceRef = React.useRef<HTMLDivElement>(null)
   const ruleRef = React.useRef<HTMLSpanElement>(null)
-  const availRef = React.useRef<HTMLSpanElement>(null)
   const keycapRef = React.useRef<HTMLSpanElement>(null)
   const triggerRef = React.useRef<HTMLButtonElement>(null)
   const listRef = React.useRef<HTMLDivElement>(null)
@@ -233,15 +223,6 @@ export function CommandPalette() {
   /* Theme state + the OS-flip subscription live in `theme-segment.tsx` now:
      the mobile menu sheet renders the same control and must stay in step. */
   const { theme, pickTheme } = useTheme()
-
-  /* SOUND IS THE PALETTE'S ALONE. lib/sound.ts has always said the palette's
-     Preferences surface owns the user-facing toggle; this is that toggle, and
-     `useSound` is the boot wiring the module's comment promised — it reads
-     localStorage after mount and arms the mechanism. There is deliberately no
-     mobile twin: the tick is desktop-only at the source (a touch-primary
-     device gets silence whatever this says), so a switch in the mobile sheet
-     would be a control for something that cannot happen. */
-  const { sound, pickSound } = useSound()
 
   const [activeId, setActiveId] = React.useState<string | null>(
     OPTIONS[0]?.id ?? null
@@ -331,7 +312,7 @@ export function CommandPalette() {
   /**
    * Undo everything `measure()` wrote — the atoms' absolute positions, the
    * surface's own box, and the pixel sizes pinned onto the slot, the trigger,
-   * the availability line, the rule and the face.
+   * the rule and the face.
    *
    * Two callers. `measure()` runs it first so what it reads is the browser's
    * own flex layout rather than last time's freeze. The mount effect runs it
@@ -344,7 +325,6 @@ export function CommandPalette() {
     const surface = surfaceRef.current
     const face = faceRef.current
     const rule = ruleRef.current
-    const avail = availRef.current
     const keycap = keycapRef.current
     const trigger = triggerRef.current
     if (!surface) return
@@ -374,7 +354,6 @@ export function CommandPalette() {
       trigger.style.width = ""
       trigger.style.height = ""
     }
-    if (avail) avail.style.height = ""
     if (rule) rule.style.top = ""
     if (face) {
       face.style.top = ""
@@ -387,10 +366,9 @@ export function CommandPalette() {
     const surface = surfaceRef.current
     const face = faceRef.current
     const rule = ruleRef.current
-    const avail = availRef.current
     const keycap = keycapRef.current
     const trigger = triggerRef.current
-    if (!slot || !surface || !face || !rule || !avail || !keycap || !trigger)
+    if (!slot || !surface || !face || !rule || !keycap || !trigger)
       return
 
     const avatar = surface.querySelector<HTMLElement>('[data-slot="chip-avatar"]')
@@ -443,9 +421,7 @@ export function CommandPalette() {
     trigger.style.width = `${chipRef.current.w}px`
     trigger.style.height = `${chipRef.current.h}px`
 
-    // The availability line and the header rule are laid out against the
-    // frozen header row, never against each other.
-    avail.style.height = `${chipRef.current.h}px`
+    // The header rule is laid out against the frozen header row.
     rule.style.top = `${chipRef.current.h - 1}px`
     face.style.top = `${chipRef.current.h}px`
 
@@ -729,8 +705,8 @@ export function CommandPalette() {
        There is nowhere for them to go any more — round 3's compact social row
        was the one line that held a second axis, and Ion's round-4 ruling moved
        it into the control block, where the toolbar owns its own ←/→ and stops
-       the event before it reaches this handler (as the theme and sound
-       segments already did). So this branch no longer MOVES anything. It still
+       the event before it reaches this handler (as the theme
+       segment already did). So this branch no longer MOVES anything. It still
        has to exist, and the reason is unchanged:
 
        the browser's default for ←/→ on a focused element is to SCROLL its
@@ -764,7 +740,7 @@ export function CommandPalette() {
       data-slot="palette-keycap"
       className="relative inline-flex shrink-0"
     >
-      <Kbd data-slot="palette-cmd" className="palette-keycap text-small leading-[1.45]">
+      <Kbd data-slot="palette-cmd" className="palette-keycap px-2 text-small leading-[1.45]">
         ⌘K
       </Kbd>
       <button
@@ -786,7 +762,7 @@ export function CommandPalette() {
           "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
         )}
       >
-        <Kbd className="text-small leading-[1.45]">esc</Kbd>
+        <Kbd className="px-2 text-small leading-[1.45]">esc</Kbd>
       </button>
     </span>
   )
@@ -841,23 +817,6 @@ export function CommandPalette() {
         {/* the chip's own row — measured once, then frozen where it landed */}
         <IdentityChip className="bg-transparent shadow-none" keycap={keycap} />
 
-        {/* availability — it fades into space the panel opened up, so it
-            displaces nothing that was already there */}
-        <span
-          ref={availRef}
-          data-slot="palette-availability"
-          aria-hidden={!open}
-          className="palette-availability pointer-events-none absolute top-0 flex items-center gap-1.5 whitespace-nowrap"
-          style={{ left: AVAIL_X }}
-        >
-          <span className="grid size-2 place-items-center rounded-full bg-status-available/20">
-            <span className="size-[5px] rounded-full bg-status-available" />
-          </span>
-          <span className="text-xs text-muted-foreground">
-            Available from October
-          </span>
-        </span>
-
         {/* the rule under the header row */}
         <span
           ref={ruleRef}
@@ -895,7 +854,8 @@ export function CommandPalette() {
           ref={faceRef}
           inert={!open}
           data-slot="palette-face"
-          className="absolute left-0 flex w-[382px] flex-col"
+          className="absolute left-0 flex flex-col"
+          style={{ width: PANEL_W }}
         >
           <div className="min-h-0 flex-1 overflow-y-auto">
             {/* THE LISTBOX HOLDS FOCUS. The search input used to, and reported
@@ -916,29 +876,38 @@ export function CommandPalette() {
               tabIndex={open ? 0 : -1}
               className="outline-none"
             >
-              {LAYOUT.map(({ group, rows }) => (
+              {LAYOUT.map(({ group, rows }, i) => (
                 /* No caption row, but still a GROUP: `aria-label` carries what
                    the deleted text row carried, so a screen reader still hears
                    "Navigate" without a sighted reader being told what five
                    labelled icons already say. `py-2` on every cluster is the
-                   seam — 8 + 8 against 0 between rows inside one. */
-                <div
-                  key={group.id}
-                  role="group"
-                  aria-label={group.label}
-                  className="palette-group px-2 py-2"
-                >
-                  {rows.map((item) => (
-                    <Row
-                      key={item.id}
-                      item={item}
-                      active={item.id === activeId}
-                      copied={copied}
-                      onPointerEnter={() => select(item.id)}
-                      onClick={() => onRowClick(item)}
+                   seam inside a group. A 1px rule divides Actions from
+                   Navigate: commands that leave the site (book, copy) are a
+                   different region from the pages. */
+                <React.Fragment key={group.id}>
+                  {i > 0 ? (
+                    <span
+                      aria-hidden="true"
+                      className="palette-reveal block h-px w-full bg-border"
                     />
-                  ))}
-                </div>
+                  ) : null}
+                  <div
+                    role="group"
+                    aria-label={group.label}
+                    className="palette-group px-2 py-2"
+                  >
+                    {rows.map((item) => (
+                      <Row
+                        key={item.id}
+                        item={item}
+                        active={item.id === activeId}
+                        copied={copied}
+                        onPointerEnter={() => select(item.id)}
+                        onClick={() => onRowClick(item)}
+                      />
+                    ))}
+                  </div>
+                </React.Fragment>
               ))}
             </div>
 
@@ -951,11 +920,7 @@ export function CommandPalette() {
 
             {/* THE CONTROL BLOCK IS ONE 8-PADDED BOX SPLIT IN TWO. Socials
                 takes the top padding, Preferences the bottom, and there is
-                nothing between them — three 40px lines inside 8 + 8, exactly
-                the rhythm every other cluster in this panel has. Two boxes
-                each with `py-2` would have put 16px between Socials and Theme
-                and made the block read as two regions, which is the one thing
-                the seam note above says a rule is for. */}
+                nothing between them — two 40px lines inside 8 + 8. */}
             <div
               role="group"
               aria-label="Socials"
@@ -1009,30 +974,6 @@ export function CommandPalette() {
                   Theme
                 </span>
                 <ThemeSegment value={theme} onPick={pickTheme} />
-              </div>
-
-              {/* SOUND — the same row, one line down.
-
-                  No rule between them and no gap: they are the same KIND of
-                  thing (a control that states a preference), which is exactly
-                  the argument the seam note above makes for why Navigate and
-                  Actions sit together and Preferences does not. Two 40px lines
-                  with nothing between them read as one group, which is what
-                  they are.
-
-                  It is OUTSIDE the listbox and outside the ↑/↓ ring, like the
-                  Theme row: ↑/↓ still walk the commands even while this
-                  control holds focus, Tab reaches it, and ←/→ belong to its
-                  own two-cell ring. */}
-              <div className="flex h-10 items-center gap-2 rounded-md pr-3 pl-2">
-                <Volume2
-                  className="size-4 shrink-0 text-muted-foreground"
-                  strokeWidth={ICON_STROKE}
-                />
-                <span className="min-w-0 flex-1 truncate text-sm text-foreground">
-                  Sound
-                </span>
-                <SoundSegment value={sound} onPick={pickSound} />
               </div>
             </div>
           </div>
@@ -1100,11 +1041,6 @@ function Row({
       ) : (
         <span className="min-w-0 flex-1 truncate text-sm text-foreground">
           {item.label}
-        </span>
-      )}
-      {item.shortcut && (
-        <span className="text-small shrink-0 text-muted-foreground">
-          {item.shortcut}
         </span>
       )}
     </>

@@ -1,8 +1,14 @@
+import Link from "next/link"
+
+import { MobileTopBar } from "@/components/landing/mobile/mobile-top-bar"
 import {
+  RAIL_HOME,
   SectionRail,
   type RailBack,
   type SectionNavItem,
 } from "@/components/nav/section-rail"
+import { Button } from "@/components/ui/button"
+import { ArrowLeft } from "@/lib/icons"
 import { cn } from "@/lib/utils"
 
 /**
@@ -66,9 +72,11 @@ import { cn } from "@/lib/utils"
  *
  * ── <1024 ──────────────────────────────────────────────────────────────────
  *
- * Unchanged: one centred column, no wheel, "Home" stays. `SectionRail`'s own
- * `lg:` rules and its matchMedia gate track this breakpoint — see RAIL_QUERY
- * there.
+ * One centred column, no wheel. The back control leaves the rail and sits in
+ * the same 56px sticky top bar the landing uses (Ion, 2026-08-19): destination
+ * on the left, menu on the right. `SectionRail` is `hidden` here — an empty
+ * first grid row would still cost `gap-10`. Its matchMedia gate tracks `lg`
+ * for the wheel; see RAIL_QUERY.
  *
  * Vertical: the frame's page padding is 136px top and bottom (`py-34`), which
  * is off the spacing convention in token-contract.md 3.8 (it stops at 96) —
@@ -117,8 +125,26 @@ export function RailShell({
   gutter?: "prose" | "rows"
   children: React.ReactNode
 }) {
+  const dest = back ?? RAIL_HOME
+
   return (
     <main className="min-h-dvh bg-background">
+      {/* Sibling of the grid, not a grid item: sticky inside the rail cell
+          has nothing to stick against on a one-column stack, and putting
+          this first inside the grid would steal the page-entrance's
+          `:first-child` (the rail) on desktop. */}
+      <MobileTopBar>
+        <Button
+          variant="secondary"
+          asChild
+          className="relative before:absolute before:-inset-1.5 before:content-['']"
+        >
+          <Link href={dest.href}>
+            <ArrowLeft />
+            {dest.label}
+          </Link>
+        </Button>
+      </MobileTopBar>
       <div
         className={cn(
           "mx-auto grid max-w-[1184px] grid-cols-1 gap-10 py-16",

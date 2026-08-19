@@ -10,9 +10,9 @@ import { cn } from "@/lib/utils"
 
 import { SOCIALS } from "../socials"
 import { MobileIndicator } from "./mobile-indicator-lazy"
-import { MobileMenu } from "./mobile-menu"
+import { MobileTopBar } from "./mobile-top-bar"
 import { useProgressChannel } from "./progress-channel"
-import { TOPBAR_H, useMobileScroll } from "./use-mobile-scroll"
+import { useMobileScroll } from "./use-mobile-scroll"
 
 /* ============================================================================
    MOBILE LANDING — Option B, "scroll as control" (POR-22, ratified).
@@ -89,10 +89,7 @@ export function MobileLanding({ projects }: { projects: Project[] }) {
   return (
     <div className="lg:hidden">
       {/* -- top bar ------------------------------------------------------- */}
-      <header
-        className="sticky top-0 z-30 flex items-center justify-between border-b border-border bg-background px-4"
-        style={{ height: TOPBAR_H }}
-      >
+      <MobileTopBar>
         <div className="flex items-center gap-3">
           <Image
             src="/ion-avatar.png"
@@ -104,9 +101,7 @@ export function MobileLanding({ projects }: { projects: Project[] }) {
           />
           <span className="text-subhead text-foreground">Ion Mesca</span>
         </div>
-
-        <MobileMenu />
-      </header>
+      </MobileTopBar>
 
       <MobileIndicator
         projects={projects}
@@ -119,7 +114,7 @@ export function MobileLanding({ projects }: { projects: Project[] }) {
       {/* -- hero ---------------------------------------------------------- */}
       <section className="flex flex-col gap-4 px-4 py-6">
         <h1 className="text-2xl text-foreground">Software Designer</h1>
-        <p className="text-lg text-muted-foreground">
+        <p className="text-lg text-muted-foreground [letter-spacing:-0.005em]">
           Curious generalist at heart, building AI native software and fintech
           systems at <span className="underline">Ledgy</span>
         </p>

@@ -6,15 +6,15 @@ import { agentsPage, navFor } from "@/content/collections"
 
 export const metadata: Metadata = {
   title: "Agents & skills — Ion Mesca",
-  description: "The agents and skills that do the work with Ion Mesca.",
+  description: "Skills Ion Mesca runs, and the ones he wrote.",
   alternates: { canonical: "/agents" },
 }
 
 /**
  * /agents — flavour 2 of the collection pattern.
  *
- * Figma "Agents & skills — desktop light" 20:1293. Adds the credit line and
- * the "How I use it" block to the preview, and swaps the ↗ for an install chip
+ * Figma "Agents & skills — desktop light" 20:1293. Adds the credit line,
+ * shares Stack's tool-preview face, and swaps the ↗ for an install chip
  * on Ion's own skills.
  */
 export default function AgentsPage() {

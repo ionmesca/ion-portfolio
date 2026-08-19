@@ -61,6 +61,9 @@ export function Intro() {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col pl-1">
+        {/* Tracking experiment (Ion, 2026-08-20): `text-lg` ships −0.01em;
+            smaller steps are 0. Local halfway (−0.005em) before touching the
+            Heading token. */}
         {/* Per CHARACTER, and safe to be: a heading's role accepts a name, so
             `aria-label` restates the string for assistive tech and the split
             spans are hidden from it. */}
@@ -68,7 +71,7 @@ export function Intro() {
           as="h1"
           group="hero"
           text={HEADLINE}
-          className="text-lg text-foreground"
+          className="text-lg text-foreground [letter-spacing:-0.005em]"
         />
 
         {/* 255px is the measured wrap width from Figma (259 hug − 4 indent).
@@ -87,7 +90,7 @@ export function Intro() {
           // then starts the second. The string, not a number: see text-effect.tsx.
           after={{ text: HEADLINE }}
           text={POSITIONING}
-          className="w-[255px] text-lg text-muted-foreground"
+          className="w-[255px] text-lg text-muted-foreground [letter-spacing:-0.005em]"
         >
           <LedgyMention />
         </TextEffect>

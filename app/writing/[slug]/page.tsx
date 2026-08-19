@@ -72,7 +72,7 @@ const BODY_FLOW = [
  *  footnote's own `<p>`, which is invalid HTML. When a real article wants its
  *  own footnote this becomes a frontmatter field. Flagged. */
 const PLACEHOLDER_FOOTNOTE =
-  "Placeholder article — filler text standing in for writing that does not exist yet."
+  "Layout test. The essay is not written yet."
 
 export const dynamicParams = false
 
@@ -136,7 +136,7 @@ export default async function ArticlePage({
       <article className="flex min-w-0 flex-col gap-12">
         <TitleBlock
           title={article.title}
-          date={`${article.displayDate} · ${article.readTime}`}
+          date={`${article.displayDate}, ${article.year} · ${article.readTime}`}
         />
 
         <div className={BODY_FLOW}>

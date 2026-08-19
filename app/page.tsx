@@ -89,7 +89,7 @@ export default function Home() {
             //
             // The rail is pinned and the media column scrolls underneath it,
             // and everything the rail holds overhangs into that column: the ⌘K
-            // panel grows to 382px on a 263px rail, the hover previews are 264
+            // panel grows to 288px on a 263px rail, the hover previews are 264
             // wide. So "the rail paints above the column" is a law of this
             // layout, and until now it was only ever true BY ACCIDENT.
             //

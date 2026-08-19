@@ -2,6 +2,8 @@
 
 import * as React from "react"
 
+import { MOBILE_TOPBAR_H } from "./mobile-metrics"
+
 /* ============================================================================
    Mobile landing — the scroll controller.
 
@@ -43,7 +45,7 @@ import * as React from "react"
 export const ACTIVE_LINE = 0.4
 
 /** Top bar 56 + indicator 40 (Figma 20:599 / 20:605). */
-export const TOPBAR_H = 56
+export const TOPBAR_H = MOBILE_TOPBAR_H
 export const INDICATOR_H = 40
 const REVEAL_PX = TOPBAR_H + INDICATOR_H
 

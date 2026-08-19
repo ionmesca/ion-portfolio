@@ -1,8 +1,10 @@
 "use client"
 
 import * as React from "react"
+import Image from "next/image"
 
 import type { CollectionPreview } from "@/content/collections"
+import { ArrowRight, ArrowUpRight } from "@/lib/icons"
 import {
   placePreview,
   PREVIEW_RADIUS,
@@ -45,9 +47,13 @@ export const CARD_R = PREVIEW_RADIUS
 /** One row's card: its key, its heading, and what to draw inside. */
 export type PreviewAnchor = {
   key: string
-  /** The excerpt card's own title. Ignored by the site and repo faces. */
+  /** The excerpt card's own title. Ignored by the tool face. */
   title: string
   preview: CollectionPreview
+  /** Row destination. Absent on install-chip rows, which copy rather than go. */
+  href?: string
+  /** True when href leaves the site. Drives ↗ vs → on the card. */
+  external?: boolean
 }
 
 type PreviewApi = {
@@ -140,7 +146,7 @@ export function PreviewProvider({
     return placePreview({
       anchor: rowEl.getBoundingClientRect(),
       w: CARD_W,
-      h: heights.current.get(key) ?? 200,
+      h: heights.current.get(key) ?? 280,
       prefer: "below",
       // Vertical from the viewport, horizontal from the stage: the card may
       // not leave the window, and it may not leave the column.
@@ -198,7 +204,12 @@ export function PreviewProvider({
                     data-on={anchor.key === shown}
                     style={{ width: CARD_W }}
                   >
-                    <PreviewCard title={anchor.title} preview={anchor.preview} />
+                    <PreviewCard
+                      title={anchor.title}
+                      preview={anchor.preview}
+                      href={anchor.href}
+                      external={anchor.external}
+                    />
                   </div>
                 ))}
               </div>
@@ -211,26 +222,38 @@ export function PreviewProvider({
 }
 
 /* ----------------------------------------------------------------------------
-   THE THREE FACES
+   THE TWO FACES
 
-   Figma: Stack 20:1173, Agents & skills 20:1567, Articles 20:1584. All three
-   are the same 280-wide popover-filled card at radius/lg with the Overlay
-   elevation; only what is inside them differs.
+   Same 280-wide popover-filled card at radius/lg with the Overlay elevation.
+   Stack and Agents share the tool face (chrome + screenshot + three-line
+   blurb). Writing keeps the excerpt face. The corner glyph is the shared
+   affordance: ↗ leaves the site, → stays, and install rows omit it because
+   the chip on the row is already the action.
    ------------------------------------------------------------------------- */
+
+const GLYPH = "size-3 shrink-0 text-muted-foreground [&]:[stroke-width:1.5]"
 
 function PreviewCard({
   title,
   preview,
+  href,
+  external,
 }: {
   title: string
   preview: CollectionPreview
+  href?: string
+  external?: boolean
 }) {
   if (preview.kind === "excerpt") {
-    // 20:1584 — pad 12, gap 8. No chrome, no mock: articles go inward.
     return (
       <div className="flex flex-col gap-2 p-3">
-        <p className="text-subhead text-foreground">{title}</p>
-        <p className="text-sm text-muted-foreground">{preview.excerpt}</p>
+        <div className="flex items-start gap-2">
+          <p className="text-subhead min-w-0 flex-1 text-foreground">{title}</p>
+          {href && <ArrowRight aria-hidden="true" className={GLYPH} />}
+        </div>
+        <p className="line-clamp-3 text-sm text-muted-foreground">
+          {preview.excerpt}
+        </p>
         <p className="text-xs text-muted-foreground">{preview.readTime}</p>
       </div>
     )
@@ -238,74 +261,60 @@ function PreviewCard({
 
   return (
     <div className="flex flex-col">
-      <BrowserChrome />
-
-      {preview.kind === "site" ? (
-        /* 20:1178 — the wireframe site mock. Rect widths are the frame's own,
-           inside the card's 256 of content width. */
-        <div className="flex flex-col gap-2 p-3">
-          <Block w={120} h={10} />
-          <Block w={256} h={8} />
-          <Block w={210} h={8} />
-          <Block w={168} h={8} />
-          <Block w={256} h={48} />
-        </div>
-      ) : (
-        /* 20:1572 — the README mock: a heading, a code block, one line. */
-        <div className="flex flex-col gap-2 p-3">
-          <Block w={96} h={12} />
-          <Block w={256} h={28} />
-          <Block w={256} h={8} />
-        </div>
-      )}
-
-      {preview.kind === "repo" && (
-        <>
-          <div className="h-px w-full bg-border" />
-          {/* 20:1578 — the ratified depth: the row stays one line, the curious
-              get the paragraph on hover. */}
-          <div className="flex flex-col gap-1 px-3 pt-3">
-            <p className="text-xs text-muted-foreground">How I use it</p>
-            {preview.usage.map((line) => (
-              <p key={line} className="text-sm text-foreground">
-                {line}
-              </p>
-            ))}
-          </div>
-        </>
-      )}
-
-      <p
-        className={
-          preview.kind === "repo"
-            ? "p-3 text-xs text-muted-foreground"
-            : "px-3 pb-3 text-xs text-muted-foreground"
-        }
-      >
-        {preview.domain}
+      <BrowserChrome href={href} external={external} />
+      <PreviewShot src={preview.image} />
+      <p className="line-clamp-3 px-3 pt-3 text-sm text-foreground">
+        {preview.blurb}
       </p>
+      <p className="p-3 text-xs text-muted-foreground">{preview.domain}</p>
     </div>
   )
 }
 
-/** 20:1174 — the 28px strip with three 6px dots. */
-function BrowserChrome() {
+/** 20:1174 — the 28px strip with three 6px dots, plus the shared corner glyph. */
+function BrowserChrome({
+  href,
+  external,
+}: {
+  href?: string
+  external?: boolean
+}) {
   return (
     <div className="flex h-7 shrink-0 items-center gap-1.5 bg-muted px-3">
       <span className="size-1.5 rounded-full bg-stone-300 dark:bg-stone-600" />
       <span className="size-1.5 rounded-full bg-stone-300 dark:bg-stone-600" />
       <span className="size-1.5 rounded-full bg-stone-300 dark:bg-stone-600" />
+      {href &&
+        (external ? (
+          <ArrowUpRight aria-hidden="true" className={`ml-auto ${GLYPH}`} />
+        ) : (
+          <ArrowRight aria-hidden="true" className={`ml-auto ${GLYPH}`} />
+        ))}
     </div>
   )
 }
 
-/** One wireframe bar. Radius 4 is raw in the frame and stays raw here — it is
- *  art inside a mock, not a surface on the radius ladder. */
-function Block({ w, h }: { w: number; h: number }) {
+/**
+ * Real screenshot inside the chrome. `fill` + a fixed 144px well so the morph
+ * measures a stable height before the file decodes. A missing or broken file
+ * leaves the muted well rather than a broken image.
+ */
+function PreviewShot({ src }: { src: string }) {
+  const [failed, setFailed] = React.useState(false)
+
   return (
-    <span
-      className="block shrink-0 rounded-[4px] bg-muted"
-      style={{ width: w, height: h }}
-    />
+    <div className="relative h-36 w-full overflow-hidden bg-muted">
+      {!failed && (
+        <Image
+          src={src}
+          alt=""
+          fill
+          sizes="280px"
+          loading="lazy"
+          className="object-cover object-top"
+          onError={() => setFailed(true)}
+        />
+      )}
+    </div>
   )
 }

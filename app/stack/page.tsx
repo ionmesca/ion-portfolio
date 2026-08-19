@@ -6,7 +6,7 @@ import { navFor, stackPage } from "@/content/collections"
 
 export const metadata: Metadata = {
   title: "Stack — Ion Mesca",
-  description: "The tools Ion Mesca designs and builds with.",
+  description: "What Ion Mesca still opens after the job is done.",
   alternates: { canonical: "/stack" },
 }
 
@@ -14,8 +14,8 @@ export const metadata: Metadata = {
  * /stack — flavour 1 of the collection pattern.
  *
  * Figma "Stack — desktop light" 20:1033. Behaviour law:
- * docs/design/collection-lab.html. Tool rows with a browser-chrome preview and
- * a domain caption; the wheel lists the four categories.
+ * docs/design/collection-lab.html. Tool rows with a real-site preview,
+ * a three-line blurb and a domain caption; the wheel lists the categories.
  */
 export default function StackPage() {
   return (

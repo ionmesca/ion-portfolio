@@ -46,10 +46,11 @@ export {
    * click:
    *
    *   ArrowRight    →   stays on this site. Article rows, and any internal
-   *                     row added later.
+   *                     row added later. Visible on hover and focus, and on
+   *                     the preview card.
    *   ArrowUpRight  ↗   leaves for another site, in a new tab. Stack rows,
    *                     the "Skills I use" rows, the quiet GitHub link in a
-   *                     group header.
+   *                     group header. Same hover/focus rule; also on the card.
    *
    * A row with neither has a different, visible affordance instead — the
    * install chip, which copies rather than navigates. There is no third case:
@@ -69,11 +70,10 @@ export {
   ArrowUp,
   ArrowDown,
   CornerDownLeft,
-  // theme: the Preferences row's glyph and its three segment options
-  // (Figma 13:2866 / 13:2877 — sun, moon, monitor).
+  // theme: the Preferences row's glyph and its two segment options
+  // (sun, moon). System / monitor was removed.
   Sun,
   Moon,
-  Monitor,
   // sound: the Preferences row's glyph and its two segment options. There is
   // no Figma frame for this row — the Sound preference was ratified after the
   // palette was drawn — so the pair is chosen to match the theme row's

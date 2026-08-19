@@ -52,7 +52,7 @@ export type Article = {
   title: string
   /** "2026-03-12". Sorts lexicographically, which is why it is a string. */
   date: string
-  /** "Mar 2026" — the collection row's far-right caption. */
+  /** "Mar 12" — the collection row's far-right caption. Year lives on the wheel. */
   displayDate: string
   /** "2026" — the group id and the wheel's row label on /writing. */
   year: string
@@ -68,11 +68,12 @@ const MONTHS = [
   "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
 ]
 
-/** "2026-03-12" → "Mar 2026". No Date object: see the `date` note above. */
+/** "2026-03-12" → "Mar 12". No Date object: see the `date` note above. */
 function displayDate(date: string): string {
-  const [year, month] = date.split("-")
+  const [, month, day] = date.split("-")
   const label = MONTHS[Number(month) - 1]
-  return label ? `${label} ${year}` : year
+  const n = Number(day)
+  return label && n ? `${label} ${n}` : date
 }
 
 /**
@@ -175,8 +176,8 @@ export function getArticlesPage(): CollectionPage<ArticleEntry> {
 
   return {
     title: "Writing",
-    intro: "Notes from building things that ship.",
-    footnote: "Placeholder content — Ion curates the real list post-build.",
+    intro: "Things I learned by shipping them.",
+    footnote: "These three are layout tests. The essays are not written yet.",
     groups: years.map((year) => ({
       id: year,
       label: year,

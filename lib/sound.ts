@@ -37,13 +37,10 @@ export const SOUND_STORAGE_KEY = "ion-sound"
 /**
  * Master enable flag.
  *
- * Default ON. This is a ratified decision, not an oversight: the tick only ever
- * fires on a deliberate commit action on a desktop pointer device, which makes
- * it feedback rather than noise. The command palette's Preferences group owns
- * the user-facing toggle and calls `setSoundEnabled` at boot — this module
- * stays the mechanism and holds no opinion about the UI.
+ * Default OFF. The palette Sound row is hidden (Ion, 2026-08-19); ticks stay
+ * off until that row comes back. A leftover `on` in storage is ignored.
  */
-let soundEnabled = true
+let soundEnabled = false
 
 /**
  * Whether the flag above has been reconciled with storage yet.
@@ -59,21 +56,14 @@ let soundEnabled = true
  */
 let prefRead = false
 
-/** The stored preference, or ON when nothing is stored or storage throws. */
+/** The stored preference, or OFF when nothing is stored or storage throws. */
 export function readSoundPreference(): boolean {
-  if (typeof window === "undefined") return true
+  if (typeof window === "undefined") return false
   try {
-    return localStorage.getItem(SOUND_STORAGE_KEY) !== "off"
+    return localStorage.getItem(SOUND_STORAGE_KEY) === "on"
   } catch {
-    return true
+    return false
   }
-}
-
-function hydratePreference(): void {
-  if (prefRead) return
-  if (typeof window === "undefined") return
-  soundEnabled = readSoundPreference()
-  prefRead = true
 }
 
 /** Set the flag for this page. Does NOT remember it — see `applySound`. */
@@ -97,8 +87,7 @@ export function applySound(enabled: boolean): void {
 }
 
 export function isSoundEnabled(): boolean {
-  hydratePreference()
-  return soundEnabled
+  return false
 }
 
 /**

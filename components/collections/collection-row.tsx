@@ -14,8 +14,8 @@ import { usePreviewAnchor } from "./preview-popover"
    THE COLLECTION ROW — Figma component set 20:1030 (+ 20:1291, the article
    flavour). One shape, four variants, and the rulebook's first line:
 
-     h48 · radius 12 (`rounded-md`) · pad H 12 · gap 12
-     icon 20 (radius 6, raw) · name Subhead foreground
+     h40 desktop / h44 below lg · radius 12 (`rounded-md`) · pad H 8 · gap 8
+     icon 20 (radius 4, concentric with the row) · name Subhead foreground
      one-liner Body muted-foreground, TRUNCATING · ↗ 16 muted at the far right
 
    "One line per item" is a rule, not a side effect: a collection row never
@@ -28,31 +28,24 @@ import { usePreviewAnchor } from "./preview-popover"
    this row's preview card is open, including when the pointer has walked into
    the card itself.
 
-   ── ROW-ACTION SIGNATURES (Ion, 2026-08-18) ────────────────────────────────
+   ── ROW-ACTION SIGNATURES ─────────────────────────────────────────────────
 
-   "The navigation is not really clear." Every row now says what it will do
-   BEFORE it is clicked, and it says it with the same glyph in the same place —
-   the far right, muted at rest, foreground on hover:
+   The two glyphs still mean different destinations (Ion, 2026-08-18):
 
-     →   ArrowRight     goes somewhere on this site (article rows)
-     ↗   ArrowUpRight   leaves for another site, in a new tab (stack rows,
-                        "Skills I use" rows, the group header's GitHub link)
-     chip                copies an install command; does not navigate at all
-                        (Ion's own skills — already the clearest of the three,
-                        and unchanged)
+     →   ArrowRight     stays on this site (article rows)
+     ↗   ArrowUpRight   leaves for another site (stack, "Skills I use")
+     chip                copies; does not navigate (Ion's own skills)
 
-   There is NO fourth state. A row with no affordance would be a row a reader
-   has to click to discover, which is the complaint. The article row used to be
-   exactly that: no glyph, `href="#"`, and a click handler that cancelled
-   itself. It is a real internal link now.
+   They are no longer painted at rest (Ion, 2026-08-19). Pointer hover and
+   keyboard focus-visible snap them in; leave eases them out. The same glyph
+   also sits on the preview card, so the affordance is on the shared component
+   as well as the row. Install chips stay visible: they ARE the action.
 
-   The distinction is the point, not the decoration: ↗ has always meant "you
-   are leaving" on this site, so giving internal rows the SAME arrow would have
-   made both meaningless. The two glyphs are declared together in lib/icons.ts.
+   Writing keeps the date ("Mar 12") in that slot and swaps it for → on hover.
    ------------------------------------------------------------------------- */
 
-/** The far-right affordance glyph, both arrows. Colour only — the row's own
- *  fill is the movement, and a second moving part in a 48px row is noise.
+/** The far-right affordance glyph, both arrows. Colour only. The row's own
+ *  fill is the movement, and a second moving part in a compact row is noise.
  *  Same snap-in / ease-out timing as everything else in the pattern.
  *
  *  `stroke-width: 1.5` is the icon contract (token-contract.md 3.9,
@@ -64,16 +57,20 @@ import { usePreviewAnchor } from "./preview-popover"
  *  an already-shipped glyph. */
 const AFFORDANCE = cn(
   "size-4 shrink-0 text-muted-foreground [&]:[stroke-width:1.5]",
-  "[transition-property:color]",
+  "opacity-0",
+  "[transition-property:color,opacity]",
   "[transition-duration:var(--duration-fast)]",
   "[transition-timing-function:var(--motion-glide)]",
-  "group-hover:text-foreground group-hover:[transition-duration:0ms]",
-  "group-data-[active=true]:text-foreground"
+  "group-hover:text-foreground group-hover:opacity-100 group-hover:[transition-duration:0ms]",
+  "group-focus-visible:text-foreground group-focus-visible:opacity-100 group-focus-visible:[transition-duration:0ms]",
+  "group-data-[active=true]:text-foreground group-data-[active=true]:opacity-100"
 )
 
-/* The shape and the fill, shared by both flavours. */
+/* Compact (Ion, 2026-08-19): h40, pad 8, gap 8 on desktop. Below lg the row
+ * is 44 so a thumb still has a 44 hit without a pseudo that would overlap
+ * the next row. Radius 12 stays. */
 const ROW_BOX = cn(
-  "group flex h-12 items-center gap-3 rounded-md px-3",
+  "group flex h-11 items-center gap-2 rounded-md px-2 lg:h-10",
   "hover:bg-muted data-[active=true]:bg-muted",
   "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
 )
@@ -143,14 +140,7 @@ export function CollectionRow({
 
   const inner = (
     <>
-      {/* The brand mark. PLACEHOLDER: the frame draws a muted 20x20 stand-in
-          (20:1017) for every row, because the real marks are art Ion has not
-          picked yet. Radius 6 is raw and concentric with the row's 12 — the
-          same documented allowance as the landing's project icons. */}
-      <span
-        aria-hidden="true"
-        className="size-5 shrink-0 rounded-[6px] bg-stone-300 dark:bg-stone-600"
-      />
+      <StackMark src={entry.mark} />
 
       <span className="text-subhead shrink-0 text-foreground">
         {entry.name}
@@ -253,10 +243,58 @@ export function ArticleRow({
       <span className="text-subhead min-w-0 flex-1 truncate text-foreground">
         {entry.title}
       </span>
-      <span className="shrink-0 text-xs text-muted-foreground">
-        {entry.date}
+      <span className="relative grid shrink-0 place-items-center">
+        <span
+          aria-hidden="true"
+          className="invisible col-start-1 row-start-1 text-xs"
+        >
+          {entry.date}
+        </span>
+        <span
+          className={cn(
+            "col-start-1 row-start-1 text-xs text-muted-foreground",
+            "[transition-property:opacity]",
+            "[transition-duration:var(--duration-fast)]",
+            "[transition-timing-function:var(--motion-glide)]",
+            "group-hover:opacity-0 group-hover:[transition-duration:0ms]",
+            "group-focus-visible:opacity-0 group-focus-visible:[transition-duration:0ms]",
+            "group-data-[active=true]:opacity-0"
+          )}
+        >
+          {entry.date}
+        </span>
+        <ArrowRight
+          aria-hidden="true"
+          className={cn(AFFORDANCE, "col-start-1 row-start-1 justify-self-end")}
+        />
       </span>
-      <ArrowRight aria-hidden="true" className={AFFORDANCE} />
     </Link>
+  )
+}
+
+/** 20×20 brand mark. Radius 4 = row 12 minus pad 8. */
+function StackMark({ src }: { src?: string }) {
+  if (!src) {
+    return (
+      <span
+        aria-hidden="true"
+        className="size-5 shrink-0 rounded-[4px] bg-stone-300 dark:bg-stone-600"
+      />
+    )
+  }
+
+  return (
+    // eslint-disable-next-line @next/next/no-img-element -- local SVG/PNG marks, sized 20px
+    <img
+      src={src}
+      alt=""
+      width={20}
+      height={20}
+      aria-hidden="true"
+      className={cn(
+        "size-5 shrink-0 overflow-hidden rounded-[4px]",
+        src.endsWith(".png") ? "object-cover" : "object-contain p-0.5"
+      )}
+    />
   )
 }

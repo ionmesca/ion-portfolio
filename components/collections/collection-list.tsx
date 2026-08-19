@@ -10,6 +10,7 @@ import type {
   CollectionPage,
 } from "@/content/collections"
 import { ArrowUpRight } from "@/lib/icons"
+import { cn } from "@/lib/utils"
 
 import { ArticleRow, CollectionRow } from "./collection-row"
 import { PreviewProvider, type PreviewAnchor } from "./preview-popover"
@@ -19,12 +20,13 @@ import { PreviewProvider, type PreviewAnchor } from "./preview-popover"
  *
  * Figma "Content" 20:1053 / 20:1306 / 20:1376 — identical in all three frames:
  *
- *   column          vertical, gap 24, pad 0 (the rows carry the 12)
- *   title block     pad H 12, gap 8 — Title (24) then one muted Body line
- *   group header    pad 12 / 12 / 4 / 12, Caption muted; on "Mine" it also
+ *   column          vertical, gap 24, pad 0 (the rows carry the 8)
+ *   title block     pad H 8, gap 8 — Title (24) then one muted Body line
+ *   group header    pad 8 / 0 / 4 / 8, Caption muted; on "Mine" it also
  *                   carries one quiet GitHub link, right-aligned
- *   rows            gap 0 — the 48px rows stack flush, their radius does the
- *                   separating on hover
+ *   labeled groups  32px between sections (mt-8), including Writing years
+ *   rows            gap 0 — compact rows (h40 / h44 below lg), their radius
+ *                   does the separating on hover
  *   footnote        pad H 12, Caption muted
  *
  * Everything from here down is client-side because the rows are preview
@@ -52,6 +54,8 @@ export function CollectionList({
           key: `${group.id}-${item.id}`,
           title: item.name,
           preview: item.preview,
+          href: item.href,
+          external: Boolean(item.href),
         }))
       ),
     [page.groups]
@@ -88,6 +92,8 @@ export function ArticleList({ page }: { page: CollectionPage<ArticleEntry> }) {
           key: `${group.id}-${item.id}`,
           title: item.title,
           preview: item.preview,
+          href: item.href,
+          external: false,
         }))
       ),
     [page.groups]
@@ -124,9 +130,11 @@ function Column<T>({
 }) {
   return (
     <div className="flex min-w-0 flex-col gap-6">
-      <header className="flex flex-col gap-2 px-3">
+      <header className="flex flex-col gap-2 px-2">
         <h1 className="text-2xl text-foreground">{page.title}</h1>
-        <p className="text-sm text-muted-foreground">{page.intro}</p>
+        <p className="text-pretty text-sm text-muted-foreground">
+          {page.intro}
+        </p>
       </header>
 
       <div className="flex flex-col">
@@ -134,12 +142,23 @@ function Column<T>({
           // The id is the wheel's scroll target. `[id]` carries a 96px
           // scroll-margin globally, so a click lands the header clear of the
           // top of the window.
-          <section key={group.id} id={group.id} className="flex flex-col">
+          <section
+            key={group.id}
+            id={group.id}
+            className={cn(
+              "flex flex-col",
+              // Labeled groups get a chapter break, including Writing years.
+              !group.hideLabel && "mt-8 first:mt-0"
+            )}
+          >
             {/* items-center, not items-baseline: the GitHub glyph is an inline SVG
                 whose baseline is its bottom edge, so a baseline row grows the
                 header by 3px and every group below it drifts. */}
-            <div className="flex items-center justify-between px-3 pt-3 pb-1">
-              <h2 className="text-xs text-muted-foreground">{group.label}</h2>
+            {(!group.hideLabel || group.link) && (
+            <div className="flex items-center justify-between px-2 pb-1">
+              {!group.hideLabel && (
+                <h2 className="text-xs text-muted-foreground">{group.label}</h2>
+              )}
 
               {group.link && (
                 <a
@@ -164,13 +183,16 @@ function Column<T>({
                 </a>
               )}
             </div>
+            )}
 
             <div className="flex flex-col">{renderRows(group)}</div>
           </section>
         ))}
       </div>
 
-      <p className="px-3 text-xs text-muted-foreground">{page.footnote}</p>
+      {page.footnote ? (
+        <p className="px-2 text-xs text-muted-foreground">{page.footnote}</p>
+      ) : null}
     </div>
   )
 }
