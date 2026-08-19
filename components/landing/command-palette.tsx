@@ -956,7 +956,11 @@ export function CommandPalette() {
                 each with `py-2` would have put 16px between Socials and Theme
                 and made the block read as two regions, which is the one thing
                 the seam note above says a rule is for. */}
-            <div className="palette-group px-2 pt-2">
+            <div
+              role="group"
+              aria-label="Socials"
+              className="palette-group px-2 pt-2"
+            >
               {/* SOCIALS — Ion, 2026-08-19: "I want the socials to be also its
                   own section, the same way as we have theme and sound…
                   occupying less space."
@@ -974,12 +978,12 @@ export function CommandPalette() {
                   they share is the LANGUAGE — one glyph, one word, one muted
                   track — which is what Ion asked for, and no rule divides them,
                   because a rule is this panel's word for "a different kind of
-                  region starts here" and these three lines are all controls. */}
-              <div
-                role="group"
-                aria-label="Socials"
-                className="flex h-10 items-center gap-2 rounded-md pr-3 pl-2"
-              >
+                  region starts here" and these three lines are all controls.
+
+                  The group is the BOX, not the row, so it nests exactly the way
+                  Preferences does — one `role="group"` holding its control
+                  lines. */}
+              <div className="flex h-10 items-center gap-2 rounded-md pr-3 pl-2">
                 <AtSign
                   className="size-4 shrink-0 text-muted-foreground"
                   strokeWidth={ICON_STROKE}
