@@ -10,17 +10,21 @@ import {
 import { letterMeta, letterNav, letterSections } from "@/content/letter"
 
 export const metadata: Metadata = {
-  title: "A letter — Ion Mesca",
+  title: "About — Ion Mesca",
   description:
     "Who I am, how I got here, and what I think an AI-native interface owes the person using it.",
-  alternates: { canonical: "/letter" },
+  alternates: { canonical: "/about" },
 }
 
 /**
- * /letter — the letter page.
+ * /about — the letter page.
  *
- * Route ruled by the implementation spec: the letter lives at /letter, and the
- * collection of articles will live at /articles later.
+ * THE ROUTE IS /about AND THE NAV SAYS "About" (Ion, 2026-08-19). What is on
+ * the page is still a letter, and deliberately so: the FORM is a letter, the
+ * PLACE in the site is "about me", and those are two different questions. So
+ * the address and the menu answer the second one, and the prose — the title,
+ * the voice, the signature in `content/letter.ts` — is untouched. The files
+ * keep the code name too (`app/about/page.tsx` reads `components/letter/`).
  *
  * The layout is `RailShell` — the 272/640/272 grid from Figma "Letter — light"
  * (13:2941), which the three collection frames clone. It used to be drawn here
@@ -32,9 +36,9 @@ export const metadata: Metadata = {
  * deliberately the plainest thing that keeps the page readable and navigable —
  * not a proposal. Flagged in the report.
  */
-export default function LetterPage() {
+export default function AboutPage() {
   return (
-    <RailShell nav={letterNav} label="Letter sections" gutter="prose">
+    <RailShell nav={letterNav} label="About sections" gutter="prose">
       <article className="flex min-w-0 flex-col gap-12">
         <TitleBlock title={letterMeta.title} date={letterMeta.date} />
 

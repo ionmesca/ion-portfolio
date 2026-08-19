@@ -96,11 +96,11 @@ export function RailShell({
   children,
 }: {
   nav: SectionNavItem[]
-  /** `aria-label` for the wheel — "Letter sections", "Stack sections", … */
+  /** `aria-label` for the wheel — "About sections", "Stack sections", … */
   label: string
   /**
    * Where the rail's back button goes. Omitted is "← Home" — the letter and the
-   * three collections. An article detail page passes "← Articles".
+   * three collections. An article detail page passes "← Writing".
    *
    * IMPORTANT for the conditional wheel: `children` must stay the grid's SECOND
    * item, because `SectionRail` measures its own `nextElementSibling` to decide

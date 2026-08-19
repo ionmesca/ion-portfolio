@@ -22,7 +22,7 @@ export { headingSlug }
  * no `slug:` field to get out of step with it. The frontmatter is three fields,
  * exactly as ruled:
  *
- *   title     the h1 of the detail page and the row on /articles
+ *   title     the h1 of the detail page and the row on /writing
  *   date      "YYYY-MM-DD", QUOTED. Unquoted, YAML parses it into a JS Date in
  *             the build machine's timezone, which can move a 1st-of-the-month
  *             article into the previous month. A string cannot do that.
@@ -47,14 +47,14 @@ const ARTICLES_DIR = path.join(process.cwd(), "content", "articles")
 export type Article = {
   /** The filename without `.mdx`, and the URL segment. */
   slug: string
-  /** `/articles/<slug>` — every consumer takes it from here. */
+  /** `/writing/<slug>` — every consumer takes it from here. */
   href: string
   title: string
   /** "2026-03-12". Sorts lexicographically, which is why it is a string. */
   date: string
   /** "Mar 2026" — the collection row's far-right caption. */
   displayDate: string
-  /** "2026" — the group id and the wheel's row label on /articles. */
+  /** "2026" — the group id and the wheel's row label on /writing. */
   year: string
   summary: string
   /** "6 min read", counted off the body. */
@@ -132,7 +132,7 @@ function parse(file: string): Article {
 
   return {
     slug,
-    href: `/articles/${slug}`,
+    href: `/writing/${slug}`,
     title,
     date,
     displayDate: displayDate(date),
@@ -156,7 +156,7 @@ export function getArticle(slug: string): Article | undefined {
 }
 
 /**
- * /articles, built from the files.
+ * /writing, built from the files.
  *
  * THE INDEX IS DERIVED, NOT AUTHORED (Ion, 2026-08-18: no dead rows). It used
  * to be a hand-written list in `content/collections.ts` whose rows pointed at
@@ -174,7 +174,7 @@ export function getArticlesPage(): CollectionPage<ArticleEntry> {
   }
 
   return {
-    title: "Articles",
+    title: "Writing",
     intro: "Notes from building things that ship.",
     footnote: "Placeholder content — Ion curates the real list post-build.",
     groups: years.map((year) => ({

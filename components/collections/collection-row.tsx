@@ -216,11 +216,11 @@ export function CollectionRow({
  * The iconless flavour, ratified in the lab: no 20px mark (there is no brand to
  * stand in for, and an avatar would make the list louder than the writing), no
  * one-liner. Title Subhead, then the date in the palette's shortcut position.
- * Articles go inward, so the row is quieter than a Stack row.
+ * Writing goes inward, so the row is quieter than a Stack row.
  *
  * TWO CHANGES FROM THE FRAME, both from Ion's 2026-08-18 ruling:
  *
- *   the link    real. `next/link` to `/articles/<slug>`, and the row is
+ *   the link    real. `next/link` to `/writing/<slug>`, and the row is
  *               keyboard-reachable and prefetched like any other internal
  *               navigation. It used to be `href="#"` with a click handler that
  *               swallowed the click, because there was no detail page.

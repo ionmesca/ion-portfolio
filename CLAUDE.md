@@ -55,7 +55,7 @@ landing document-scroll wheel, the hover-preview container morph
 
 - `app/` — Routes
 - `components/ui/` — shadcn primitives and project variants
-- `content/articles/` — MDX articles (routed at `/articles/[slug]`)
+- `content/articles/` — MDX articles (routed at `/writing/[slug]`)
 - `content/work/` — pre-rebuild case studies, currently unrouted
 - `docs/design/` — Token contract, motion spec, labs, Figma reference shots
 - `public/fonts/` — Aeonik Pro

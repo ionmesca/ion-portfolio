@@ -295,7 +295,7 @@ Desktop rail and media column, plus the shared data.
 
 ### `components/nav/`
 
-- `rail-shell.tsx` — one grid, four pages (letter + three collections).
+- `rail-shell.tsx` — one grid, four pages (about + three collections).
 - `section-rail.tsx` — the back button and the conditional section wheel.
 
 ### `components/letter/`
@@ -341,12 +341,21 @@ to arrive with raw values (`bg-black/50`, hardcoded durations, `border-t`);
 | Route | File | Notes |
 |---|---|---|
 | `/` | `app/page.tsx` | Landing. Desktop rail + media column; mobile tree below `lg`. |
-| `/letter` | `app/letter/page.tsx` | The letter. |
+| `/about` | `app/about/page.tsx` | The letter. Route and nav label are About; the prose is still a letter. |
 | `/stack` | `app/stack/page.tsx` | Collection flavour 1 — tools, site previews. |
 | `/agents` | `app/agents/page.tsx` | Collection flavour 2 — adds credit line, "How I use it", install chip. |
-| `/articles` | `app/articles/page.tsx` | Collection flavour 3 — iconless rows, wheel of years. |
-| `/articles/[slug]` | `app/articles/[slug]/page.tsx` | Article detail. The letter's chassis with one word changed. |
+| `/writing` | `app/writing/page.tsx` | Collection flavour 3 — iconless rows, wheel of years. |
+| `/writing/[slug]` | `app/writing/[slug]/page.tsx` | Article detail. The letter's chassis with one word changed. |
 | `/dev` | `app/dev/page.tsx` | **Dev-only specimen. `noindex`, unlinked, delete before cutover.** |
+
+**Routes were renamed on 2026-08-19 (Ion): Articles → Writing, Letter →
+About — label AND route, because the site is pre-launch and an address that
+disagrees with its menu is a thing to fix now rather than a redirect to keep
+forever.** CODE NAMES DID NOT MOVE and are not meant to: `components/letter/`,
+`content/letter.ts`, `content/articles/*.mdx` and `lib/articles.ts` still say
+letter and articles. A directory is what the code calls a thing; a route is
+what a reader is told it is called, and only the second one is a promise to
+anybody outside the repo.
 
 `app/layout.tsx` loads Aeonik through `next/font/local`, inlines the blocking
 theme script (`suppressHydrationWarning` on `<html>` is deliberate and covers
@@ -369,7 +378,7 @@ reads 164 gutter / 263 rail / 48 gap / right column / 24 gutter, top offset 136.
 panels per project, so the document is long and the rail's selection is read off
 the column's position — one project per pair of panels.
 
-### Letter, collections, article detail — `RailShell`
+### About, collections, article detail — `RailShell`
 
 One grid, four pages. At 1512: `164 │ 272 rail │ 640 reading │ 272 tail │ 164`.
 The tail is empty; it is what keeps the reading column centred.

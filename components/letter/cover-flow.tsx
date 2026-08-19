@@ -69,11 +69,11 @@ import {
 
    CLAUDE.md allows `motion/react` for micro-interactions behind a proven ≤3KB
    gz split point. This surface has none: it is reached from `prose.tsx`, which
-   every letter section renders through, so LazyMotion would land on /letter's
+   every letter section renders through, so LazyMotion would land on /about's
    first load rather than behind a gate. The sanctioned alternative is the rAF
    integrator in `lib/motion.ts` — `createSpring`, reading the very same
    constants `motion/react` would have been handed. Measured first-load delta
-   for /letter is in the report.
+   for /about is in the report.
 
    ── WHICH SPRING, AND WHY ──────────────────────────────────────────────────
 

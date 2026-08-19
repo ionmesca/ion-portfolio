@@ -7,13 +7,13 @@ import type { NextConfig } from "next"
  * DELIBERATELY BORING. `@next/mdx` is the first-party plugin: it registers one
  * loader rule (Turbopack and webpack both) so `import Body from "…/x.mdx"`
  * returns a React component compiled at BUILD time. Nothing is fetched, parsed
- * or compiled at request time, so `/articles/<slug>` prerenders to static HTML
+ * or compiled at request time, so `/writing/<slug>` prerenders to static HTML
  * like every other route on this site.
  *
  * WHAT IS NOT HERE, and why:
  *
  *   pageExtensions   NOT extended with "mdx". Articles are IMPORTED by
- *                    `app/articles/[slug]/page.tsx`, they are not routes
+ *                    `app/writing/[slug]/page.tsx`, they are not routes
  *                    themselves. Adding "mdx" would let a stray file in `app/`
  *                    silently become a page, and buys nothing.
  *   remote MDX       never. The content is in the repo.

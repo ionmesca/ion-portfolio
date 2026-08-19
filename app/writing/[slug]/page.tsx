@@ -6,7 +6,7 @@ import { RailShell } from "@/components/nav/rail-shell"
 import { getArticle, getArticles } from "@/lib/articles"
 
 /**
- * /articles/[slug] — the article detail page.
+ * /writing/[slug] — the article detail page.
  *
  * IT IS THE LETTER, WITH ONE WORD CHANGED. POR-27 ratified a single template
  * for both ("Article pages inherit this template with back button reading
@@ -21,9 +21,13 @@ import { getArticle, getArticles } from "@/lib/articles"
  *
  * WHAT IS NEW, and only this:
  *
- *   back             "← Articles", not "← Home". The frames only ever drew
+ *   back             "← Writing", not "← Home". The frames only ever drew
  *                    "Home"; POR-27's rule is that the label names the
- *                    DESTINATION, and an article's destination is its index.
+ *                    DESTINATION, and an article's destination is its index —
+ *                    which Ion renamed to Writing on 2026-08-19, so the button
+ *                    says Writing and points at /writing. The `.mdx` files it
+ *                    is built from stay in `content/articles/`: a code name is
+ *                    not an address.
  *   wheel rows       the article's OWN h2s, read off the `.mdx` at build time
  *                    (lib/articles.ts) instead of a hand-written nav list.
  *                    A heading is a wheel row by existing.
@@ -126,7 +130,7 @@ export default async function ArticlePage({
     <RailShell
       nav={article.sections}
       label="Article sections"
-      back={{ href: "/articles", label: "Articles" }}
+      back={{ href: "/writing", label: "Writing" }}
       gutter="prose"
     >
       <article className="flex min-w-0 flex-col gap-12">

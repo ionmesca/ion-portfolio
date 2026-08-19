@@ -6,18 +6,24 @@ import { navFor } from "@/content/collections"
 import { getArticlesPage } from "@/lib/articles"
 
 export const metadata: Metadata = {
-  title: "Articles — Ion Mesca",
+  title: "Writing — Ion Mesca",
   description: "Notes from building things that ship.",
-  alternates: { canonical: "/articles" },
+  alternates: { canonical: "/writing" },
 }
 
 /**
- * /articles — flavour 3 of the collection pattern.
+ * /writing — flavour 3 of the collection pattern.
  *
  * Figma "Articles — desktop light" 20:1363. The iconless row (title + date),
  * an excerpt-card preview, and a wheel of years instead of categories.
  *
- * THE ROWS NAVIGATE NOW. The list is read off `content/articles/*.mdx` at build
+ * IT IS CALLED WRITING (Ion, 2026-08-19). The route and the label were both
+ * "articles"; the site is pre-launch, so the URL moved with the word rather
+ * than leaving an address that says one thing while the page says another.
+ * The FILES keep their name — `content/articles/*.mdx`, `lib/articles.ts` —
+ * because those are code names and nobody reads them out loud.
+ *
+ * THE ROWS NAVIGATE. The list is read off `content/articles/*.mdx` at build
  * time (`lib/articles.ts`), so every row points at a page that exists and the
  * year groups are a fact about the dates rather than a second list to keep in
  * step. The old hand-written nine rows, all pointing at `href="#"`, are gone —
@@ -26,11 +32,11 @@ export const metadata: Metadata = {
  * A Server Component reading the filesystem, handing plain data to the client
  * list: the same contract `/stack` and `/agents` have, with a different source.
  */
-export default function ArticlesPage() {
+export default function WritingPage() {
   const page = getArticlesPage()
 
   return (
-    <CollectionShell nav={navFor(page)} label="Article years">
+    <CollectionShell nav={navFor(page)} label="Writing years">
       <ArticleList page={page} />
     </CollectionShell>
   )

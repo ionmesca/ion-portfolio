@@ -59,9 +59,9 @@ export const metadata: Metadata = {
   creator: "Ion Mesca",
 
   /* THERE IS NO `title.template` YET, and its absence is deliberate. The
-     template would be "%s — Ion Mesca", but /letter and both /articles routes
+     template would be "%s — Ion Mesca", but /about and both /writing routes
      currently append that suffix to their own title strings by hand, so
-     turning the template on today renders "A letter — Ion Mesca — Ion Mesca"
+     turning the template on today renders "About — Ion Mesca — Ion Mesca"
      on three live pages. Those files belong to another crew this pass; the
      switch is one commit that has to flip all of them at once. Flagged in the
      POR-37 report with the exact lines. */
@@ -74,7 +74,7 @@ export const metadata: Metadata = {
     description: DESCRIPTION,
     /* NO `url`. It is inherited verbatim by every child route that does not
        replace the whole `openGraph` object, so a root value would tell a
-       crawler that /stack, /agents and /letter are all the home page. The
+       crawler that /stack, /agents and /about are all the home page. The
        per-page `alternates.canonical` carries that signal instead, and it is
        the stronger one. The card art is the `opengraph-image.png` file
        convention beside this file — Next writes the tag, which is why there is

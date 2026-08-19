@@ -13,7 +13,7 @@ import { SITE_URL } from "./layout"
  * flat XML document. Nothing here runs in a request.
  *
  * THE ARTICLE ROWS ARE DERIVED, not listed. A new `.mdx` file appears in the
- * sitemap the moment it appears on /articles, for the same reason and through
+ * sitemap the moment it appears on /writing, for the same reason and through
  * the same function — there is no second list to forget to update.
  *
  * `lastModified` IS ONLY SET WHERE IT IS KNOWN. An article carries a real
@@ -29,7 +29,7 @@ import { SITE_URL } from "./layout"
  */
 
 /** Every route that is not derived from content. */
-const STATIC_ROUTES = ["/", "/letter", "/articles", "/agents", "/stack"]
+const STATIC_ROUTES = ["/", "/about", "/writing", "/agents", "/stack"]
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const statics = STATIC_ROUTES.map((path) => ({

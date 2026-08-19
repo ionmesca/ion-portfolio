@@ -44,7 +44,7 @@ export type CollectionPreview =
   | { kind: "site"; domain: string }
   /** Agents & skills: chrome + README mock + "How I use it" + domain. */
   | { kind: "repo"; domain: string; usage: [string, string] }
-  /** Articles: no chrome, no mock — title, excerpt, reading time. */
+  /** Writing: no chrome, no mock — title, excerpt, reading time. */
   | { kind: "excerpt"; excerpt: string; readTime: string }
 
 /** A row on Stack or Agents & skills. */
@@ -65,14 +65,14 @@ export type CollectionEntry = {
   preview: CollectionPreview
 }
 
-/** A row on Articles — no icon, no one-liner, no ↗. */
+/** A row on Writing — no icon, no one-liner, no ↗. */
 export type ArticleEntry = {
   id: string
   title: string
   /** "Mar 2026" — the far-right caption, in the palette's shortcut position. */
   date: string
   /**
-   * `/articles/<slug>`. REQUIRED, and internal by construction — an article row
+   * `/writing/<slug>`. REQUIRED, and internal by construction — an article row
    * that cannot navigate is a dead row, and Ion ruled those out on 2026-08-18.
    * The list is built from the files in `content/articles/` by
    * `lib/articles.ts`, so a row exists only when the page it points at does.
@@ -373,9 +373,10 @@ export const agentsPage: CollectionPage<CollectionEntry> = {
 }
 
 /* ----------------------------------------------------------------------------
-   /articles — Figma 20:1363
+   /writing — Figma "Articles" 20:1363 (the frame keeps its old name; the
+   route and the label are Writing since Ion's 2026-08-19 ruling)
 
-   THE ARTICLES LIST IS NOT HERE ANY MORE. It used to be a hand-written array
+   THE LIST IS NOT HERE ANY MORE. It used to be a hand-written array
    of nine titles copied off the frame, every one of them pointing at
    `href="#"`, because there were no article pages to point at. Ion, 2026-08-18:
    "the navigation is not really clear" — a row that does nothing is the worst

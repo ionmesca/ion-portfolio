@@ -88,7 +88,7 @@ const RAIL_QUERY = "(min-width: 64rem)"
    scrolling, that question has no content, and the answer is furniture. So the
    wheel now has a condition: the reading column has to be longer than
    `WHEEL_MIN_RATIO` viewports before it appears. The BACK BUTTON is
-   unconditional — "← Home" / "← Articles" is how you leave, and that is always
+   unconditional — "← Home" / "← Writing" is how you leave, and that is always
    a live question.
 
    In practice, today: the letter and the long articles keep their wheel; the
@@ -197,7 +197,7 @@ const freshCache = (): RowCache => ({
  * inside the rail:
  *
  *   Back button     85x32, ArrowLeft 16, `default` size, variant `secondary` —
- *                   "Home" everywhere the frames draw it, "Articles" on an
+ *                   "Home" everywhere the frames draw it, "Writing" on an
  *                   article detail page (POR-27: the label names the
  *                   destination, not the gesture). Unconditional; the wheel
  *                   beside it is not.
@@ -222,9 +222,9 @@ export function SectionRail({
   back = HOME,
 }: {
   sections: SectionNavItem[]
-  /** `aria-label` for the wheel — "Letter sections", "Stack sections", … */
+  /** `aria-label` for the wheel — "About sections", "Stack sections", … */
   label: string
-  /** Defaults to "← Home". Articles pass "← Articles". */
+  /** Defaults to "← Home". Article pages pass "← Writing". */
   back?: RailBack
 }) {
   const [active, setActive] = React.useState(0)

@@ -76,7 +76,7 @@ export function CollectionList({
 }
 
 /* ----------------------------------------------------------------------------
-   Articles
+   Writing
    ------------------------------------------------------------------------- */
 
 export function ArticleList({ page }: { page: CollectionPage<ArticleEntry> }) {

@@ -69,7 +69,7 @@ export const CONTACT_EMAIL = "ion.mesca@gmail.com"
 /**
  * The one PLACEHOLDER destination left in this file.
  *
- * Every Navigate row has a real route: `/`, `/letter`, `/articles`, `/stack`
+ * Every Navigate row has a real route: `/`, `/about`, `/writing`, `/stack`
  * and `/agents` all exist. The three socials read their real profiles off
  * `socials.ts` below. Book a call is the last `#` — a dead anchor is a smaller
  * lie than a 404, and it waits on a real booking URL.
@@ -98,8 +98,14 @@ export const PALETTE_GROUPS: PaletteGroup[] = [
     label: "Navigate",
     items: [
       { id: "home", label: "Home", icon: Home, href: "/" },
-      { id: "letter", label: "Letter", icon: PenLine, href: "/letter" },
-      { id: "articles", label: "Articles", icon: FileText, href: "/articles" },
+      /* THE IDS ARE CODE NAMES AND DO NOT FOLLOW THE LABELS. Ion renamed
+         Letter → About and Articles → Writing on 2026-08-19, label and route
+         together. `letter` and `articles` stay here for the same reason
+         `components/letter/`, `content/articles/` and `lib/articles.ts` keep
+         theirs: an id is what the code calls a thing, not what a reader is
+         told it is called. Nothing outside this file's DOM ids reads them. */
+      { id: "letter", label: "About", icon: PenLine, href: "/about" },
+      { id: "articles", label: "Writing", icon: FileText, href: "/writing" },
       { id: "stack", label: "Stack", icon: Layers, href: "/stack" },
       { id: "agents", label: "Agents & Skills", icon: Bot, href: "/agents" },
     ],
