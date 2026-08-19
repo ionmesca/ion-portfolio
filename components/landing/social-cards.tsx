@@ -40,11 +40,14 @@ import { LinkedInGlyph, XGlyph } from "./brand-glyphs"
    changed the HEIGHTS, which is the axis this pass was allowed to move.
 
    ── WHAT IS REAL AND WHAT IS PLACEHOLDER ──────────────────────────────────
-   REAL: the three hrefs (from `socials.ts`), the avatar, and now the pills —
-   each is a genuine link to the same destination its card is about.
-   PLACEHOLDER: every number and every line of prose. The contribution counts
-   come from an integer hash, the dates from a fixed anchor, and the bios are
-   stand-ins.
+   REAL: the hrefs (from `socials.ts` — X and LinkedIn are Ion's own profiles
+   since 2026-08-19, GitHub is still the bare site root), the avatar, the
+   pills, and the X card's `@ionmesca`, which is now the handle the X href
+   actually points at.
+   PLACEHOLDER: every number and every other line of prose. The contribution
+   counts come from an integer hash, the dates from a fixed anchor, the bios
+   are stand-ins, and the GitHub card's `ionmesca` username is a guess that
+   will be confirmed or corrected when that handle lands.
 
    THE PILLS ARE LINKS NOW, and that reverses POR-24's note that they were
    decorative `<span>`s. The rule that note was protecting is "a hover-opened
