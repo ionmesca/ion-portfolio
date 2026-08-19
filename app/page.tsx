@@ -85,7 +85,34 @@ export default function Home() {
             // 264-wide card on a 263-wide rail is meant to — but it may never
             // float above the rail's top edge, where the identity chip is.
             data-rail
-            className="sticky top-[136px] flex h-[700px] max-h-[calc(100dvh-160px)] w-[263px] shrink-0 flex-col gap-16 self-start"
+            // THE RAIL DECLARES ITS RANK — `z-10`, and it is load-bearing.
+            //
+            // The rail is pinned and the media column scrolls underneath it,
+            // and everything the rail holds overhangs into that column: the ⌘K
+            // panel grows to 382px on a 263px rail, the hover previews are 264
+            // wide. So "the rail paints above the column" is a law of this
+            // layout, and until now it was only ever true BY ACCIDENT.
+            //
+            // The accident: `position: sticky` makes this element a stacking
+            // context whatever its z-index, so the palette slot's `z-40` sorts
+            // only INSIDE the rail — it cannot outrank anything in the media
+            // column. The rail itself was `z-index: auto`, which put it in the
+            // positioned-descendants layer alongside any positioned sibling,
+            // where ties are broken by tree order and the media column always
+            // comes second. The panels used to be plain in-flow blocks, which
+            // paint below that layer, so the rail won without asking.
+            //
+            // ef9e76a gave the panels `relative` (a `fill` image needs a
+            // positioned ancestor) and the accident ended: the stand-ins began
+            // painting straight over the open palette's overhang. An explicit
+            // z-index here states the rule once, at the element the rule is
+            // about, so the next positioned thing to appear in the media
+            // column cannot quietly repeat it.
+            //
+            // 10 and not 40: this only has to beat `auto` in the document
+            // flow. 40 stays where it belongs — inside the rail, ranking the
+            // palette above the project rows.
+            className="sticky top-[136px] z-10 flex h-[700px] max-h-[calc(100dvh-160px)] w-[263px] shrink-0 flex-col gap-16 self-start"
           >
             <div className="flex flex-col gap-6">
               {/* The identity chip, and — on a desktop pointer — the ⌘K palette

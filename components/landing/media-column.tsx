@@ -50,6 +50,12 @@ function Panel({
   return (
     <div
       ref={anchor}
+      // `relative` is here for the `fill` image below, and it is also what
+      // lifts this panel out of in-flow painting into the positioned layer —
+      // where, for one build, it painted over the open ⌘K panel's overhang.
+      // The rail states its own rank now (`z-10`, app/page.tsx), so anything
+      // positioned in this column sits below the whole pinned column by rule
+      // rather than by luck. Do not answer a future z-order surprise here.
       className="relative h-[538px] shrink-0 overflow-hidden rounded-xl bg-muted"
       data-project={project.id}
       // With no artwork the muted rectangle IS the picture, and it has to say
