@@ -80,6 +80,12 @@ export {
   // language exactly: one glyph that means the thing, and its negation.
   Volume2,
   VolumeOff,
+  // socials: the Preferences block's third row. The three cells beside it are
+  // FILLED BRAND MARKS and stay out of this file (see `Brand marks` above);
+  // this is only the line's own label glyph, and it follows the same rule the
+  // theme and sound glyphs do — one lucide mark that means the thing itself.
+  // `at-sign` is a handle, which is exactly what those three cells lead to.
+  AtSign,
 } from "lucide-react"
 
 export type { LucideIcon } from "lucide-react"

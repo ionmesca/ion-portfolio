@@ -5,7 +5,7 @@ import Link from "next/link"
 
 import { IconSwap } from "@/components/ui/icon-swap"
 import { Kbd } from "@/components/ui/kbd"
-import { Check, Copy, ICON_STROKE, Sun, Volume2 } from "@/lib/icons"
+import { AtSign, Check, Copy, ICON_STROKE, Sun, Volume2 } from "@/lib/icons"
 import { D_SLOW } from "@/lib/motion"
 import { createMorph, type Morph, type MorphRect } from "@/lib/morph"
 import { useHoverCorridor } from "@/lib/morph-preview"
@@ -13,6 +13,7 @@ import { useCopyToClipboard } from "@/lib/use-copy"
 import { cn } from "@/lib/utils"
 
 import { IdentityChip } from "./identity-chip"
+import { SocialsSegment } from "./socials-segment"
 import { SoundSegment, useSound } from "./sound-segment"
 import { ThemeSegment, useTheme } from "./theme-segment"
 import {
@@ -71,19 +72,25 @@ import {
    out of each cluster with it, and 8px of padding is not a cluster boundary.
    Navigate and Actions are now separated by RHYTHM (8 + 8 = 16px of padding
    against 0 between rows inside a group), because they are the same kind of
-   thing — commands. Preferences is separated by the 1px full-bleed `border`
-   rule, because it is not: it holds a control, it sits outside the listbox
-   and outside the ↑/↓ ring. The frame's own vocabulary for "a different kind
-   of region starts here" is exactly that rule — it is what already sits under
-   the header — so it is reused once, where it is true, rather than three
-   times, which would have made a 451px panel read as a table.
+   thing — commands. The CONTROL BLOCK is separated by the 1px full-bleed
+   `border` rule, because it is not: it holds controls, it sits outside the
+   listbox and outside the ↑/↓ ring. The frame's own vocabulary for "a
+   different kind of region starts here" is exactly that rule — it is what
+   already sits under the header — so it is reused once, where it is true,
+   rather than three times, which would have made a 451px panel read as a
+   table. The three lines inside the block get no rules between them for the
+   same reason: they are all controls, and a rule there would say otherwise.
 
-     body      Navigate 176 · Actions 120 · rule 1 · Preferences 96  =  393
+     body      Navigate 176 · Actions 80 · rule 1 · controls 136  =  393
      panel     42 header + 393  =  435
 
-   (Actions is 120 and not 176 because its three socials collapse into one
-   40px icon row — round 3. Preferences is 96 and not 56 because it holds TWO
-   control rows since 2026-08-18: Theme, and Sound.)
+   THE PANEL DID NOT CHANGE HEIGHT when round 4 moved the socials. Actions
+   dropped its 40px compact icon row (120 → 80) and the control block gained a
+   40px Socials line (96 → 136). One line moved from one side of the rule to
+   the other, so 435 is 435 and the zero-jump morph has nothing new to do.
+   (Actions is 80 and not 176 because its three socials are not rows here at
+   all; the block is 136 and not 40 because it holds THREE control lines —
+   Socials, Theme and Sound.)
 
    BEHAVIOUR LAW — a FLIP container on one rAF lerp with a JS bezier glide
    solver, 400ms symmetric, no scrim. The content does not animate: it rides
@@ -148,8 +155,12 @@ const CLOSE_MS = D_SLOW
 const OPTION_DOM_ID = (id: string) => `palette-option-${id}`
 
 /**
- * Each group, split into the rows it draws full width and the icons it
- * collapses into one compact row at its end.
+ * Each group's full-width rows.
+ *
+ * `compact` names the ids this surface does NOT draw as listbox rows — the
+ * three socials, which are the Socials control row's business now. The field
+ * still means what it always meant ("the desktop lays these out differently"),
+ * and the mobile sheet still ignores it and renders all ten as touch rows.
  *
  * Module constants, not memos. With the search row gone the lists are facts
  * about the file that imports them and can never change at runtime, which is
@@ -159,36 +170,27 @@ const OPTION_DOM_ID = (id: string) => `palette-option-${id}`
 const LAYOUT = PALETTE_GROUPS.map((group) => ({
   group,
   rows: group.items.filter((item) => !group.compact?.includes(item.id)),
-  icons: group.compact
-    ? group.compact.flatMap((id) => group.items.filter((i) => i.id === id))
-    : [],
 }))
 
 /** Every option, flat, for id → item lookups. Ring order. */
-const OPTIONS = LAYOUT.flatMap(({ rows, icons }) => [...rows, ...icons])
+const OPTIONS = LAYOUT.flatMap(({ rows }) => rows)
 
 /**
- * THE ↑/↓ RING IS A RING OF STOPS, NOT OF OPTIONS (Ion, round 3).
+ * THE ↑/↓ RING — one option per stop, again.
  *
- * Every stop is one option, except the social row, which is one stop holding
- * three. ↑/↓ walk the stops; ←/→ walk inside one. That is the standard
- * two-dimensional composite: the vertical axis is the menu, the horizontal axis
- * is whatever the current line happens to hold, and a reader who never presses
- * ← still passes every destination exactly once.
+ * Round 3 made it a ring of STOPS rather than of options, because the compact
+ * social row was one stop holding three. Ion's round-4 ruling moved those three
+ * out of the listbox entirely and into the control block below the rule, so
+ * every stop holds exactly one option once more and the second axis went with
+ * them. ←/→ inside the panel now belong to the three control rows alone —
+ * Socials, Theme, Sound — each of which owns its own ring and says so.
  *
- * Ten options, eight stops.
+ * Seven options, seven stops.
  */
-const STOPS: string[][] = LAYOUT.flatMap(({ rows, icons }) => [
-  ...rows.map((item) => [item.id]),
-  ...(icons.length ? [icons.map((item) => item.id)] : []),
-])
+const STOPS: string[] = OPTIONS.map((item) => item.id)
 
 /** Which stop an option sits in. −1 for an id that is not in the ring. */
-const stopOf = (id: string | null) =>
-  id === null ? -1 : STOPS.findIndex((stop) => stop.includes(id))
-
-/** The ids in the compact row, in visual order. Empty if there is no row. */
-const ICON_IDS = STOPS.find((stop) => stop.length > 1) ?? []
+const stopOf = (id: string | null) => (id === null ? -1 : STOPS.indexOf(id))
 
 type ChipRect = { w: number; h: number }
 
@@ -245,25 +247,10 @@ export function CommandPalette() {
     OPTIONS[0]?.id ?? null
   )
 
-  /**
-   * WHICH ICON THE COMPACT ROW IS PARKED ON — the roving tabindex's "one".
-   *
-   * A composite widget keeps exactly one of its members reachable by Tab, and
-   * remembers which one it was on the last time you were in it. That is what
-   * this holds, and it does two jobs with one number: it is the icon that
-   * carries `tabIndex={0}`, and it is the icon ↓ lands on when the selection
-   * walks into the row from the option above.
-   *
-   * State and not a ref, because the render reads it — the roving tabindex has
-   * to be correct in the markup, not applied afterwards.
-   */
-  const [iconId, setIconId] = React.useState<string | null>(ICON_IDS[0] ?? null)
-
-  /** Select an option, and remember it if it lives in the compact row. */
-  const select = React.useCallback((id: string) => {
-    setActiveId(id)
-    if (ICON_IDS.includes(id)) setIconId(id)
-  }, [])
+  /** Select an option. (It used to also remember which icon the compact social
+   *  row was parked on; that row is a toolbar in the control block now and
+   *  keeps its own roving tabindex — see `socials-segment.tsx`.) */
+  const select = React.useCallback((id: string) => setActiveId(id), [])
 
   /* --- desktop gate -------------------------------------------------------
      None of this exists on mobile — zero shortcuts there, and the mobile phase
@@ -687,46 +674,13 @@ export function CommandPalette() {
       ?.scrollIntoView({ block: "nearest" })
   }, [])
 
-  /** ↑/↓ — one STOP at a time. Walking into the compact row lands on whichever
-   *  icon it was parked on, which is the roving tabindex's memory. */
+  /** ↑/↓ — one option at a time, wrapping. */
   const moveStop = React.useCallback(
     (delta: number) => {
       const at = stopOf(activeId)
-      const next = (at + delta + STOPS.length) % STOPS.length
-      const stop = STOPS[next]
-      const id =
-        stop.length > 1 && iconId && stop.includes(iconId) ? iconId : stop[0]
+      const id = STOPS[(at + delta + STOPS.length) % STOPS.length]
       select(id)
       reveal(id)
-    },
-    [activeId, iconId, reveal, select]
-  )
-
-  /**
-   * ←/→ — one option at a time INSIDE the current stop.
-   *
-   * Returns the id it moved to, or NULL when the stop holds a single option —
-   * which is the caller's signal to leave the key alone: on every ordinary row
-   * ← and → still belong to the browser, and inside the Preferences group they
-   * belong to the theme segment's own ring. It returns the id rather than a
-   * boolean because the caller may have to move DOM focus to it, and the
-   * `activeId` in its own closure is still the previous render's.
-   *
-   * It does NOT wrap. A three-icon row is short enough to see in full, so
-   * wrapping would only ever surprise someone who pressed → once too often;
-   * stopping at the end is how a toolbar behaves.
-   */
-  const moveWithinStop = React.useCallback(
-    (delta: number): string | null => {
-      const at = stopOf(activeId)
-      const stop = at < 0 ? null : STOPS[at]
-      if (!stop || stop.length < 2 || !activeId) return null
-      const i = stop.indexOf(activeId)
-      const next = Math.min(Math.max(i + delta, 0), stop.length - 1)
-      const id = stop[next]
-      select(id)
-      reveal(id)
-      return id
     },
     [activeId, reveal, select]
   )
@@ -770,38 +724,24 @@ export function CommandPalette() {
       return
     }
 
-    /* ←/→ move INSIDE the compact icon row.
+    /* ←/→ ARE SWALLOWED FOR THE LISTBOX, AND ONLY FOR IT.
 
-       THE GUARD IS ABOUT WHO HAS FOCUS, and it is the only guard: the branch
-       runs for the LISTBOX and for the icons, and for nothing else, so the
-       theme segment keeps its own left/right ring intact.
+       There is nowhere for them to go any more — round 3's compact social row
+       was the one line that held a second axis, and Ion's round-4 ruling moved
+       it into the control block, where the toolbar owns its own ←/→ and stops
+       the event before it reaches this handler (as the theme and sound
+       segments already did). So this branch no longer MOVES anything. It still
+       has to exist, and the reason is unchanged:
 
-       IT SWALLOWS THE KEY EVEN WHEN THERE IS NOWHERE TO GO. On an ordinary row
-       ←/→ mean nothing, and the browser's default for them on a focused element
-       is to SCROLL its nearest scrollable ancestor — which here is the palette
-       surface, a box that is `overflow: hidden` only so it can clip the morph
-       and whose scroll offset lib/morph.ts pins at 0 on every frame. Letting
-       the default through sets up exactly the fight `pinScroll` was written to
-       prevent, and it wedged the renderer hard enough to hang a headless run.
-       A listbox that swallows ↑/↓ and lets ←/→ scroll its own clip box was
-       never consistent anyway. */
+       the browser's default for ←/→ on a focused element is to SCROLL its
+       nearest scrollable ancestor — which here is the palette surface, a box
+       that is `overflow: hidden` only so it can clip the morph, and whose
+       scroll offset lib/morph.ts pins at 0 on every frame. Letting the default
+       through sets up exactly the fight `pinScroll` was written to prevent,
+       and it wedged the renderer hard enough to hang a headless run. */
     if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
-      const el = e.target as HTMLElement | null
-      const fromRing =
-        el === listRef.current ||
-        (el instanceof HTMLElement && ICON_IDS.includes(el.dataset.option ?? ""))
-      if (!fromRing) return
+      if (e.target !== listRef.current) return
       e.preventDefault()
-      const moved = moveWithinStop(e.key === "ArrowRight" ? 1 : -1)
-      if (!moved) return
-      // Focus follows the roving tabindex only when focus was already IN the
-      // row. From the listbox the selection is virtual and DOM focus must not
-      // move — that is the whole aria-activedescendant contract.
-      if (el !== listRef.current) {
-        document
-          .getElementById(OPTION_DOM_ID(moved))
-          ?.focus({ preventScroll: true })
-      }
       return
     }
 
@@ -976,7 +916,7 @@ export function CommandPalette() {
               tabIndex={open ? 0 : -1}
               className="outline-none"
             >
-              {LAYOUT.map(({ group, rows, icons }) => (
+              {LAYOUT.map(({ group, rows }) => (
                 /* No caption row, but still a GROUP: `aria-label` carries what
                    the deleted text row carried, so a screen reader still hears
                    "Navigate" without a sighted reader being told what five
@@ -998,35 +938,6 @@ export function CommandPalette() {
                       onClick={() => onRowClick(item)}
                     />
                   ))}
-
-                  {icons.length > 0 && (
-                    /* THE COMPACT ICON ROW (Ion, round 3).
-                       `role="presentation"` because this box is layout and
-                       nothing else: it must not come between the group and the
-                       options it owns in the accessibility tree, which is the
-                       one thing a bare <div> inside a listbox would do. The
-                       three anchors stay `role="option"`, exactly as they were
-                       when they had a row each — so the ↑/↓ ring, Enter, and
-                       every screen reader announcement are unchanged. Only the
-                       geometry moved. */
-                    <div
-                      role="presentation"
-                      className="flex h-10 items-center gap-1"
-                    >
-                      {icons.map((item) => (
-                        <IconTarget
-                          key={item.id}
-                          item={item}
-                          active={item.id === activeId}
-                          roving={item.id === iconId}
-                          open={open}
-                          onPointerEnter={() => select(item.id)}
-                          onFocus={() => select(item.id)}
-                          onClick={() => onRowClick(item)}
-                        />
-                      ))}
-                    </div>
-                  )}
                 </div>
               ))}
             </div>
@@ -1038,10 +949,52 @@ export function CommandPalette() {
               className="palette-reveal block h-px w-full bg-border"
             />
 
+            {/* THE CONTROL BLOCK IS ONE 8-PADDED BOX SPLIT IN TWO. Socials
+                takes the top padding, Preferences the bottom, and there is
+                nothing between them — three 40px lines inside 8 + 8, exactly
+                the rhythm every other cluster in this panel has. Two boxes
+                each with `py-2` would have put 16px between Socials and Theme
+                and made the block read as two regions, which is the one thing
+                the seam note above says a rule is for. */}
+            <div className="palette-group px-2 pt-2">
+              {/* SOCIALS — Ion, 2026-08-19: "I want the socials to be also its
+                  own section, the same way as we have theme and sound…
+                  occupying less space."
+
+                  IT SITS FIRST IN THIS BLOCK, and that is the whole point of
+                  putting it here rather than anywhere else: it came off the
+                  bottom of the Actions group, so the panel's reading order is
+                  unchanged — the socials are still the last thing after Copy
+                  email. Nobody who used yesterday's panel has to re-learn where
+                  they are. It costs three quarters of the height it used to.
+
+                  Its OWN group, not Preferences'. Two links and a theme
+                  preference are not the same kind of fact, and a screen reader
+                  saying "Preferences, GitHub link" would be a small lie. What
+                  they share is the LANGUAGE — one glyph, one word, one muted
+                  track — which is what Ion asked for, and no rule divides them,
+                  because a rule is this panel's word for "a different kind of
+                  region starts here" and these three lines are all controls. */}
+              <div
+                role="group"
+                aria-label="Socials"
+                className="flex h-10 items-center gap-2 rounded-md pr-3 pl-2"
+              >
+                <AtSign
+                  className="size-4 shrink-0 text-muted-foreground"
+                  strokeWidth={ICON_STROKE}
+                />
+                <span className="min-w-0 flex-1 truncate text-sm text-foreground">
+                  Socials
+                </span>
+                <SocialsSegment />
+              </div>
+            </div>
+
             <div
               role="group"
               aria-label="Preferences"
-              className="palette-group px-2 py-2"
+              className="palette-group px-2 pb-2"
             >
               <div className="flex h-10 items-center gap-2 rounded-md pr-3 pl-2">
                 <Sun
@@ -1088,94 +1041,6 @@ export function CommandPalette() {
 /* ============================================================================
    Pieces
    ========================================================================== */
-
-/**
- * One target in the compact icon row.
- *
- * IT IS STILL AN OPTION. Everything that made the three socials work as rows —
- * `role="option"`, the `palette-option-*` id the listbox points
- * `aria-activedescendant` at, the `data-active` fill, Enter committing through
- * a synthetic `.click()` — is unchanged. What changed is that three 366x32 rows
- * carrying one glyph and one short word became three 32x32 glyphs on one 40px
- * line, which is 96px of ink instead of 96px of row plus 1000px of empty.
- *
- * THE NAME IS NOT LOST. The label that used to be visible text is now
- * `aria-label`, so the accessible name is the same string it always was and a
- * screen reader still hears "GitHub, link". A sighted reader gets the mark,
- * which is what a brand glyph is for.
- *
- * ALIGNMENT IS NOT A COINCIDENCE. A 32px target with a 16px glyph centred puts
- * that glyph's centre 16px from the target's left edge; a full-width row puts
- * its icon's centre at `pl-2` (8) + half of 16 = 16 from ITS left edge. Both
- * boxes start at the group's `px-2`, so the first social sits in exactly the
- * same icon column as Home, Letter and Book a call. The row reads as the last
- * line of the same list rather than as a widget bolted underneath it.
- *
- * 40 TALL, NOT 32. It is the height the Preferences theme row already uses, and
- * for the same reason: a line that holds controls rather than text needs the
- * air. `size-8` targets centred in it leave 4px above and below, which is what
- * keeps three adjacent hover fills from reading as one bar.
- *
- * ROVING TABINDEX. Exactly one of the three is a tab stop at any moment — the
- * one the row is parked on. That is what makes Tab treat the row as a single
- * destination instead of three, and it is why `iconId` is state rather than
- * something derived at the last moment.
- */
-function IconTarget({
-  item,
-  active,
-  roving,
-  open,
-  onPointerEnter,
-  onFocus,
-  onClick,
-}: {
-  item: PaletteItem
-  active: boolean
-  /** True for the one target that currently carries the tab stop. */
-  roving: boolean
-  open: boolean
-  onPointerEnter: () => void
-  onFocus: () => void
-  onClick: () => void
-}) {
-  const Icon = item.icon
-
-  return (
-    <a
-      id={OPTION_DOM_ID(item.id)}
-      role="option"
-      aria-selected={active}
-      aria-label={item.label}
-      data-active={active}
-      // `data-option` is what the surface's ←/→ handler reads to know the key
-      // came from inside the row. A dataset lookup rather than a class or an id
-      // prefix, because it is a fact about the element's ROLE in the ring and
-      // should not be inferred from how it is styled or named.
-      data-option={item.id}
-      // Exactly what `Row` does for an external item, and deliberately no more:
-      // no `target="_blank"`. Whether the palette's outbound links should open
-      // a tab is a question about all of them — Book a call included — and
-      // answering it for three of them here would just make the panel
-      // inconsistent with itself. Flagged in the round-3 report.
-      href={item.external ?? "#"}
-      // Roving: one tab stop for the whole row, and none of them while the
-      // panel is shut (the face is `inert` then, but the Tab ring is computed
-      // from `tabIndex` and must agree with it).
-      tabIndex={open && roving ? 0 : -1}
-      onPointerEnter={onPointerEnter}
-      onFocus={onFocus}
-      onClick={onClick}
-      className={cn(
-        "palette-row grid size-8 shrink-0 place-items-center rounded-md",
-        "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground",
-        "[&_svg]:[stroke-width:1.5]"
-      )}
-    >
-      <Icon className="size-4 text-muted-foreground" />
-    </a>
-  )
-}
 
 function Row({
   item,

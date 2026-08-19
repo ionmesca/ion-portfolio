@@ -8,7 +8,7 @@ import {
   PenLine,
 } from "@/lib/icons"
 
-import { GitHubGlyph, LinkedInGlyph, XGlyph } from "./brand-glyphs"
+import { SOCIALS } from "./socials"
 
 /**
  * The ⌘K palette's rows, in Figma order (13:2673).
@@ -42,10 +42,15 @@ export type PaletteGroup = {
   label: string
   items: PaletteItem[]
   /**
-   * Ids from `items` that the DESKTOP palette collapses into one compact row of
-   * icon targets, closing the group (Ion, round 3, 2026-08-18: three full-width
-   * rows for three social links was three quarters of a row of empty space,
-   * three times over).
+   * Ids from `items` that the DESKTOP palette does NOT draw as full-width rows.
+   *
+   * It has meant one thing throughout — "the desktop lays these out
+   * differently" — and only the other layout has changed. Round 3 collapsed the
+   * three socials into one compact row of icon targets at the end of the group
+   * (three full-width rows for three social links was three quarters of a row
+   * of empty space, three times over). Round 4 took them out of the listbox
+   * altogether: they are a Socials control row below the rule now, in the same
+   * language as Theme and Sound (Ion, 2026-08-19).
    *
    * THE MOBILE SHEET IGNORES THIS and still renders all ten as full-width rows.
    * A 44px touch target is not negotiable, and the sheet has the height to
@@ -62,14 +67,30 @@ export type PaletteGroup = {
 export const CONTACT_EMAIL = "ion.mesca@gmail.com"
 
 /**
- * PLACEHOLDER destinations, all `#`.
+ * The one PLACEHOLDER destination left in this file.
  *
- * Every Navigate row now has a real route: `/`, `/letter`, `/articles`,
- * `/stack` and `/agents` all exist. What is still `#` is Book a call and the
- * three social rows, which wait on real URLs — a dead anchor is a smaller lie
- * than a 404.
+ * Every Navigate row has a real route: `/`, `/letter`, `/articles`, `/stack`
+ * and `/agents` all exist. The three socials read their real profiles off
+ * `socials.ts` below. Book a call is the last `#` — a dead anchor is a smaller
+ * lie than a 404, and it waits on a real booking URL.
  */
 const PLACEHOLDER = "#"
+
+/**
+ * The three social rows, built from `socials.ts` so there is exactly one list
+ * of destinations on this site. The ids are the labels lowercased, which is
+ * what `compact` below names and what the desktop palette matches on.
+ *
+ * They exist here FOR THE MOBILE SHEET, which renders every item in every
+ * group as a touch row. The desktop palette skips them and draws
+ * `socials-segment.tsx` instead.
+ */
+const SOCIAL_ITEMS: PaletteItem[] = SOCIALS.map(({ label, href, Glyph }) => ({
+  id: label.toLowerCase(),
+  label,
+  icon: Glyph,
+  external: href,
+}))
 
 export const PALETTE_GROUPS: PaletteGroup[] = [
   {
@@ -86,9 +107,9 @@ export const PALETTE_GROUPS: PaletteGroup[] = [
   {
     id: "actions",
     label: "Actions",
-    // The three socials close the group as one icon row on desktop. Order is
-    // the order they sit in, left to right.
-    compact: ["github", "x", "linkedin"],
+    // Derived, not retyped: whatever `socials.ts` holds is what the desktop
+    // palette leaves out of its listbox and the mobile sheet draws as rows.
+    compact: SOCIAL_ITEMS.map((item) => item.id),
     items: [
       {
         id: "book",
@@ -103,14 +124,7 @@ export const PALETTE_GROUPS: PaletteGroup[] = [
         shortcut: "⌘⇧C",
         action: "copy-email",
       },
-      { id: "github", label: "GitHub", icon: GitHubGlyph, external: PLACEHOLDER },
-      { id: "x", label: "X", icon: XGlyph, external: PLACEHOLDER },
-      {
-        id: "linkedin",
-        label: "LinkedIn",
-        icon: LinkedInGlyph,
-        external: PLACEHOLDER,
-      },
+      ...SOCIAL_ITEMS,
     ],
   },
 ]
