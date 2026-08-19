@@ -13,16 +13,13 @@ import { GitHubGlyph, LinkedInGlyph, XGlyph } from "./brand-glyphs"
  * hero, the ⌘K palette's Socials row and the hover cards' Follow / Connect
  * links all read this list, so a handle is written once.
  *
- * X and LinkedIn are Ion's real profiles (given 2026-08-19). GitHub is still a
- * bare profile root — see the PLACEHOLDER note on its line.
+ * ALL THREE ARE REAL as of 2026-08-19 — Ion's own profiles. There are no
+ * placeholder destinations left in this file.
  */
 export const SOCIALS = [
   {
     label: "GitHub",
-    // PLACEHOLDER — the handle has not been given yet, so this is the site
-    // root. It is the last unreal destination in this file; replace the path
-    // and nothing else changes.
-    href: "https://github.com/",
+    href: "https://github.com/ionmesca",
     Glyph: GitHubGlyph,
     size: "size-5",
   },
