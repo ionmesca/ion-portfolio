@@ -3,6 +3,8 @@
 import Image from "next/image"
 import * as React from "react"
 
+import { cn } from "@/lib/utils"
+
 import { LinkedInGlyph, XGlyph } from "./brand-glyphs"
 
 /* ============================================================================
@@ -23,15 +25,21 @@ import { LinkedInGlyph, XGlyph } from "./brand-glyphs"
    pill stays at the top of the same row, which is what lands the button level
    with the cover's edge instead of level with the text.
 
-   Did not: his colour. Colin paints LinkedIn blue on the Connect pill, X blue
-   on the verified check, and a photographic profile banner behind the X
-   avatar. This system is stone by decision and carries exactly ONE non-stone
-   hue — the availability green, which the contribution graph already borrows.
-   Three more brand hues on a hover card would make the quietest surface on
-   the site the loudest. So: both pills are the family's filled
-   foreground-on-background pill, both seals are muted stone, and the covers
-   are drawn, not photographed (see `Cover`). Ion's brief said so for the
-   covers and the taste call is the same one for the hues.
+   Did not: his photographic profile banner behind the X avatar. The covers
+   are drawn, not photographed (see `Cover`), because a hover card whose whole
+   premise is that it is instant must not fire a network request to open.
+
+   TWO OF THE HUES CAME BACK (Ion, 2026-08-19): "for linkedin make the call to
+   action linkedin color, for twitter make the checkmark blue". So the Connect
+   pill is LinkedIn blue and the X card's seal is X blue — the two places
+   where the hue IS the identification, which is exactly what a preview card
+   of somebody's profile is for. Everything else on all three cards stays
+   stone: the Follow pill, the LinkedIn seal, the covers, every line of text.
+   The earlier all-stone ruling still governs the rest of the surface.
+
+   The two values are declared right here (`BRAND` below) and NOT in
+   globals.css. They are not system tokens — nothing else on the site may use
+   them, and a token is a promise that something might.
 
    ── WIDTHS ────────────────────────────────────────────────────────────────
    Unchanged: 264 / 244 / 244, the lab's CARDS table. The widths are the
@@ -40,14 +48,13 @@ import { LinkedInGlyph, XGlyph } from "./brand-glyphs"
    changed the HEIGHTS, which is the axis this pass was allowed to move.
 
    ── WHAT IS REAL AND WHAT IS PLACEHOLDER ──────────────────────────────────
-   REAL: the hrefs (from `socials.ts` — X and LinkedIn are Ion's own profiles
-   since 2026-08-19, GitHub is still the bare site root), the avatar, the
-   pills, and the X card's `@ionmesca`, which is now the handle the X href
-   actually points at.
-   PLACEHOLDER: every number and every other line of prose. The contribution
-   counts come from an integer hash, the dates from a fixed anchor, the bios
-   are stand-ins, and the GitHub card's `ionmesca` username is a guess that
-   will be confirmed or corrected when that handle lands.
+   REAL: all three hrefs (from `socials.ts` — Ion's own profiles as of
+   2026-08-19), the avatar, the pills, and both handles on the faces —
+   `@ionmesca` on X and `ionmesca` on GitHub are the handles their hrefs
+   actually point at.
+   PLACEHOLDER: every number and every line of prose. The contribution counts
+   come from an integer hash, the dates from a fixed anchor, and the bios are
+   stand-ins.
 
    THE PILLS ARE LINKS NOW, and that reverses POR-24's note that they were
    decorative `<span>`s. The rule that note was protecting is "a hover-opened
@@ -64,6 +71,45 @@ import { LinkedInGlyph, XGlyph } from "./brand-glyphs"
    ========================================================================= */
 
 const AVATAR = 48
+
+/* ----------------------------------------------------------------------------
+   THE TWO BRAND HUES
+
+   Component-scoped constants, deliberately not tokens. Each is the network's
+   own published colour, converted to oklch so it sits in the same colour space
+   as everything else this file renders next to; the source hex is kept beside
+   it because THAT is the value anyone will check against a brand page.
+
+     linkedin  #0A66C2  →  oklch(51.6% 0.163 254.7)
+     x         #1D9BF0  →  oklch(66.7% 0.161 245.5)
+
+   ONE DECLARATION EACH, no dark-mode variant, and that is a measured decision
+   rather than a shortcut:
+
+   · The Connect pill carries WHITE text, and white on #0A66C2 is 5.69:1 —
+     above AA for body text — no matter what is behind the pill, so the thing
+     the reader actually has to read never changes with the theme. The pill
+     itself against the dark card (stone-900) sits at 2.99:1, which clears the
+     3:1 bar for a UI component's own boundary within rounding. Lightening it
+     for dark would cost the brand match to buy contrast the white text
+     already has. So L is NOT adjusted, in either theme.
+   · The X seal is a 14px mark beside the handle, and #1D9BF0 is bright enough
+     to read on the white card (3.00:1) and on the dark one. Its inner tick
+     stays `--color-popover`, punched out of the blue in whatever stone the
+     card is — the same construction the muted LinkedIn seal uses, so the two
+     seals are one shape with two fills rather than two drawings.
+   -------------------------------------------------------------------------- */
+const BRAND = {
+  /** LinkedIn blue — brand.linkedin.com, #0A66C2. */
+  linkedin: "oklch(51.6% 0.163 254.7)",
+  /** X blue — the verified seal's own hue, #1D9BF0. */
+  x: "oklch(66.7% 0.161 245.5)",
+} as const
+
+/** The ink on a brand-filled pill. Plain white, not `--background`: the pill's
+ *  fill does not follow the theme, so its text must not either. */
+const BRAND_INK = "oklch(100% 0 0)"
+
 /**
  * The cover strips.
  *
@@ -95,7 +141,7 @@ export function XCard({ href }: { href: string }) {
         <div className="flex items-start justify-between gap-3">
           <span className="mt-5 inline-flex items-center gap-1 text-small font-medium text-foreground">
             @ionmesca
-            <VerifiedSeal />
+            <VerifiedSeal tint={BRAND.x} />
           </span>
           <Pill href={href} label="Follow" />
         </div>
@@ -133,7 +179,7 @@ export function LinkedInCard({ href }: { href: string }) {
             <br />
             Zurich, Switzerland
           </p>
-          <Pill href={href} label="Connect" />
+          <Pill href={href} label="Connect" brand={BRAND.linkedin} />
         </div>
       </div>
     </div>
@@ -257,17 +303,19 @@ function Avatar({ size }: { size: number }) {
  * for the reason `brand-glyphs.tsx` gives: filled marks are not lucide
  * strokes and do not belong in the stroke set.
  *
- * MUTED STONE, not X blue and not LinkedIn blue. See the colour note at the
- * top of this file. It reads as a seal because of its shape; it does not need
- * to shout a platform's hue to do that, and at 14px on a 244-wide card a
- * saturated dot is the single loudest thing in the hero.
+ * ONE SHAPE, TWO FILLS. X's is X blue (Ion, 2026-08-19: "for twitter make the
+ * checkmark blue") — on that card the seal is the platform's own signature and
+ * the hue is half of what identifies it. LinkedIn's stays muted stone, because
+ * that card spends its colour on the Connect pill and two blues on one 244px
+ * card is a card with a theme instead of a subject.
  */
-function VerifiedSeal() {
+function VerifiedSeal({ tint }: { tint?: string }) {
   return (
     <svg
       viewBox="0 0 24 24"
       fill="currentColor"
       aria-hidden="true"
+      style={tint ? { color: tint } : undefined}
       className="size-3.5 shrink-0 text-muted-foreground"
     >
       <path d="M12 1.5l2.34 1.86 2.98-.2.98 2.82 2.7 1.28-.87 2.86L21.9 12l-1.77 2.34.87 2.86-2.7 1.28-.98 2.82-2.98-.2L12 22.5l-2.34-1.86-2.98.2-.98-2.82-2.7-1.28.87-2.86L2.1 12l1.77-2.34-.87-2.86 2.7-1.28.98-2.82 2.98.2z" />
@@ -286,19 +334,42 @@ function VerifiedSeal() {
 /**
  * The call to action.
  *
- * A real link — see the note at the top of this file. It is the family's
- * filled pill (foreground on background, fully round), which is what both
- * Colin cards use structurally; only the hue is ours. Hover is opacity and
- * not a colour swap, because there is no second filled-pill token to swap to
- * and inventing one is a globals.css ruling this crew does not have.
+ * A real link — see the note at the top of this file. The BOX is the family's
+ * filled pill: fully round, `px-2.5 py-1`, Small ink, and hover is opacity
+ * rather than a colour swap, because there is no second filled-pill token to
+ * swap to and inventing one is a globals.css ruling this crew does not have.
+ *
+ * `brand` repaints only the two colours. Given, the pill is that network's
+ * blue with white ink and stays so in both themes; withheld, it is the
+ * family's `foreground`-on-`background` pill and flips with the theme as it
+ * always has. LinkedIn's Connect is the one call site that passes it — X's
+ * Follow stays stone, because that card already spends its hue on the seal.
+ *
+ * The values ride `style` and not a class: they are one-off constants at the
+ * top of this file, and a Tailwind arbitrary value would put a colour nobody
+ * else may use into the generated stylesheet.
  */
-function Pill({ href, label }: { href: string; label: string }) {
+function Pill({
+  href,
+  label,
+  brand,
+}: {
+  href: string
+  label: string
+  brand?: string
+}) {
   return (
     <a
       href={href}
       target="_blank"
       rel="noreferrer noopener"
-      className="h-fit shrink-0 rounded-full bg-foreground px-2.5 py-1 text-xs font-medium text-background [transition:opacity_var(--duration-fast)_var(--motion-glide)] hover:opacity-90 hover:[transition-duration:0ms] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
+      style={brand ? { backgroundColor: brand, color: BRAND_INK } : undefined}
+      className={cn(
+        "h-fit shrink-0 rounded-full px-2.5 py-1 text-xs font-medium",
+        "[transition:opacity_var(--duration-fast)_var(--motion-glide)] hover:opacity-90 hover:[transition-duration:0ms]",
+        "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground",
+        !brand && "bg-foreground text-background"
+      )}
     >
       {label}
     </a>
