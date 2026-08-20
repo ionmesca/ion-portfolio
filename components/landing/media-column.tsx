@@ -12,19 +12,21 @@ import { INTRO_DELAY, useIntroReveal } from "./intro-reveal"
  * THIS COLUMN IS THE SCROLL. Every project contributes two panels, so the
  * column is 10 panels tall and the document is long. The rail beside it is
  * sticky and never moves; the selection in its project list is READ OFF this
- * column's position, one project per pair of panels (the wheel's stride is
- * literally 2 x (538 + 16) = 1108px). See use-wheel.ts.
+ * column's position, one project per pair of panels. The wheel measures
+ * those positions from the DOM (use-wheel.ts), so the panel's box can change
+ * without a matching constant over there.
  *
  * An earlier pass rendered only the active project's two panels and captured
  * the wheel event over the rail instead. That is deleted: the panel stack is
  * the input, the page scrolls normally, nothing is hijacked.
  *
- * Figma's Panel component (11:1662) is an EMPTY muted rectangle: 538 tall,
- * radius `xl` (21), fill `muted`, no children and no per-project variants. The
- * blank tiles in the reference export are the design, not a missing asset —
- * the artwork is a later ticket. So the panels here are muted stand-ins with
- * an art slot inside, and `data-project` is how you can see which project you
- * are scrolling through before the art lands.
+ * RATIO. Figma's Panel (11:1662) was 538 tall in a ~1013-wide column — about
+ * 1.88:1, a cinematic strip. Software windows live closer to a laptop
+ * screen. Ion, 2026-08-20: less squashed. **16:10** is the MacBook / product-
+ * UI ratio; `aspect-[16/10]` keeps that shape as the column flexes, instead
+ * of a fixed height that went from letterbox at 1512 to nearly square at
+ * 1024. `object-cover object-top` keeps the title bar when a shot is taller
+ * than the well.
  *
  * The FIRST panel of each project registers itself as that project's anchor
  * (see active-project.tsx): its document Y is the boundary the wheel's
@@ -56,7 +58,7 @@ function Panel({
       // The rail states its own rank now (`z-10`, app/page.tsx), so anything
       // positioned in this column sits below the whole pinned column by rule
       // rather than by luck. Do not answer a future z-order surprise here.
-      className="relative h-[538px] shrink-0 overflow-hidden rounded-xl bg-muted"
+      className="relative aspect-[16/10] w-full shrink-0 overflow-hidden rounded-xl bg-muted"
       data-project={project.id}
       // With no artwork the muted rectangle IS the picture, and it has to say
       // which project it belongs to. With artwork the <img> carries its own
@@ -84,7 +86,7 @@ function Panel({
           // dropped into the same slot is optimised without anyone
           // remembering to say so.
           unoptimized={art.src.endsWith(".svg")}
-          className="object-cover"
+          className="object-cover object-top"
           sizes="(max-width: 1024px) 100vw, 60vw"
         />
       ) : null}

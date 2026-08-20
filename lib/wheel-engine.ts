@@ -24,16 +24,15 @@
    lens 0, re-measure on fonts.ready).
 
    ── What is NEW here, and why ──────────────────────────────────────────────
-   The landing's anchors are a uniform 1108px apart. A letter's sections and a
-   collection's groups are not, so three options exist that the landing does
-   not need. All three default to the landing's behaviour, so adopting this
+   The landing's anchors are a pair of 16:10 panels apart. A letter's sections
+   and a collection's groups are not, so three options exist that the landing
+   does not need. All three default to the landing's behaviour, so adopting this
    engine there would change nothing.
 
      handoffShare  the 400px glide window is capped at a share of the distance
                    to the PREVIOUS anchor, so a 200px section is not handed a
                    400px window that opens before the section itself does. At
-                   the landing's spacing (1108 * 0.5 = 554 > 400) the cap never
-                   binds.
+                   the landing's spacing the cap never binds.
      (top clamp)   no step may begin above the reference line's own resting
                    position. The window ENDS at the boundary, so it opens 400px
                    of scroll early — and a page whose first section is shorter
