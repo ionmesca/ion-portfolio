@@ -1,5 +1,3 @@
-import Link from "next/link"
-
 import { MobileTopBar } from "@/components/landing/mobile/mobile-top-bar"
 import {
   RAIL_HOME,
@@ -139,10 +137,14 @@ export function RailShell({
           asChild
           className="relative before:absolute before:-inset-1.5 before:content-['']"
         >
-          <Link href={dest.href}>
+          {/* Native <a>, not next/link: Link + Radix Slot prerenders with an
+              undefined href, and Next's formatUrl throws
+              "Cannot destructure property 'auth'". The desktop rail already
+              client-navigates; this control is lg:hidden. */}
+          <a href={dest.href}>
             <ArrowLeft />
             {dest.label}
-          </Link>
+          </a>
         </Button>
       </MobileTopBar>
       <div
