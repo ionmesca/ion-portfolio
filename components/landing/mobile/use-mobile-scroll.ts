@@ -100,6 +100,7 @@ export function useMobileScroll({
 
     /** Document-space top of every card, remeasured on layout changes. */
     let tops: number[] = []
+    let projectIndexes: number[] = []
     let maxScroll = 0
     let ticking = false
     let raf = 0
@@ -116,7 +117,12 @@ export function useMobileScroll({
 
     const measure = () => {
       const st = window.scrollY
-      tops = cards().map((c) => c.getBoundingClientRect().top + st)
+      const measuredCards = cards()
+      tops = measuredCards.map((card) => card.getBoundingClientRect().top + st)
+      projectIndexes = measuredCards.map((card, cardIndex) => {
+        const projectIndex = Number(card.dataset.projectIndex)
+        return Number.isFinite(projectIndex) ? projectIndex : cardIndex
+      })
       maxScroll = Math.max(
         document.documentElement.scrollHeight - window.innerHeight,
         1
@@ -138,23 +144,28 @@ export function useMobileScroll({
 
       const line = window.innerHeight * ACTIVE_LINE
 
-      let idx = -1
+      let cardIndex = -1
       for (let i = 0; i < tops.length; i++) {
-        if (tops[i] - st <= line) idx = i
+        if (tops[i] - st <= line) cardIndex = i
         else break
       }
 
-      const revealed = idx >= 0 && tops[0] - st <= REVEAL_PX
+      const revealed = cardIndex >= 0 && tops[0] - st <= REVEAL_PX
 
-      if (idx >= 0) {
-        const start = tops[idx] - line
-        const end = idx + 1 < tops.length ? tops[idx + 1] - line : maxScroll
+      if (cardIndex >= 0) {
+        const projectIndex = projectIndexes[cardIndex] ?? 0
+        const projectStartCard = projectIndexes.indexOf(projectIndex)
+        const nextProjectCard = projectIndexes.findIndex(
+          (value, index) => index > cardIndex && value !== projectIndex
+        )
+        const start = tops[projectStartCard] - line
+        const end = nextProjectCard >= 0 ? tops[nextProjectCard] - line : maxScroll
         paintMeter(clamp01((st - start) / Math.max(end - start, 1)))
       } else {
         paintMeter(0)
       }
 
-      const index = idx < 0 ? 0 : idx
+      const index = cardIndex < 0 ? 0 : (projectIndexes[cardIndex] ?? 0)
       setState((prev) =>
         prev.index === index && prev.revealed === revealed
           ? prev

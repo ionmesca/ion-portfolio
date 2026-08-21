@@ -1,20 +1,21 @@
 "use client"
 
-import { SettleImage } from "@/components/ui/settle-in"
 import type { Project } from "@/lib/projects"
 
 import { useActiveProject } from "./active-project"
 import { INTRO_DELAY, useIntroReveal } from "./intro-reveal"
+import { ProjectArt } from "./project-art"
 
 /**
  * MediaColumn — the panel stack the whole desktop landing scrolls through.
  *
- * THIS COLUMN IS THE SCROLL. Every project contributes two panels, so the
- * column is 10 panels tall and the document is long. The rail beside it is
- * sticky and never moves; the selection in its project list is READ OFF this
- * column's position, one project per pair of panels. The wheel measures
- * those positions from the DOM (use-wheel.ts), so the panel's box can change
- * without a matching constant over there.
+ * THIS COLUMN IS THE SCROLL. Every project contributes at least two panels,
+ * so the column is long and the document is the input. A project can grow
+ * past two when it has extra media (Ledgy Agent's thinking mark and loop).
+ * The rail beside it is sticky and never moves; the selection in its project
+ * list is READ OFF this column's position, one project per its first panel.
+ * The wheel measures those positions from the DOM (use-wheel.ts), so the
+ * panel's box can change without a matching constant over there.
  *
  * An earlier pass rendered only the active project's two panels and captured
  * the wheel event over the rail instead. That is deleted: the panel stack is
@@ -37,16 +38,26 @@ import { INTRO_DELAY, useIntroReveal } from "./intro-reveal"
  * the page would run out of scroll while its panels were still arriving.
  */
 
-const PANELS_PER_PROJECT = 2
+const MIN_PANELS_PER_PROJECT = 2
+
+function panelCount(project: Project) {
+  return Math.max(MIN_PANELS_PER_PROJECT, project.media?.length ?? 0)
+}
 
 function Panel({
   project,
   index,
+  count,
   anchor,
+  priority,
+  lazy,
 }: {
   project: Project
   index: number
+  count: number
   anchor?: (el: HTMLDivElement | null) => void
+  priority?: boolean
+  lazy?: boolean
 }) {
   const art = project.media?.[index]
   return (
@@ -66,27 +77,14 @@ function Panel({
       // panel twice.
       role={art ? undefined : "img"}
       aria-label={
-        art
-          ? undefined
-          : `${project.name}, image ${index + 1} of ${PANELS_PER_PROJECT}`
+        art ? undefined : `${project.name}, image ${index + 1} of ${count}`
       }
     >
-      {/* The art slot. Empty today — see `media` in lib/projects.ts. The
-          picture settles in when its bytes land rather than replacing the
-          stand-in in one frame, which matters more on this surface than
-          anywhere else on the site: this column IS the scroll, so a panel
-          loads while the reader is already moving through it. */}
       {art ? (
-        <SettleImage
-          src={art.src}
-          alt={art.alt}
-          fill
-          // Next's optimiser refuses SVG unless `dangerouslyAllowSVG` is set
-          // globally. Derived rather than hard-coded, so a real screenshot
-          // dropped into the same slot is optimised without anyone
-          // remembering to say so.
-          unoptimized={art.src.endsWith(".svg")}
-          className="object-cover object-top"
+        <ProjectArt
+          art={art}
+          priority={priority}
+          lazy={lazy}
           sizes="(max-width: 1024px) 100vw, 60vw"
         />
       ) : null}
@@ -98,27 +96,33 @@ export function MediaColumn({ projects }: { projects: Project[] }) {
   const { anchorsRef } = useActiveProject()
   const intro = useIntroReveal()
 
+  const cells = projects.flatMap((project, k) => {
+    const count = panelCount(project)
+    return Array.from({ length: count }, (_, n) => ({ project, k, n, count }))
+  })
+
   return (
     <div
       className={intro.className("flex min-w-0 flex-1 flex-col gap-4")}
       style={intro.style(INTRO_DELAY.media)}
     >
-      {projects.map((project, k) =>
-        Array.from({ length: PANELS_PER_PROJECT }, (_, n) => (
-          <Panel
-            key={`${project.id}-${n}`}
-            project={project}
-            index={n}
-            anchor={
-              n === 0
-                ? (el) => {
-                    anchorsRef.current[k] = el
-                  }
-                : undefined
-            }
-          />
-        ))
-      )}
+      {cells.map(({ project, k, n, count }, columnIndex) => (
+        <Panel
+          key={`${project.id}-${n}`}
+          project={project}
+          index={n}
+          count={count}
+          priority={columnIndex === 0}
+          lazy={columnIndex >= 2}
+          anchor={
+            n === 0
+              ? (el) => {
+                  anchorsRef.current[k] = el
+                }
+              : undefined
+          }
+        />
+      ))}
 
       {/* prototype line 401 — the last project needs somewhere to arrive. */}
       <div aria-hidden="true" className="h-[55vh] shrink-0" />

@@ -1,0 +1,87 @@
+/* Copied from ledgy-app/packages/web/client/styles/animations.css.
+   Product timing is not tunable; dashes and label share --thinking-cycle-sec. */
+
+.ledgy-thinking-dash {
+  animation: ledgy-thinking-dash var(--thinking-cycle-sec) infinite backwards;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.ledgy-thinking-rails {
+  opacity: 0.71;
+}
+
+@keyframes ledgy-thinking-dash {
+  0% {
+    transform: translateX(calc(var(--dash-travel) * -1))
+      scaleX(var(--dash-stretch));
+    opacity: 0.35;
+    animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  19%,
+  48% {
+    transform: translateX(0) scaleX(1);
+    opacity: 1;
+    animation-timing-function: cubic-bezier(0.32, 0, 0.67, 0);
+  }
+  65% {
+    transform: translateX(var(--dash-travel)) scaleX(var(--dash-stretch));
+    opacity: 0.5;
+  }
+  66%,
+  100% {
+    transform: translateX(var(--dash-travel)) scaleX(var(--dash-stretch));
+    opacity: 0;
+  }
+}
+
+.ledgy-shimmer-text {
+  /* background-clip:text clips to the padding box; keep ink inside it. */
+  overflow: visible;
+  padding-block: 0.1em;
+  animation: ledgy-shimmer-drift var(--shimmer-period, 1.8s) infinite;
+  animation-delay: calc(
+    var(--shimmer-phase, 0) * -1 * var(--shimmer-period, 1.8s)
+  );
+  background-image: radial-gradient(
+    ellipse 14% 58% at 50% 50%,
+    var(--foreground) 0%,
+    var(--foreground) 10%,
+    var(--primary) 35%,
+    var(--primary-hover) 68%,
+    var(--muted-foreground) 100%
+  );
+  background-size: 400% 100%;
+  background-clip: text;
+  color: transparent;
+}
+
+@keyframes ledgy-shimmer-drift {
+  0% {
+    background-position: 153.333% 0;
+    animation-timing-function: cubic-bezier(0.32, 0, 0.67, 0);
+  }
+  70% {
+    background-position: 95% 0;
+    animation-timing-function: linear;
+  }
+  100% {
+    background-position: 20% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ledgy-thinking-dash {
+    animation: none;
+  }
+
+  .ledgy-thinking-rails {
+    opacity: 0.21;
+  }
+
+  .ledgy-shimmer-text {
+    animation: none;
+    background-image: none;
+    color: var(--muted-foreground);
+  }
+}

@@ -24,21 +24,65 @@ export type Project = {
   year: string
   mark: ProjectMark
   /**
-   * The panel artwork, one entry per panel, in panel order.
+   * The panel artwork, one entry per panel, in panel order. Index 0 is the
+   * first home panel (desktop 16:10). Mobile renders every entry in the same
+   * order as its own 4:5 card, cover-cropped from the top until portrait crops
+   * land. A project with fewer than two entries still renders two muted wells
+   * on desktop, so the wheel's "two panels per project" rhythm holds for empty
+   * case studies. Extra entries lengthen that project's stretch of the column.
    *
-   * OPTIONAL, AND EMPTY ON EVERY PROJECT BELOW. Figma's Panel component
-   * (11:1662) is an empty muted rectangle, and the blank tiles in the reference
-   * export are the ratified design until the artwork ticket lands — see the
-   * note at the top of `components/landing/media-column.tsx`. This field is the
-   * SOCKET that ticket plugs into, and `components/ui/settle-in.tsx` is what
-   * makes a picture arrive quietly rather than pop into the column while
-   * someone is scrolling past it.
+   * Stills settle in via `components/ui/settle-in.tsx`. A `type: "video"`
+   * entry is a muted loop. A `type: "thinking"` entry is the Ledgy mark,
+   * centered on the muted well.
    */
-  media?: { src: string; alt: string }[]
+  media?: ProjectMedia[]
 }
 
+export type ThinkingTheme = "neutral" | "orb"
+
+export type ProjectMedia =
+  | { type?: "image"; src: string; alt: string; unoptimized?: boolean }
+  | {
+      type: "ledgy-agent-screen"
+      backgroundSrc: string
+      captureSrc: string
+      alt: string
+    }
+  | {
+      type: "video"
+      src: string
+      webm?: string
+      poster?: string
+      alt: string
+    }
+  | {
+      type: "thinking"
+      alt: string
+      theme?: ThinkingTheme
+      label?: string
+    }
+
 export const projects: Project[] = [
-  { id: "ledgy-agent", name: "Ledgy Agent", year: "2026", mark: "ledgy-agent" },
+  {
+    id: "ledgy-agent",
+    name: "Ledgy Agent",
+    year: "2026",
+    mark: "ledgy-agent",
+    media: [
+      {
+        type: "ledgy-agent-screen",
+        backgroundSrc: "/projects/ledgy-agent/glass-studio-fill-q97.webp",
+        captureSrc: "/projects/ledgy-agent/agent-empty-state-capture.png",
+        alt: "Ledgy Agent empty state over a purple glass background",
+      },
+      {
+        type: "thinking",
+        alt: "Ledgy Agent thinking",
+        theme: "orb",
+        label: "Thinking",
+      },
+    ],
+  },
   { id: "hey-buna-app", name: "Hey Buna App", year: "2025", mark: "buna" },
   { id: "equity-dashboard", name: "Equity Dashboard", year: "2025", mark: "ledgy" },
   { id: "ripple-agent", name: "Ripple Agent", year: "2024", mark: "ledgy" },

@@ -8,6 +8,7 @@ import { ArrowUpRight } from "@/lib/icons"
 import type { Project } from "@/lib/projects"
 import { cn } from "@/lib/utils"
 
+import { ProjectArt } from "../project-art"
 import { SOCIALS } from "../socials"
 import { MobileIndicator } from "./mobile-indicator-lazy"
 import { MobileTopBar } from "./mobile-top-bar"
@@ -34,8 +35,9 @@ import { useMobileScroll } from "./use-mobile-scroll"
      indicator  40 tall, ABSENT at rest, fixed under the top bar once the
                 first card reaches it. Anatomy in C2 (20:605).
      hero       24/16 padding, gap 16: Title 24, Heading 18 muted, actions.
-     cards      one per project, 358 x 447 (4:5) inside 16 gutters, gap 16,
-                radius `xl`, `Raised`. THE CARDS ARE THE PAGE.
+     cards      one per media panel, 358 x 447 (4:5) inside 16 gutters, gap 16,
+                radius `xl`, `Raised`. Projects with several panels keep their
+                desktop order. THE CARDS ARE THE PAGE.
      footer     48 above, 16 around, Caption muted.
 
    The 16px gutter is bound: 20 is not a step in this system (token-contract
@@ -70,6 +72,14 @@ const CARD_ART: Record<string, string> = {
 export function MobileLanding({ projects }: { projects: Project[] }) {
   const listRef = React.useRef<HTMLDivElement>(null)
   const meterRef = React.useRef<HTMLSpanElement>(null)
+  const mobileCards = projects.flatMap((project, projectIndex) =>
+    (project.media?.map((_, mediaIndex) => mediaIndex) ?? [0]).map((mediaIndex) => ({
+      art: project.media?.[mediaIndex],
+      mediaIndex,
+      project,
+      projectIndex,
+    }))
+  )
 
   // The controller writes raw scroll progress into this channel every frame and
   // the indicator reads it through a spring. Not React state, for the same
@@ -167,24 +177,37 @@ export function MobileLanding({ projects }: { projects: Project[] }) {
 
       {/* -- the cards ARE the page ---------------------------------------- */}
       <div ref={listRef} className="flex flex-col gap-4 px-4">
-        {projects.map((project) => (
-          <article
-            key={project.id}
-            data-slot="mobile-card"
-            data-project={project.id}
-            className="relative aspect-[4/5] w-full overflow-hidden rounded-xl bg-muted shadow-raised"
-          >
-            <h2 className="sr-only">
-              {project.name} — {project.year}
-            </h2>
-            <div
-              aria-hidden="true"
-              className="absolute inset-0 dark:hidden"
-              style={{ backgroundImage: CARD_ART[project.id] }}
-            />
-            {/* art slot — project media lands here */}
-          </article>
-        ))}
+        {mobileCards.map(
+          ({ art, mediaIndex, project, projectIndex }, cardIndex) => {
+            return (
+              <article
+                key={`${project.id}-${mediaIndex}`}
+                data-slot="mobile-card"
+                data-project={project.id}
+                data-project-index={projectIndex}
+                className="relative aspect-[4/5] w-full overflow-hidden rounded-xl bg-muted shadow-raised"
+              >
+                <h2 className="sr-only">
+                  {project.name} — {project.year}, image {mediaIndex + 1}
+                </h2>
+                {art ? (
+                  <ProjectArt
+                    art={art}
+                    priority={cardIndex === 0}
+                    mobile
+                    sizes="100vw"
+                  />
+                ) : (
+                  <div
+                    aria-hidden="true"
+                    className="absolute inset-0 dark:hidden"
+                    style={{ backgroundImage: CARD_ART[project.id] }}
+                  />
+                )}
+              </article>
+            )
+          }
+        )}
       </div>
 
       <footer className="px-4 pt-12 pb-4">

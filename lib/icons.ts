@@ -61,6 +61,8 @@ export {
   Copy,
   Check,
   Plus,
+  Play,
+  RotateCcw,
   // lucide's `X` is the dismiss cross. It is re-exported as `Close` because
   // this site also has a brand X (the social network) — `XGlyph` in
   // components/landing/brand-glyphs.tsx. Two things called `X` in one import

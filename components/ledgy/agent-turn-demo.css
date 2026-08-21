@@ -1,0 +1,133 @@
+.ledgy-turn-item {
+  animation: ledgy-turn-fade-up 350ms cubic-bezier(0.23, 1, 0.32, 1) both;
+}
+
+.ledgy-turn-disclosure {
+  animation-delay: 90ms;
+}
+
+.ledgy-turn-tool {
+  animation: ledgy-turn-tool-fade 350ms cubic-bezier(0.23, 1, 0.32, 1) both;
+}
+
+.ledgy-turn-tool:nth-child(2) {
+  animation-delay: 140ms;
+}
+
+.ledgy-turn-tool:nth-child(3) {
+  animation-delay: 280ms;
+}
+
+.ledgy-turn-word {
+  animation: ledgy-turn-word-in 420ms cubic-bezier(0.23, 1, 0.32, 1) both;
+}
+
+.ledgy-answer-fact {
+  animation: ledgy-answer-fact-in var(--duration-slow) var(--motion-glide) both;
+}
+
+.ledgy-answer-fact:nth-child(2) {
+  animation-delay: calc(var(--stagger-group) * 4);
+}
+
+.ledgy-answer-chart {
+  animation: ledgy-answer-chart-in var(--duration-base) var(--motion-glide) both;
+  animation-delay: var(--stagger-delay);
+}
+
+.ledgy-answer-fact:nth-child(2) .ledgy-answer-chart {
+  animation-delay: calc(var(--stagger-group) * 6);
+}
+
+.ledgy-playback-progress {
+  animation: ledgy-playback-progress var(--ledgy-playback-ms) linear both;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+}
+
+@keyframes ledgy-turn-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes ledgy-playback-progress {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes ledgy-turn-tool-fade {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes ledgy-turn-word-in {
+  from {
+    filter: blur(8px);
+    opacity: 0;
+  }
+
+  to {
+    filter: blur(0);
+    opacity: 1;
+  }
+}
+
+@keyframes ledgy-answer-fact-in {
+  from {
+    filter: blur(4px);
+    opacity: 0;
+    transform: translateY(6px);
+  }
+
+  to {
+    filter: blur(0);
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes ledgy-answer-chart-in {
+  from {
+    filter: blur(4px);
+    opacity: 0;
+    transform: scale(0.96);
+  }
+
+  to {
+    filter: blur(0);
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ledgy-turn-item,
+  .ledgy-turn-tool,
+  .ledgy-turn-word,
+  .ledgy-answer-fact,
+  .ledgy-answer-chart,
+  .ledgy-playback-progress {
+    animation: none;
+  }
+
+  .ledgy-answer-tooltip {
+    transition: none;
+  }
+
+  .ledgy-playback-progress {
+    stroke-dashoffset: 0;
+  }
+}
