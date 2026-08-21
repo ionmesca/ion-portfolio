@@ -201,7 +201,12 @@ export function ProjectList({ projects }: { projects: Project[] }) {
                   )}
                 />
                 <ProjectIcon mark={project.mark} />
-                <span className="text-subhead min-w-0 flex-1 truncate text-foreground">
+                {/* The system subhead line height is 20.25px. That fractional
+                    box rasterises one pixel differently when this row leaves
+                    the wheel's scale transform. Keep the system's 15px size
+                    and weight, but use its 20px line-height step in this fixed
+                    32px control so the resting and moving baselines match. */}
+                <span className="text-subhead min-w-0 flex-1 truncate leading-5 text-foreground">
                   {project.name}
                 </span>
                 <span
@@ -214,7 +219,7 @@ export function ProjectList({ projects }: { projects: Project[] }) {
                      text-muted-foreground")` silently drops the size and the
                      date renders at 16px in the wrong place. Same footgun the
                      name span above avoids by staying a plain string. */
-                  className={`text-subhead text-muted-foreground${
+                  className={`text-subhead leading-5 text-muted-foreground${
                     isActive ? "" : " opacity-0"
                   }`}
                 >
