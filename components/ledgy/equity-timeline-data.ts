@@ -22,6 +22,7 @@ import {
   VESTING_DOMAIN,
   VESTING_SCOPES,
   formatDayLabel,
+  formatMonthLabel,
   monthIndex,
   type VestingGrant,
 } from "./vesting-data"
@@ -290,16 +291,62 @@ export const EQUITY_INSTRUMENTS: EquityInstrument[] = [
   }),
 ]
 
+const sumOver = (read: (row: EquityInstrument) => number) =>
+  EQUITY_INSTRUMENTS.reduce((total, row) => total + read(row), 0)
+
+/**
+ * THE THREE LENSES PARTITION THE TOTAL (Ion, 22 Aug, following Ledgy's
+ * `lenses.ts`). On hold is carved OUT of vested, never stacked beside it: a
+ * locked share is vested value the holder cannot touch, so counting it in both
+ * places makes the tabs read 107% of a fortune that is only 100% large.
+ *
+ * `vestedValue` stays GROSS here — it is what has actually vested, lock or no
+ * lock — and `netVestedValue` is the Vested lens's share of the partition.
+ */
 export const EQUITY_TOTALS = {
-  committedValue: EQUITY_INSTRUMENTS.reduce((total, row) => total + row.committedValue, 0),
-  onHoldValue: EQUITY_INSTRUMENTS.reduce((total, row) => total + row.onHoldValue, 0),
-  unvestedValue: EQUITY_INSTRUMENTS.reduce((total, row) => total + row.unvestedValue, 0),
-  vestedValue: EQUITY_INSTRUMENTS.reduce((total, row) => total + row.vestedValue, 0),
+  committedValue: sumOver((row) => row.committedValue),
+  onHoldValue: sumOver((row) => row.onHoldValue),
+  unvestedValue: sumOver((row) => row.unvestedValue),
+  vestedValue: sumOver((row) => row.vestedValue),
+  netVestedValue: sumOver((row) => row.vestedValue - row.onHoldValue),
 }
 
+/**
+ * Gross vested against the total. The All equity swatch alone reads this: the
+ * conic splits emerald from slate, and the hatch is emerald, so the locked
+ * slice belongs on the vested side of that pie.
+ */
 export const EQUITY_VESTED_PERCENT = Math.round(
   (EQUITY_TOTALS.vestedValue / EQUITY_TOTALS.committedValue) * 100
 )
+
+/**
+ * The three tab percents, allocated by largest remainder so they read 100
+ * together. Rounded on their own they say 64 + 7 + 30 = 101, because net vested
+ * lands on 63.5 and rounds up; the half point goes to the two shares with the
+ * bigger remainders instead, and Vested reads 63.
+ */
+const LENS_PERCENTS = (() => {
+  const shares = [
+    EQUITY_TOTALS.netVestedValue,
+    EQUITY_TOTALS.onHoldValue,
+    EQUITY_TOTALS.unvestedValue,
+  ].map((value) => (value / EQUITY_TOTALS.committedValue) * 100)
+
+  const whole = shares.map((share) => Math.floor(share))
+  let left = 100 - whole.reduce((total, share) => total + share, 0)
+  const byRemainder = shares
+    .map((share, index) => ({ index, remainder: share - Math.floor(share) }))
+    .sort((first, second) => second.remainder - first.remainder)
+
+  for (const entry of byRemainder) {
+    if (left <= 0) break
+    whole[entry.index] = (whole[entry.index] ?? 0) + 1
+    left -= 1
+  }
+
+  return { onhold: whole[1] ?? 0, unvested: whole[2] ?? 0, vested: whole[0] ?? 0 }
+})()
 
 /* ────────────────────────────────────────────────────────────────────────────
    THE SCRUB
@@ -309,6 +356,7 @@ export type EquityAsOf = {
   vestedValue: number
   vestedUnits: number
   onHoldValue: number
+  onHoldUnits: number
   isFuture: boolean
   isLocked: boolean
   isReleased: boolean
@@ -323,19 +371,30 @@ export function valueAt(instrument: EquityInstrument, month: number): EquityAsOf
     isFuture: month > todayMonth,
     isLocked,
     isReleased: lock !== null && month >= lock.endMonth,
+    onHoldUnits: isLocked ? instrument.onHoldUnits : 0,
     onHoldValue: isLocked ? instrument.onHoldValue : 0,
     vestedUnits: units,
     vestedValue: value,
   }
 }
 
-/** Share of the committed total that has vested by a month, as a whole percent. */
-export function vestedPercentAt(month: number) {
-  const total = EQUITY_INSTRUMENTS.reduce(
-    (sum, instrument) => sum + reached(grantsOf(instrument.id), month).value,
-    0
-  )
-  return Math.round((total / EQUITY_TOTALS.committedValue) * 100)
+/**
+ * What a lens is worth at a month, for the scrubbed headline.
+ *
+ * All equity reads the VESTED figure rather than the committed one, because the
+ * rows underneath all state what had landed by that month and a headline that
+ * repeated the unchanging total would contradict every number below it.
+ */
+export function lensValueAt(lens: EquityLensId, month: number) {
+  let total = 0
+  for (const instrument of EQUITY_INSTRUMENTS) {
+    const asOf = valueAt(instrument, month)
+    if (lens === "unvested") total += instrument.committedValue - asOf.vestedValue
+    else if (lens === "onhold") total += asOf.onHoldValue
+    else if (lens === "vested") total += asOf.vestedValue - asOf.onHoldValue
+    else total += asOf.vestedValue
+  }
+  return total
 }
 
 /* ────────────────────────────────────────────────────────────────────────────
@@ -352,7 +411,14 @@ export type EquityLens = {
   /** The segment kinds this lens keeps at full opacity. */
   keeps: EquitySegmentKind[]
   value: number
+  /** Share of the committed total. The tab carries it, so the subline need not. */
+  percent: number
+  /** The one date fact this lens states under the headline. */
+  subline: string
 }
+
+/** Sept 2029, the month the last tranche lands. Two sublines state it. */
+const LAST_VEST_LABEL = formatMonthLabel(endMonth)
 
 export const EQUITY_LENSES: EquityLens[] = (
   [
@@ -360,6 +426,8 @@ export const EQUITY_LENSES: EquityLens[] = (
       id: "all",
       keeps: ["vested", "unvested", "onhold", "conditions"],
       label: "All equity",
+      percent: 100,
+      subline: `Fully vested ${LAST_VEST_LABEL}`,
       swatch: `conic-gradient(${EMERALD} 0 ${EQUITY_VESTED_PERCENT}%, ${SLATE} ${EQUITY_VESTED_PERCENT}% 100%)`,
       value: EQUITY_TOTALS.committedValue,
     },
@@ -367,13 +435,17 @@ export const EQUITY_LENSES: EquityLens[] = (
       id: "vested",
       keeps: ["vested"],
       label: "Vested",
+      percent: LENS_PERCENTS.vested,
+      subline: "As of today",
       swatch: EMERALD,
-      value: EQUITY_TOTALS.vestedValue,
+      value: EQUITY_TOTALS.netVestedValue,
     },
     {
       id: "onhold",
       keeps: ["onhold"],
       label: "On hold",
+      percent: LENS_PERCENTS.onhold,
+      subline: `Until ${PREFERRED_E_LOCK.label}`,
       swatch: HATCH,
       value: EQUITY_TOTALS.onHoldValue,
     },
@@ -381,6 +453,8 @@ export const EQUITY_LENSES: EquityLens[] = (
       id: "unvested",
       keeps: ["unvested", "conditions"],
       label: "Unvested",
+      percent: LENS_PERCENTS.unvested,
+      subline: `Vests by ${LAST_VEST_LABEL}`,
       swatch: SLATE,
       value: EQUITY_TOTALS.unvestedValue,
     },
@@ -398,7 +472,13 @@ export function lensOfSegment(kind: EquitySegmentKind): EquityLensId {
 
 /** What the value and units columns read under a lens, with no scrub running. */
 export function lensReadout(instrument: EquityInstrument, lens: EquityLensId) {
-  if (lens === "vested") return { units: instrument.vestedUnits, value: instrument.vestedValue }
+  // Net of the lock: under Vested, the Shares row states the 2,015 shares the
+  // holder could sell this afternoon, not the 2,115 they own.
+  if (lens === "vested")
+    return {
+      units: instrument.vestedUnits - instrument.onHoldUnits,
+      value: instrument.vestedValue - instrument.onHoldValue,
+    }
   if (lens === "onhold") return { units: instrument.onHoldUnits, value: instrument.onHoldValue }
   if (lens === "unvested")
     return { units: instrument.unvestedUnits, value: instrument.unvestedValue }
@@ -433,14 +513,3 @@ export function unitCount(units: number, unitLabel: string) {
   return `${Math.round(units).toLocaleString("en-US")} ${unitLabel}`
 }
 
-/**
- * The axis footer, twice. The 4:5 panel leaves the strip column about 94px,
- * and `Feb 2020` plus `Sept 2029` needs 110 of them, so the narrow card states
- * the years alone rather than wrapping the months onto a second line.
- */
-export const EQUITY_AXIS = {
-  end: "Sept 2029",
-  endShort: "2029",
-  start: "Feb 2020",
-  startShort: "2020",
-}

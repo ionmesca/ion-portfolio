@@ -6,22 +6,19 @@ import { prefersReducedMotion } from "@/lib/motion"
 import { cn } from "@/lib/utils"
 
 import {
-  EMERALD_STRONG,
-  EQUITY_AXIS,
   EQUITY_DOMAIN,
   EQUITY_INSTRUMENTS,
   EQUITY_LENSES,
   EQUITY_TOTALS,
-  EQUITY_VESTED_PERCENT,
   lensOfSegment,
   lensReadout,
+  lensValueAt,
   moneyParts,
   moneyRounded,
   monthAtFraction,
   percentOfDomain,
   unitCount,
   valueAt,
-  vestedPercentAt,
   type EquityInstrument,
   type EquityLensId,
   type EquitySegmentKind,
@@ -62,6 +59,8 @@ const SETTLE_MS = 400 + (EQUITY_INSTRUMENTS.length - 1) * ROW_STAGGER_MS + 200
 const SWAP_OPACITY = 0.18
 /** A finger leaving the strip lingers before the card snaps back to Today. */
 const TOUCH_RELEASE_MS = 400
+/** Closer than this to Today and the guide's month label would sit on it. */
+const TODAY_CLEARANCE_PX = 40
 
 /**
  * The three columns: name, strip, value.
@@ -139,6 +138,14 @@ function LensTabs({
               style={{ background: lens.swatch }}
             />
             {lens.label}
+            {/*
+              The percent lives on the TAB, not in the subline (Ion, revision 2):
+              stated once, on every lens at once, so switching lenses compares
+              three shares instead of rewriting one sentence.
+            */}
+            {lens.id === "all" ? null : (
+              <span className="font-normal text-muted-foreground">{lens.percent}%</span>
+            )}
           </button>
         )
       })}
@@ -173,6 +180,19 @@ function readoutFor(
   }
 
   const asOf = valueAt(instrument, month)
+
+  // The Vested lens is net of the lock at THAT month too, so the row and the
+  // headline above it stay one arithmetic all the way across the axis.
+  if (lens === "vested") {
+    const units = asOf.vestedUnits - asOf.onHoldUnits
+    return {
+      cents: null,
+      isMuted: asOf.isFuture,
+      units: `${unitCount(units, instrument.unitLabel)} vested${asOf.isFuture ? " by then" : ""}`,
+      value: moneyRounded(asOf.vestedValue - asOf.onHoldValue),
+    }
+  }
+
   const units = asOf.isLocked
     ? `on hold until ${instrument.lock?.label ?? ""}`
     : asOf.isReleased
@@ -205,6 +225,26 @@ export function EquityTimeline() {
   const [shownLens, setShownLens] = React.useState<EquityLensId>("all")
   const [shownMonth, setShownMonth] = React.useState<number | null>(null)
   const [faded, setFaded] = React.useState(false)
+
+  // The guide's last month, kept after the pointer leaves so the line and its
+  // label fade out where they stood instead of snapping back to Today first.
+  const [ghostMonth, setGhostMonth] = React.useState<number | null>(null)
+  // Measured, because "40px from Today" is a pixel rule on a percent axis.
+  const [columnWidth, setColumnWidth] = React.useState(0)
+
+  React.useEffect(() => {
+    if (scrubMonth !== null) setGhostMonth(scrubMonth)
+  }, [scrubMonth])
+
+  React.useEffect(() => {
+    const column = stripRef.current
+    if (!column) return
+    const observer = new ResizeObserver(([entry]) => {
+      setColumnWidth(entry?.contentRect.width ?? 0)
+    })
+    observer.observe(column)
+    return () => observer.disconnect()
+  }, [])
 
   /* -- first reveal ------------------------------------------------------- */
   React.useEffect(() => {
@@ -328,34 +368,47 @@ export function EquityTimeline() {
     setLens((current) => (current === next ? "all" : next))
   }
 
-  const total = moneyParts(EQUITY_TOTALS.committedValue)
   const activeLens =
     EQUITY_LENSES.find((entry) => entry.id === lens) ?? EQUITY_LENSES[0]
   const shownLensEntry =
     EQUITY_LENSES.find((entry) => entry.id === shownLens) ?? EQUITY_LENSES[0]
 
-  const subline = (() => {
-    if (shownMonth !== null) {
-      const isFuture = shownMonth > todayMonth
-      const percent = vestedPercentAt(shownMonth)
-      return (
-        <>
-          {`${isFuture ? "By" : "As of"} ${formatMonthLabel(shownMonth)} · `}
-          <span style={isFuture ? undefined : { color: EMERALD_STRONG }}>
-            {`${percent}% vested`}
-          </span>
-        </>
-      )
-    }
-    if (shownLens === "all" || !shownLensEntry) return `${EQUITY_VESTED_PERCENT}% vested`
-    const percent = Math.round(
-      (shownLensEntry.value / EQUITY_TOTALS.committedValue) * 100
-    )
-    return `${shownLensEntry.label} · ${moneyRounded(shownLensEntry.value)} · ${percent}%`
-  })()
+  /*
+    THE HEADLINE FOLLOWS THE LENS (Ion, revision 2). Pick On hold and the 24px
+    figure is what is locked, not the fortune it belongs to. Scrub, and it is
+    that lens as of the hovered month, muted once the month is in the future,
+    because a projection should not be printed in the same ink as a fact.
+  */
+  const headline =
+    shownMonth === null
+      ? {
+          ...moneyParts(shownLensEntry?.value ?? EQUITY_TOTALS.committedValue),
+          isMuted: false,
+        }
+      : {
+          cents: null,
+          isMuted: shownMonth > todayMonth,
+          whole: moneyRounded(lensValueAt(shownLens, shownMonth)),
+        }
 
-  const guidePercent = scrubMonth === null ? null : percentOfDomain(scrubMonth)
+  // ONE date fact, never a percent: the tabs already carry the percents.
+  const subline =
+    shownMonth === null
+      ? (shownLensEntry?.subline ?? "")
+      : shownMonth > todayMonth
+        ? `Projected · ${formatMonthLabel(shownMonth)}`
+        : `As of ${formatMonthLabel(shownMonth)}`
+
   const todayPercent = percentOfDomain(todayMonth)
+  const guideMonth = scrubMonth ?? ghostMonth
+  const guidePercent = guideMonth === null ? null : percentOfDomain(guideMonth)
+  const guideShown = scrubMonth !== null
+  // The two labels would collide, so Today gives way: the month you asked for
+  // outranks the one you already know.
+  const todayLabelHidden =
+    guideShown &&
+    guidePercent !== null &&
+    (Math.abs(guidePercent - todayPercent) / 100) * columnWidth < TODAY_CLEARANCE_PX
   const swapStyle: React.CSSProperties = {
     opacity: faded ? SWAP_OPACITY : 1,
     transition: "opacity var(--duration-fast) var(--motion-glide)",
@@ -369,10 +422,17 @@ export function EquityTimeline() {
     >
       <header className="flex flex-col gap-2.5 p-3 @md:p-4">
         <LensTabs onSelect={setLens} value={lens} />
-        <div className="flex flex-col gap-0.5">
-          <span className="text-2xl leading-8 font-medium whitespace-nowrap text-foreground tabular-nums">
-            {total.whole}
-            <span className="text-muted-foreground">{total.cents}</span>
+        <div className="flex flex-col gap-0.5" style={swapStyle}>
+          <span
+            className={cn(
+              "text-2xl leading-8 font-medium whitespace-nowrap tabular-nums",
+              headline.isMuted ? "text-muted-foreground" : "text-foreground"
+            )}
+          >
+            {headline.whole}
+            {headline.cents === null ? null : (
+              <span className="text-muted-foreground">{headline.cents}</span>
+            )}
           </span>
           {/*
             ONE subline, never a list. It is the card's running commentary: the
@@ -382,7 +442,6 @@ export function EquityTimeline() {
           <span
             aria-live="polite"
             className="text-xs leading-4 text-muted-foreground tabular-nums"
-            style={swapStyle}
           >
             {subline}
           </span>
@@ -410,10 +469,31 @@ export function EquityTimeline() {
             <span />
             <div ref={stripRef} className="relative">
               <span
-                className="absolute -translate-x-1/2 text-xs leading-4 whitespace-nowrap text-muted-foreground"
-                style={{ left: `${todayPercent}%` }}
+                className="absolute -translate-x-1/2 text-xs leading-4 whitespace-nowrap text-muted-foreground motion-reduce:transition-none"
+                style={{
+                  left: `${todayPercent}%`,
+                  opacity: todayLabelHidden ? 0 : 1,
+                  transition: "opacity var(--duration-fast) var(--motion-glide)",
+                }}
               >
                 Today
+              </span>
+              {/*
+                The hovered month rides the guide up here in the axis header,
+                where Today lives, instead of floating over the strips. The axis
+                footer is gone: two fixed dates that never changed were paying
+                rent the moving one earns.
+              */}
+              <span
+                aria-hidden="true"
+                className="absolute -translate-x-1/2 text-xs leading-4 whitespace-nowrap text-muted-foreground tabular-nums motion-reduce:transition-none"
+                style={{
+                  left: `${guidePercent ?? todayPercent}%`,
+                  opacity: guideShown ? 1 : 0,
+                  transition: "opacity var(--duration-fast) var(--motion-glide)",
+                }}
+              >
+                {guideMonth === null ? null : formatMonthLabel(guideMonth)}
               </span>
             </div>
             <span />
@@ -516,28 +596,13 @@ export function EquityTimeline() {
                 style={{
                   borderColor: "color-mix(in oklab, var(--foreground) 35%, transparent)",
                   left: `${guidePercent ?? todayPercent}%`,
-                  opacity: guidePercent === null ? 0 : 1,
+                  opacity: guideShown ? 1 : 0,
                   transition: "opacity var(--duration-fast) var(--motion-glide)",
                 }}
               />
             </div>
             <span />
           </div>
-        </div>
-
-        <div className={cn(GRID, "mt-2.5")}>
-          <span />
-          <div className="flex justify-between text-xs leading-4 whitespace-nowrap text-muted-foreground tabular-nums">
-            <span>
-              <span className="@md:hidden">{EQUITY_AXIS.startShort}</span>
-              <span className="hidden @md:inline">{EQUITY_AXIS.start}</span>
-            </span>
-            <span>
-              <span className="@md:hidden">{EQUITY_AXIS.endShort}</span>
-              <span className="hidden @md:inline">{EQUITY_AXIS.end}</span>
-            </span>
-          </div>
-          <span />
         </div>
       </div>
     </section>

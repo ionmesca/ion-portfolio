@@ -1,5 +1,3 @@
-import { cn } from "@/lib/utils"
-
 import {
   EMERALD,
   HATCH,
@@ -96,29 +94,47 @@ export function EquityTimelineStrip({
       </div>
 
       {event === null ? null : (
-        <div
-          aria-hidden="true"
-          className={cn("motion-reduce:transition-none")}
-          style={{
-            opacity: revealed && !scrubbing ? 1 : 0,
-            transition: `opacity ${settled ? "var(--duration-fast)" : "var(--duration-base)"} var(--motion-glide)`,
-            transitionDelay: settled ? "0ms" : `${revealDelay + 400}ms`,
-          }}
-        >
+        <>
+          {/*
+            The dot STAYS while the strip is scrubbed (Ion, revision 2): it is
+            the row's one landmark, and a landmark that vanishes when you reach
+            for it is worse than one that overlaps the guide for a moment.
+          */}
           <span
-            className="absolute top-0.5 size-1 -translate-x-1/2 rounded-full"
+            aria-hidden="true"
+            className="absolute top-0.5 size-1 -translate-x-1/2 rounded-full motion-reduce:transition-none"
             style={{
               backgroundColor: "color-mix(in oklab, var(--foreground) 80%, transparent)",
               left: `${percentOfDomain(event.month)}%`,
+              opacity: revealed ? 1 : 0,
+              transition: `opacity ${settled ? "var(--duration-fast)" : "var(--duration-base)"} var(--motion-glide)`,
+              transitionDelay: settled ? "0ms" : `${revealDelay + 400}ms`,
             }}
           />
+          {/*
+            The DATE hides instead, and it hangs to the RIGHT of its dot rather
+            than centred on it, so it can never straddle the Today line it sits
+            beside.
+
+            It is desktop-only. Both dots sit past two thirds of the axis, and a
+            60px date hanging right of them runs straight into the value column
+            on the 4:5 card, which leaves 126px for the whole nine years. The
+            narrow card keeps the dot and drops the date rather than printing
+            one on top of the other.
+          */}
           <span
-            className="absolute top-3.5 -translate-x-1/2 text-[11px] leading-[14px] whitespace-nowrap text-muted-foreground tabular-nums"
-            style={{ left: `${percentOfDomain(event.month)}%` }}
+            aria-hidden="true"
+            className="absolute top-3.5 hidden text-[11px] leading-[14px] whitespace-nowrap text-muted-foreground tabular-nums @md:block motion-reduce:transition-none"
+            style={{
+              left: `calc(${percentOfDomain(event.month)}% + 6px)`,
+              opacity: revealed && !scrubbing ? 1 : 0,
+              transition: `opacity ${settled ? "var(--duration-fast)" : "var(--duration-base)"} var(--motion-glide)`,
+              transitionDelay: settled ? "0ms" : `${revealDelay + 400}ms`,
+            }}
           >
             {event.label}
           </span>
-        </div>
+        </>
       )}
     </div>
   )
