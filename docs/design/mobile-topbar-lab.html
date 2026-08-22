@@ -48,7 +48,7 @@
   --blur-bar: 12px;
   /* PROPOSED: how tall the fade is. The controls sit in the top 56px; the
      gradient keeps going so the edge never reads as a line. */
-  --bar-fade: 96px;
+  --bar-fade: 120px;
 
   --topbar-h: 56px;
   --screen-w: 375px;
@@ -65,6 +65,8 @@ body {
   font-size: 15px;
   -webkit-font-smoothing: antialiased;
 }
+/* .bar-a/.bar-b set display:flex, which beats the UA's [hidden]. */
+[hidden] { display: none !important; }
 button { font: inherit; color: inherit; background: none; border: 0; margin: 0; padding: 0; text-align: left; cursor: pointer; }
 :focus-visible { outline: 2px solid var(--stone-400); outline-offset: 2px; }
 
@@ -87,7 +89,7 @@ button { font: inherit; color: inherit; background: none; border: 0; margin: 0; 
 .scroller::-webkit-scrollbar { display: none; }
 
 /* ---- page content (the same in both options) ----------------------------- */
-.hero { padding: 40px 16px; }
+.hero { padding: 56px 16px; }
 .hero h1 { margin: 0; font-size: 24px; font-weight: 500; line-height: 1.2; }
 .hero p { margin: 8px 0 0; font-size: 18px; line-height: 1.45; color: var(--muted-foreground); letter-spacing: -0.005em; }
 .hero p u { text-underline-offset: 3px; }
@@ -137,13 +139,19 @@ button { font: inherit; color: inherit; background: none; border: 0; margin: 0; 
   background: linear-gradient(to bottom, rgb(255 255 255 / 0.92) 0%, rgb(255 255 255 / 0.6) 45%, rgb(255 255 255 / 0) 100%);
   -webkit-backdrop-filter: blur(var(--blur-bar));
   backdrop-filter: blur(var(--blur-bar));
-  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 35%, transparent 100%);
-  mask-image: linear-gradient(to bottom, #000 0%, #000 35%, transparent 100%);
+  /* The mask reaches transparent at 80%, not at the box edge: Chrome paints
+     a faint seam where a backdrop-filter box ends, and the seam only goes
+     away if the mask has already zeroed that row. */
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 30%, transparent 80%);
+  mask-image: linear-gradient(to bottom, #000 0%, #000 30%, transparent 80%);
 }
 /* Hide the ground entirely at the top of the landing: the hero is white on
    white, and a fade over white is invisible anyway. It fades in on scroll. */
-.bar-b[data-ground="off"]::before { opacity: 0; }
-.bar-b::before { transition: opacity var(--base) var(--glide); }
+/* visibility too, not just opacity: a backdrop-filter layer at opacity 0
+   still draws its seam in Chrome. */
+.bar-b[data-ground="off"]::before { opacity: 0; visibility: hidden; }
+.bar-b::before { transition: opacity var(--base) var(--glide), visibility 0s linear var(--base); }
+.bar-b[data-ground="on"]::before { transition: opacity var(--base) var(--glide), visibility 0s; }
 
 /* ---- shared pieces -------------------------------------------------------- */
 .identity { display: inline-flex; align-items: center; gap: 10px; min-width: 0; height: 40px; }
@@ -169,9 +177,9 @@ button { font: inherit; color: inherit; background: none; border: 0; margin: 0; 
 .pill.identity-pill { padding-left: 6px; gap: 8px; }
 .pill.identity-pill .avatar { width: 28px; height: 28px; }
 .pill.identity-pill .mark { width: 24px; height: 24px; }
-/* option B's meter: a short hairline inside the identity pill, not a page-wide rule */
-.pill.identity-pill { position: relative; overflow: hidden; }
-.pill.identity-pill .meter { position: absolute; left: 0; bottom: 0; height: 2px; width: 38%; background: var(--foreground); }
+/* option B's meter: a short line under the project name, not a page-wide rule */
+.bar-b .identity { position: relative; }
+.bar-b .identity .meter { position: absolute; left: 0; bottom: 2px; height: 2px; width: 38%; background: var(--foreground); border-radius: 1px; }
 
 /* state switching */
 [data-state] .only-top, [data-state] .only-scrolled, [data-state] .only-letter { display: none; }
@@ -241,11 +249,11 @@ button { font: inherit; color: inherit; background: none; border: 0; margin: 0; 
 
     <!-- B -->
     <header class="bar-b" id="barB" hidden data-ground="off">
-      <span class="only-top pill identity-pill"><span class="avatar"></span><span class="name">Ion Mesca</span></span>
-      <span class="only-scrolled pill identity-pill"><span class="mark"></span><span class="name">Equity Admin</span><span class="year">2025</span><span class="meter"></span></span>
+      <span class="only-top identity"><span class="avatar"></span><span class="name">Ion Mesca</span></span>
+      <span class="only-scrolled identity"><span class="mark"></span><span class="name">Equity Admin</span><span class="year">2025</span><span class="meter"></span></span>
       <span class="only-letter pill"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>Home</span>
       <span class="right">
-        <span class="pill counter-pill only-scrolled" style="color: var(--muted-foreground); font-weight: 400; font-variant-numeric: tabular-nums">1 / 6</span>
+        <span class="counter only-scrolled">1 / 6</span>
         <span class="pill icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg></span>
       </span>
     </header>
@@ -264,7 +272,7 @@ let opt = 'a', state = 'top';
 
 const CAPS = {
   a: 'A. The 56px bar as built: solid white, hairline below, the controls are secondary buttons inside it. Scrolled: the meter runs along the bar\'s bottom edge.',
-  b: 'B. No bar. A white fade with a 12px progressive blur (both masked, so there is no edge), and everything in it is a floating pill: identity, back, counter, menu. The meter becomes a hairline inside the identity pill. On the landing the ground is off at the top (white on white) and fades in on scroll.',
+  b: 'B. No bar. A white fade with a 12px progressive blur, masked to nothing well before its own edge. Only the buttons float as pills (back, menu); the identity and the counter are plain text on the fade. The meter is a short line under the project name. On the landing the ground is off at the top (white on white) and fades in on scroll.',
 };
 
 function seg(id, onPick) {
