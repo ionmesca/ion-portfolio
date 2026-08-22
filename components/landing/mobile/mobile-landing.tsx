@@ -8,6 +8,7 @@ import { ArrowUpRight } from "@/lib/icons"
 import { projectPanelIndices, type Project } from "@/lib/projects"
 import { cn } from "@/lib/utils"
 
+import { LEDGY_HREF } from "../ledgy-preview"
 import { ProjectArt } from "../project-art"
 import { SOCIALS } from "../socials"
 import { MobileIndicator } from "./mobile-indicator-lazy"
@@ -123,14 +124,28 @@ export function MobileLanding({ projects }: { projects: Project[] }) {
       />
 
       {/* -- hero ---------------------------------------------------------- */}
-      <section className="flex flex-col gap-4 px-4 py-6">
+      {/* Ion, 2026-08-22: the hero breathes top and bottom (40px), the title
+          and intro read as one group (8px), and the CTA row stands apart
+          from them (24px). Proximity does the grouping, not rules. */}
+      <section className="flex flex-col px-4 py-10">
         <h1 className="text-2xl text-foreground">Software Designer</h1>
-        <p className="text-lg text-muted-foreground [letter-spacing:-0.005em]">
+        <p className="mt-2 text-lg text-muted-foreground [letter-spacing:-0.005em]">
           Curious generalist at heart, building AI native software and fintech
-          systems at <span className="underline">Ledgy</span>
+          systems at{" "}
+          {/* No hover on a phone, so no site preview: the mention is the
+              plain underlined link to ledgy.com that the desktop anchor is
+              at rest. */}
+          <a
+            href={LEDGY_HREF}
+            target="_blank"
+            rel="noreferrer noopener"
+            className="underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
+          >
+            Ledgy
+          </a>
         </p>
 
-        <div className="flex items-center gap-4">
+        <div className="mt-6 flex items-center gap-4">
           {/* Same treatment as the desktop hero (intro.tsx): the variants carry
               the look, the 70% glyph is Figma's own measurement. `touch` is the
               40px size the Button set gained in pass 10 §B. */}
@@ -186,7 +201,9 @@ export function MobileLanding({ projects }: { projects: Project[] }) {
                 data-slot="mobile-card"
                 data-project={project.id}
                 data-project-index={projectIndex}
-                className="relative aspect-[4/5] w-full overflow-hidden rounded-xl bg-muted shadow-raised"
+                // No shadow: the desktop panels (media-column.tsx) sit flat on
+                // the page, and the mobile cards match.
+                className="relative aspect-[4/5] w-full overflow-hidden rounded-xl bg-muted"
               >
                 <h2 className="sr-only">
                   {project.name} — {project.year}, image {mediaIndex + 1}

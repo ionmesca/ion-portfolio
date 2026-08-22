@@ -56,7 +56,7 @@ import {
    and never a claim. The href is the real destination.
    ========================================================================= */
 
-const LEDGY_HREF = "https://ledgy.com"
+export const LEDGY_HREF = "https://ledgy.com"
 const LEDGY_HOST = "ledgy.com"
 
 /** Lab constants, verbatim: `var W = 280, MOCK_H = 180, CAP_H = 32, PAD = 6`. */
