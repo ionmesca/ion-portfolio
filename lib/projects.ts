@@ -61,6 +61,10 @@ export type ProjectMedia =
       theme?: ThinkingTheme
       label?: string
     }
+  | {
+      type: "vesting-chart"
+      alt: string
+    }
 
 export function projectPanelIndices(project: Project) {
   const count = Math.max(1, project.media?.length ?? 0)
@@ -116,6 +120,12 @@ export const projects: Project[] = [
     name: "Equity Dashboard",
     year: "2025",
     mark: "ledgy-agent",
+    media: [
+      {
+        type: "vesting-chart",
+        alt: "Vesting card showing 70% vested against a stepped value chart",
+      },
+    ],
   },
   {
     id: "vesting-builder",
