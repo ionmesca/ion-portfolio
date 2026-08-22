@@ -1,14 +1,14 @@
 "use client"
 
 import { LedgyAgentScreenCapture } from "@/components/ledgy/agent-screen-capture"
+import { EquityTimelineStage } from "@/components/ledgy/equity-timeline-stage"
 import { ThinkingStage } from "@/components/ledgy/thinking-stage"
-import { VestingChartStage } from "@/components/ledgy/vesting-chart-stage"
 import { SettleImage } from "@/components/ui/settle-in"
 import type { ProjectMedia } from "@/lib/projects"
 
 /**
  * One panel's picture: a still, the Agent home composition, the thinking mark,
- * or the Equity Dashboard vesting card.
+ * or the Equity Dashboard equity timeline card.
  *
  * Stills go through SettleImage so they arrive on the spring rather than
  * popping over the muted stand-in.
@@ -26,10 +26,10 @@ function isLedgyAgentScreen(
   return art.type === "ledgy-agent-screen"
 }
 
-function isVestingChart(
+function isEquityTimeline(
   art: ProjectMedia
-): art is Extract<ProjectMedia, { type: "vesting-chart" }> {
-  return art.type === "vesting-chart"
+): art is Extract<ProjectMedia, { type: "equity-timeline" }> {
+  return art.type === "equity-timeline"
 }
 
 export function ProjectArt({
@@ -58,8 +58,8 @@ export function ProjectArt({
     return <ThinkingStage theme={art.theme ?? "orb"} label={art.label} />
   }
 
-  if (isVestingChart(art)) {
-    return <VestingChartStage />
+  if (isEquityTimeline(art)) {
+    return <EquityTimelineStage />
   }
 
   return (

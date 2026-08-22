@@ -62,7 +62,7 @@ export type ProjectMedia =
       label?: string
     }
   | {
-      type: "vesting-chart"
+      type: "equity-timeline"
       alt: string
     }
 
@@ -122,8 +122,8 @@ export const projects: Project[] = [
     mark: "ledgy-agent",
     media: [
       {
-        type: "vesting-chart",
-        alt: "Vesting card showing 70% vested against a stepped value chart",
+        type: "equity-timeline",
+        alt: "Equity card with Options and Shares as strips on one time axis, 70% vested",
       },
     ],
   },

@@ -226,7 +226,7 @@ OS setting can change while the page is open.
 
 Ruling 2026-08-22. `chart.js` (lazy chunk, tree-shaken registration) draws
 anything with an axis, a series and a hover; `components/ledgy/vesting-chart.tsx`
-is the reference and `docs/design/vesting-chart-spec.md` the spec. The
+was the reference and `docs/design/vesting-chart-spec.md` its spec. The
 library does the geometry and the data transitions (400ms `easeOutQuart`,
 150ms hover, off under reduced motion); everything visible around the line
 is ours: a masked dot grid plugin, a dashed Today marker, HTML overlays for
@@ -234,6 +234,13 @@ labels and the live dot so type and colour come from the tokens. Built-in
 axes, grid, legend and tooltip are switched off. Glyph-sized data with no
 axis (meters, the answer-card pool bar and ring, sparklines) stays inline
 SVG, which is cheaper and already on the CSS ladder.
+
+THE RULING CURRENTLY HAS NO CONSUMER. The equity timeline card
+(`components/ledgy/equity-timeline.tsx`, ruling 2026-08-22,
+`docs/design/equity-timeline-spec.md`) retired the vesting chart, and
+`chart.js` left the dependency list with it. The ruling stands for the next
+plot that needs one; the reference implementation is in git history at
+`cc77f54:components/ledgy/vesting-chart.tsx`.
 
 ---
 

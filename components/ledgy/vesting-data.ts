@@ -39,7 +39,7 @@ const MONTH_NAMES = [
 ] as const
 
 /** Month index for a calendar month, counted from Feb 2020. */
-function monthIndex(year: number, month: number) {
+export function monthIndex(year: number, month: number) {
   return (year - 2020) * 12 + (month - 2)
 }
 
@@ -114,7 +114,18 @@ type GrantSeed = {
  * is the €5.3M the card is supposed to state, but the Sept 2025 start left only
  * €2.3M vested today, well short of the €3.7M the agreed mock draws at the
  * Today line. Moving the largest grant's start is the one change that puts both
- * numbers where the mock has them without touching a single unit count.
+ * numbers where the mock has them.
+ *
+ * THE RATIFIED TOTALS (docs/design/equity-timeline-spec.md). The equity
+ * timeline card states four figures that are not up for derivation: Options
+ * €4,681,864.51 over 1,335 options, Shares €403,409.74 over 2,115 shares,
+ * €5,085,274.25 in total, 70% of it vested today. The share counts already
+ * summed to 2,115; the option counts summed to 1,393, so Grant 133 drops from
+ * 1,000 units to 942. Grant 133 rather than Grant 59 (which would have given a
+ * tidier 100 + 135 + 100 + 1,000) because Grant 59 is fully vested and cutting
+ * it takes the vested share down to 69%, while Grant 133 is 63% vested today
+ * and cutting it leaves the card on 70.4%. Two netValues carry the cents; both
+ * are commented where they sit.
  *
  * NO CLIFF JUMPS. The three share positions read as instant vests in Ledgy, and
  * drawn that way they put two vertical walls in the line: €52.6k at Jun 2021 and
@@ -154,8 +165,14 @@ const GRANT_SEEDS: GrantSeed[] = [
   {
     name: "Grant 133",
     unitLabel: "options",
-    units: 1000,
-    netValue: SHARE_PRICE - 1.0,
+    // 942, not the round 1,000 this grant used to carry. The four option
+    // grants have to total the ratified 1,335 options (equity-timeline-spec)
+    // and 100 + 193 + 100 is 393, so the largest grant absorbs the remainder.
+    units: 942,
+    // The residual that lands the Options committed total exactly on the
+    // ratified EUR 4,681,864.51 once the other three grants are priced at
+    // SHARE_PRICE - 1.17. Reads as a strike of 0.78 rather than the round 1.00.
+    netValue: 3507.1291825902,
     kind: "option",
     from: [2021, 7],
     to: [2029, 9],
@@ -173,7 +190,11 @@ const GRANT_SEEDS: GrantSeed[] = [
     name: "Common",
     unitLabel: "shares",
     units: 15,
-    netValue: SHARE_PRICE,
+    // SHARE_PRICE plus six tenths of a cent, the whole of the EUR 0.09 gap
+    // between 115 priced shares at SHARE_PRICE and the ratified Shares total
+    // of EUR 403,409.74. It lands here rather than on Preferred E because
+    // Preferred E has to stay on exactly EUR 350,791 for the On hold lens.
+    netValue: SHARE_PRICE + 0.006,
     kind: "share",
     from: [2020, 7],
     to: [2021, 6],
@@ -231,7 +252,7 @@ function buildSeries(grants: VestingGrant[]) {
  * `1 Sept 2026`, joined with non-breaking spaces so the narrow card breaks the
  * subline before the date rather than inside it.
  */
-function formatDayLabel(month: number, day: number) {
+export function formatDayLabel(month: number, day: number) {
   const year = 2020 + Math.floor((month + 1) / 12)
   const name = MONTH_NAMES[(((month + 1) % 12) + 12) % 12]
   return `${day}\u00a0${name}\u00a0${year}`
