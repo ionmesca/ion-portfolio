@@ -1,8 +1,7 @@
 import { MobileTopBar } from "@/components/landing/mobile/mobile-top-bar"
+import { RAIL_HOME, type RailBack } from "@/components/nav/rail-back"
 import {
-  RAIL_HOME,
   SectionRail,
-  type RailBack,
   type SectionNavItem,
 } from "@/components/nav/section-rail"
 import { Button } from "@/components/ui/button"

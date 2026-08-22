@@ -1,6 +1,8 @@
 "use client"
 
 import * as React from "react"
+
+import { RAIL_HOME, type RailBack } from "@/components/nav/rail-back"
 import Link from "next/link"
 
 import { clsx } from "clsx"
@@ -147,12 +149,6 @@ const RAIL_QUERY = "(min-width: 64rem)"
  *  is the shortest page where "where am I" is a real question. */
 const WHEEL_MIN_RATIO = 1.5
 
-/** Where the back button goes, and what it says. The letter and the three
- *  collections go Home; an article goes back to its index. POR-27:
- *  "destination-labelled back button". */
-export type RailBack = { href: string; label: string }
-
-export const RAIL_HOME: RailBack = { href: "/", label: "Home" }
 
 export type SectionNavItem = { id: string; nav: string }
 
