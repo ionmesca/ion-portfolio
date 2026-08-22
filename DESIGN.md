@@ -222,6 +222,19 @@ JS-driven motion must make the same promise itself — call
 `prefersReducedMotion()` and `snap()`. Read it per `set`, never cache it: the
 OS setting can change while the page is open.
 
+### Charts: Chart.js for plots, inline SVG for glyphs
+
+Ruling 2026-08-22. `chart.js` (lazy chunk, tree-shaken registration) draws
+anything with an axis, a series and a hover; `components/ledgy/vesting-chart.tsx`
+is the reference and `docs/design/vesting-chart-spec.md` the spec. The
+library does the geometry and the data transitions (400ms `easeOutQuart`,
+150ms hover, off under reduced motion); everything visible around the line
+is ours: a masked dot grid plugin, a dashed Today marker, HTML overlays for
+labels and the live dot so type and colour come from the tokens. Built-in
+axes, grid, legend and tooltip are switched off. Glyph-sized data with no
+axis (meters, the answer-card pool bar and ring, sparklines) stays inline
+SVG, which is cheaper and already on the CSS ladder.
+
 ---
 
 ## 4. Component inventory

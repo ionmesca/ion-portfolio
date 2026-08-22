@@ -51,6 +51,21 @@ landing document-scroll wheel, the hover-preview container morph
 (`lib/morph.ts` / `lib/morph-preview.ts`), and simple color/opacity hovers
 (token ladder: 150/200/400ms, snap-in/ease-out).
 
+Charts (Ion's ruling, 2026-08-22): `chart.js` is the chart library for
+plotted data, meaning anything with a time or value axis, a series and a
+hover (the Equity Dashboard vesting chart is the reference:
+`components/ledgy/vesting-chart.tsx`). Lazy-import it inside an effect and
+register only the controllers/elements/scales used, so it lands in its own
+chunk; report the first-load JS delta. Axes, grid, legend and the built-in
+tooltip stay off; draw Fey-style furniture (masked dot grid, dashed marker,
+live dot, labels) as plugins or HTML overlays so labels use the page font
+and tokens. Motion maps to the ladder: data transitions 400ms
+`easeOutQuart` (the Chart.js curve closest to `--motion-glide`), hover
+150ms, `animation: false` under reduced motion. Glyph-sized data (the
+12px pool bar and 44px stakeholder ring in `agent-turn-demo.tsx`, the
+96x32 sparkline, meters) stays inline SVG: no axes, no hover series, not a
+chart.
+
 ## Structure
 
 - `app/` — Routes
