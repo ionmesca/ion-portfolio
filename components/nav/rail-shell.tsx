@@ -131,10 +131,13 @@ export function RailShell({
           this first inside the grid would steal the page-entrance's
           `:first-child` (the rail) on desktop. */}
       <MobileTopBar>
+        {/* Ghost, not secondary (Ion, 2026-08-22): the bar is the container.
+            -ml-3 lands the arrow on the 16px gutter, where the page text
+            starts. */}
         <Button
-          variant="secondary"
+          variant="ghost"
           asChild
-          className="relative before:absolute before:-inset-1.5 before:content-['']"
+          className="relative -ml-3 before:absolute before:-inset-1.5 before:content-['']"
         >
           {/* Native <a>, not next/link: Link + Radix Slot prerenders with an
               undefined href, and Next's formatUrl throws

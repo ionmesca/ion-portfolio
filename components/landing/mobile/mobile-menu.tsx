@@ -95,15 +95,17 @@ export function MobileMenu() {
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
         <Button
-          variant="secondary"
+          variant="ghost"
           size="icon"
           aria-label="Open menu"
+          // Ghost, not secondary (Ion, 2026-08-22): the bar is already the
+          // container, a carded button inside it is chrome inside chrome.
           // The box is 32 (Figma 20:603) but a finger is not: the pseudo
           // element grows the hit area to 44 without moving a pixel of the
-          // button. See the report — the frame draws 32 where the written
-          // spec said 40.
+          // button. -mr-2 puts the glyph, not the invisible box, on the
+          // 16px gutter.
           className={cn(
-            "relative [&_svg]:text-muted-foreground",
+            "relative -mr-2 [&_svg]:text-muted-foreground",
             "before:absolute before:-inset-1.5 before:content-['']"
           )}
         >

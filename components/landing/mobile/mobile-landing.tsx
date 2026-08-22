@@ -124,10 +124,10 @@ export function MobileLanding({ projects }: { projects: Project[] }) {
       />
 
       {/* -- hero ---------------------------------------------------------- */}
-      {/* Ion, 2026-08-22: the hero breathes top and bottom (56px), the title
+      {/* Ion, 2026-08-22: the hero breathes top and bottom (64px), the title
           and intro read as one group (8px), and the CTA row stands apart
           from them (24px). Proximity does the grouping, not rules. */}
-      <section className="flex flex-col px-4 py-14">
+      <section className="flex flex-col px-4 py-16">
         <h1 className="text-2xl text-foreground">Software Designer</h1>
         <p className="mt-2 text-lg text-muted-foreground [letter-spacing:-0.005em]">
           Curious generalist at heart, building AI native software and fintech
