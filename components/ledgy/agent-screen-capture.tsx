@@ -28,7 +28,9 @@ export function LedgyAgentScreenCapture({
       {/*
         Desktop centres the screen inside the glass. Mobile is a 4:5 crop, so
         the screen anchors bottom-left instead: the top and right keep the
-        glass visible while the sidebar and composer stay in frame.
+        glass visible, the sidebar and headline stay in frame, and the bottom
+        runs off the card just above the collapse-sidebar icon. Its corner is
+        rounded-sm so it sits concentric inside the card's rounded-xl.
       */}
       <div
         className={cn(
@@ -38,8 +40,10 @@ export function LedgyAgentScreenCapture({
       >
         <div
           className={cn(
-            "relative aspect-[16/10] max-w-none overflow-hidden rounded-xl shadow-raised",
-            mobileCrop ? "mb-[6%] ml-[5%] h-[66%] w-auto shrink-0" : "w-[84%] @3xl:w-[72%]"
+            "relative aspect-[16/10] max-w-none overflow-hidden shadow-raised",
+            mobileCrop
+              ? "ml-[4%] h-[68%] w-auto shrink-0 translate-y-[16%] rounded-sm"
+              : "w-[84%] rounded-xl @3xl:w-[72%]"
           )}
         >
           <Image

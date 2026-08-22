@@ -58,6 +58,11 @@ export function ProjectArt({
       priority={priority}
       unoptimized={art.unoptimized ?? art.src.endsWith(".svg")}
       className="object-cover object-top"
+      style={
+        mobile && art.mobilePosition
+          ? { objectPosition: art.mobilePosition }
+          : undefined
+      }
       sizes={sizes}
     />
   )

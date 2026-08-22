@@ -37,7 +37,18 @@ export type Project = {
 export type ThinkingTheme = "neutral" | "orb"
 
 export type ProjectMedia =
-  | { type?: "image"; src: string; alt: string; unoptimized?: boolean }
+  | {
+      type?: "image"
+      src: string
+      alt: string
+      unoptimized?: boolean
+      /**
+       * CSS object-position for the mobile 4:5 cover crop. Desktop always
+       * shows the whole 16:10 frame; mobile sees roughly half the width, so
+       * this picks which half. Defaults to the top-centre.
+       */
+      mobilePosition?: string
+    }
   | {
       type: "ledgy-agent-screen"
       backgroundSrc: string
@@ -67,11 +78,15 @@ export const projects: Project[] = [
         src: "/projects/equity-admin/equity-admin-home-q95.avif",
         alt: "Equity administration dashboard with stakeholder tasks and ownership insights",
         unoptimized: true,
+        // Centre the tasks card; both cards do not fit in the mobile half.
+        mobilePosition: "34% 0",
       },
       {
         src: "/projects/equity-admin/equity-admin-command-bar-q95.avif",
         alt: "Equity administration command bar showing grant navigation and actions",
         unoptimized: true,
+        // The open command bar sits in the right half of the frame.
+        mobilePosition: "75% 0",
       },
     ],
   },

@@ -72,7 +72,7 @@ function StreamedAnswer({ onSettled }: { onSettled: () => void }) {
 
   return (
     <p
-      className="text-xs leading-5 text-secondary-foreground @md:text-sm @md:leading-6"
+      className="text-sm leading-6 text-secondary-foreground"
       aria-label={ANSWER}
     >
       {ANSWER_WORDS.slice(0, visibleCount).map((word, index) => (
@@ -94,7 +94,7 @@ function ToolRow({
   label: string
 }) {
   return (
-    <div className="ledgy-turn-tool flex min-h-8 items-center gap-2 py-1 text-xs @md:text-sm">
+    <div className="ledgy-turn-tool flex min-h-8 items-center gap-2 py-1 text-sm">
       <span className="grid size-4 shrink-0 place-items-center text-muted-foreground">
         <Icon className="size-3" />
       </span>
@@ -229,12 +229,17 @@ export function LedgyAgentTurnDemo({
   thinkingLabel?: string
 }) {
   return (
-    <div className="mx-auto flex h-[17rem] w-[calc(100%-1.5rem)] max-w-[34rem] flex-col justify-center text-left font-sans @md:w-[88%]">
-      <div className="ledgy-turn-item w-full rounded-xl bg-border p-2 text-xs leading-5 text-secondary-foreground @md:p-3 @md:text-sm">
+    <div className="mx-auto flex h-full w-[calc(100%-1.5rem)] max-w-[34rem] flex-col justify-center text-left font-sans @md:h-[17rem] @md:w-[88%]">
+      {/*
+        Mobile insets the bubble 12px from a rounded-xl (21px) card, so its
+        corner is rounded-sm (9px) to stay concentric. Desktop has room for
+        the full rounded-xl bubble.
+      */}
+      <div className="ledgy-turn-item w-full rounded-sm bg-border p-3 text-sm leading-6 text-secondary-foreground @md:rounded-xl">
         {PROMPT}
       </div>
 
-      <div className="mt-2 min-h-[9rem] px-2 @md:mt-3 @md:min-h-[10rem] @md:px-3">
+      <div className="mt-2 min-h-[10rem] px-3 @md:mt-3">
         <TurnWorkDisclosure
           answerSettled={answerSettled}
           scene={scene}
