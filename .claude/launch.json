@@ -6,6 +6,12 @@
       "runtimeExecutable": "bun",
       "runtimeArgs": ["run", "dev"],
       "port": 3000
+    },
+    {
+      "name": "design-labs",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "http.server", "3200", "--bind", "127.0.0.1"],
+      "port": 3200
     }
   ]
 }

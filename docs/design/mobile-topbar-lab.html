@@ -1,0 +1,308 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mobile top bar — bar vs floating</title>
+<style>
+/* Tokens inlined from app/globals.css. Light only. One proposed addition is
+   marked PROPOSED below; nothing else is new. */
+:root {
+  --stone-50:  #fafaf9;
+  --stone-100: #f5f5f4;
+  --stone-200: #e7e5e4;
+  --stone-300: #d6d3d1;
+  --stone-400: #a6a09b;
+  --stone-500: #79716b;
+  --stone-700: #44403b;
+  --stone-950: #0c0a09;
+  --background: #fff;
+  --foreground: var(--stone-950);
+  --card: #fff;
+  --muted: var(--stone-100);
+  --muted-foreground: var(--stone-500);
+  --border: var(--stone-200);
+  --secondary-foreground: #1c1917;
+  --radius-sm: 9px;
+  --radius-md: 12px;
+  --radius-xl: 21px;
+  --shadow-subtle:
+    0 0.5px 0.5px 0 rgb(0 0 0 / 0.04),
+    0 1.5px 1px 0 rgb(0 0 0 / 0.03),
+    0 3px 1.5px 0 rgb(0 0 0 / 0.02),
+    0 5px 2px 0 rgb(0 0 0 / 0.01),
+    0 0 0 1px rgb(0 0 0 / 0.05);
+  --shadow-modal:
+    0 4px 4px 0 rgb(0 0 0 / 0.06),
+    0 12px 8px 0 rgb(0 0 0 / 0.045),
+    0 24px 12px 0 rgb(0 0 0 / 0.03),
+    0 40px 16px 0 rgb(0 0 0 / 0.015),
+    0 0 0 1px rgb(0 0 0 / 0.05);
+  --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --glide:  cubic-bezier(0.16, 1, 0.3, 1);
+  --fast: 150ms;
+  --base: 200ms;
+
+  /* PROPOSED: the bar's backdrop blur. The contract stops at --blur-icon 4px;
+     a readable progressive blur behind floating controls needs more. */
+  --blur-bar: 12px;
+  /* PROPOSED: how tall the fade is. The controls sit in the top 56px; the
+     gradient keeps going so the edge never reads as a line. */
+  --bar-fade: 96px;
+
+  --topbar-h: 56px;
+  --screen-w: 375px;
+  --screen-h: 760px;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  background: var(--stone-100);
+  color: var(--foreground);
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-size: 15px;
+  -webkit-font-smoothing: antialiased;
+}
+button { font: inherit; color: inherit; background: none; border: 0; margin: 0; padding: 0; text-align: left; cursor: pointer; }
+:focus-visible { outline: 2px solid var(--stone-400); outline-offset: 2px; }
+
+/* ---- lab chrome ---------------------------------------------------------- */
+.lab { display: flex; flex-direction: column; align-items: center; gap: 16px; padding: 32px 16px 48px; }
+.controls { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+.seg { display: flex; gap: 2px; padding: 4px; background: var(--stone-200); border-radius: var(--radius-md); }
+.seg button {
+  height: 32px; padding: 0 14px; border-radius: 8px; font-size: 13px; color: var(--muted-foreground);
+  transition: color var(--fast) linear, background-color var(--fast) linear, box-shadow var(--fast) linear;
+}
+.seg button[aria-pressed="true"] { background: var(--background); color: var(--foreground); font-weight: 500; box-shadow: var(--shadow-subtle); }
+.caption { margin: 0; font-size: 12px; line-height: 1.4; color: var(--muted-foreground); max-width: 375px; }
+.frame { padding: 8px; background: var(--background); border-radius: 48px; box-shadow: var(--shadow-modal); }
+.screen {
+  position: relative; width: var(--screen-w); height: var(--screen-h); border-radius: 40px;
+  background: var(--background); overflow: hidden; isolation: isolate; box-shadow: 0 0 0 1px rgb(0 0 0 / 0.06);
+}
+.scroller { position: absolute; inset: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; }
+.scroller::-webkit-scrollbar { display: none; }
+
+/* ---- page content (the same in both options) ----------------------------- */
+.hero { padding: 40px 16px; }
+.hero h1 { margin: 0; font-size: 24px; font-weight: 500; line-height: 1.2; }
+.hero p { margin: 8px 0 0; font-size: 18px; line-height: 1.45; color: var(--muted-foreground); letter-spacing: -0.005em; }
+.hero p u { text-underline-offset: 3px; }
+.hero .ctas { margin-top: 24px; display: flex; align-items: center; gap: 16px; }
+.btn-primary { height: 40px; padding: 0 16px; border-radius: var(--radius-md); background: #1c1917; color: var(--stone-50); font-size: 14px; font-weight: 500; display: inline-flex; align-items: center; gap: 6px; }
+.ghost { width: 40px; height: 40px; display: inline-flex; align-items: center; justify-content: center; color: var(--muted-foreground); border-radius: var(--radius-md); }
+.cards { display: flex; flex-direction: column; gap: 16px; padding: 0 16px 40px; }
+.card { aspect-ratio: 4 / 5; border-radius: var(--radius-xl); background: var(--muted); overflow: hidden; position: relative; }
+.card img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 34% 0; }
+.card.glass { background: url("../../public/projects/ledgy-agent/glass-studio-fill-q97.webp") center / cover; }
+.card.glass .shot {
+  position: absolute; left: 4%; bottom: 0; height: 68%; aspect-ratio: 16 / 10; translate: 0 16%;
+  border-radius: var(--radius-sm); overflow: hidden; box-shadow: var(--shadow-subtle);
+}
+.card.glass .shot img { object-position: 0 0; }
+.letter { padding: 72px 24px 48px; max-width: 100%; }
+.letter h1 { margin: 0; font-size: 30px; font-weight: 500; }
+.letter .date { margin: 6px 0 40px; color: var(--muted-foreground); }
+.letter p { margin: 0 0 24px; font-size: 18px; line-height: 1.6; }
+.letter h2 { font-size: 22px; font-weight: 500; margin: 40px 0 16px; }
+
+/* Top padding under the bar. Option A: the sticky bar takes the space in
+   flow. Option B: the bar floats, so the page starts under it and needs the
+   offset itself. Both equal --topbar-h so the content lands in the same spot. */
+.page { padding-top: var(--topbar-h); }
+
+/* ---- option A: the bar as built today ------------------------------------- */
+.bar-a {
+  position: absolute; top: 0; left: 0; right: 0; z-index: 30; height: var(--topbar-h);
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 0 16px; background: var(--background); border-bottom: 1px solid var(--border);
+}
+/* the landing's scroll-progress meter, as built: a line on the bar's bottom edge */
+.bar-a .meter { position: absolute; left: 0; bottom: -1px; height: 2px; width: 38%; background: var(--foreground); }
+
+/* ---- option B: no bar. A fade with a progressive blur, and floating pills - */
+.bar-b {
+  position: absolute; top: 0; left: 0; right: 0; z-index: 30; height: var(--topbar-h);
+  display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 0 16px;
+}
+/* The ground. Two layers, both masked so they fade to nothing instead of
+   ending on an edge: a white gradient for legibility, a blur so whatever
+   scrolls under the controls goes soft instead of fighting them. */
+.bar-b::before {
+  content: ""; position: absolute; left: 0; right: 0; top: 0; height: var(--bar-fade); z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(to bottom, rgb(255 255 255 / 0.92) 0%, rgb(255 255 255 / 0.6) 45%, rgb(255 255 255 / 0) 100%);
+  -webkit-backdrop-filter: blur(var(--blur-bar));
+  backdrop-filter: blur(var(--blur-bar));
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 35%, transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 0%, #000 35%, transparent 100%);
+}
+/* Hide the ground entirely at the top of the landing: the hero is white on
+   white, and a fade over white is invisible anyway. It fades in on scroll. */
+.bar-b[data-ground="off"]::before { opacity: 0; }
+.bar-b::before { transition: opacity var(--base) var(--glide); }
+
+/* ---- shared pieces -------------------------------------------------------- */
+.identity { display: inline-flex; align-items: center; gap: 10px; min-width: 0; height: 40px; }
+.avatar { width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(140deg, var(--stone-300), var(--stone-500)); flex: none; }
+.identity .name { font-size: 16px; font-weight: 500; white-space: nowrap; }
+.mark { width: 24px; height: 24px; border-radius: 6px; background: linear-gradient(140deg, #8478f3, #5531ef); flex: none; }
+.identity .year { color: var(--muted-foreground); font-size: 14px; margin-left: -2px; }
+.counter { font-size: 14px; color: var(--muted-foreground); font-variant-numeric: tabular-nums; margin-right: 8px; }
+.right { display: flex; align-items: center; gap: 8px; }
+
+/* The pill: the secondary button as built (card + shadow-subtle + radius-md),
+   at the 40px touch height. Option B puts the identity and the counter in a
+   pill too, so everything that floats shares one vocabulary. */
+.pill {
+  display: inline-flex; align-items: center; gap: 6px; height: 40px; padding: 0 12px;
+  border-radius: var(--radius-md); background: var(--card); color: var(--secondary-foreground);
+  box-shadow: var(--shadow-subtle); font-size: 14px; font-weight: 500; white-space: nowrap;
+  transition: scale var(--fast) var(--spring), background-color var(--fast) linear;
+}
+.pill:active { scale: 0.97; background: var(--muted); }
+.pill.icon { width: 40px; padding: 0; justify-content: center; }
+.pill svg { width: 16px; height: 16px; stroke: var(--muted-foreground); }
+.pill.identity-pill { padding-left: 6px; gap: 8px; }
+.pill.identity-pill .avatar { width: 28px; height: 28px; }
+.pill.identity-pill .mark { width: 24px; height: 24px; }
+/* option B's meter: a short hairline inside the identity pill, not a page-wide rule */
+.pill.identity-pill { position: relative; overflow: hidden; }
+.pill.identity-pill .meter { position: absolute; left: 0; bottom: 0; height: 2px; width: 38%; background: var(--foreground); }
+
+/* state switching */
+[data-state] .only-top, [data-state] .only-scrolled, [data-state] .only-letter { display: none; }
+[data-state="top"] .only-top, [data-state="scrolled"] .only-scrolled, [data-state="letter"] .only-letter { display: inline-flex; }
+[data-state="letter"] .page-landing, [data-state="top"] .page-letter, [data-state="scrolled"] .page-letter { display: none; }
+</style>
+</head>
+<body>
+<div class="lab">
+  <div class="controls">
+    <div class="seg" id="opt">
+      <button aria-pressed="true" data-v="a">A · bar as built</button>
+      <button aria-pressed="false" data-v="b">B · floating</button>
+    </div>
+    <div class="seg" id="state">
+      <button aria-pressed="true" data-v="top">Landing, top</button>
+      <button aria-pressed="false" data-v="scrolled">Landing, scrolled</button>
+      <button aria-pressed="false" data-v="letter">Letter</button>
+    </div>
+  </div>
+
+  <div class="frame"><div class="screen" id="screen" data-state="top">
+    <div class="scroller" id="scroller">
+      <div class="page page-landing">
+        <section class="hero">
+          <h1>Software Designer</h1>
+          <p>Curious generalist at heart, building AI native software and fintech systems at <u>Ledgy</u></p>
+          <div class="ctas">
+            <span class="btn-primary">Book a call ↗</span>
+            <span class="ghost">●</span><span class="ghost">●</span><span class="ghost">●</span>
+          </div>
+        </section>
+        <div class="cards">
+          <div class="card"><img src="../../public/projects/equity-admin/equity-admin-home-q95.avif" alt=""></div>
+          <div class="card"><img src="../../public/projects/equity-admin/equity-admin-command-bar-q95.avif" alt="" style="object-position: 75% 0"></div>
+          <div class="card glass"><div class="shot"><img src="../../public/projects/ledgy-agent/agent-empty-state-capture.png" alt=""></div></div>
+          <div class="card"></div>
+          <div class="card"></div>
+        </div>
+      </div>
+      <div class="page page-letter">
+        <article class="letter">
+          <h1>A letter</h1>
+          <p class="date">August 2026</p>
+          <p>I am Ion, a <b>designer and developer</b> based in Barcelona. I work at <u>Ledgy</u>, where I build the tools people use to understand who owns what in a company.</p>
+          <p>I live with my family and <b>a dog who attends every design review</b>. Most weeks are some mix of Figma, a code editor, and a long walk to sort out whatever is stuck.</p>
+          <h2>History</h2>
+          <p>I got into this the way a lot of people did: <b>a slow family computer</b> and too much time on it. I wanted to change how something looked, found out that you could, and never really stopped.</p>
+          <p>That turned into design school, then into product work, and eventually into Ledgy. The first thing I built was ugly and it worked, which is still roughly my order of priorities.</p>
+          <p>Somewhere along the way the two halves stopped being separate jobs. A design that cannot be built is a drawing; code without a point of view is plumbing.</p>
+          <p>These days I spend most of my time on the equity tools at Ledgy, and on small AI things on the side, mostly to find out what they are actually good for.</p>
+        </article>
+      </div>
+    </div>
+
+    <!-- A -->
+    <header class="bar-a" id="barA">
+      <span class="identity only-top"><span class="avatar"></span><span class="name">Ion Mesca</span></span>
+      <span class="identity only-scrolled"><span class="mark"></span><span class="name">Equity Admin</span><span class="year">2025</span></span>
+      <span class="identity only-letter"><span class="pill"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>Home</span></span>
+      <span class="right">
+        <span class="counter only-scrolled">1 / 6</span>
+        <span class="pill icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg></span>
+      </span>
+      <span class="meter only-scrolled"></span>
+    </header>
+
+    <!-- B -->
+    <header class="bar-b" id="barB" hidden data-ground="off">
+      <span class="only-top pill identity-pill"><span class="avatar"></span><span class="name">Ion Mesca</span></span>
+      <span class="only-scrolled pill identity-pill"><span class="mark"></span><span class="name">Equity Admin</span><span class="year">2025</span><span class="meter"></span></span>
+      <span class="only-letter pill"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>Home</span>
+      <span class="right">
+        <span class="pill counter-pill only-scrolled" style="color: var(--muted-foreground); font-weight: 400; font-variant-numeric: tabular-nums">1 / 6</span>
+        <span class="pill icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg></span>
+      </span>
+    </header>
+  </div></div>
+
+  <p class="caption" id="cap"></p>
+</div>
+
+<script>
+const screen = document.getElementById('screen');
+const scroller = document.getElementById('scroller');
+const barA = document.getElementById('barA');
+const barB = document.getElementById('barB');
+const cap = document.getElementById('cap');
+let opt = 'a', state = 'top';
+
+const CAPS = {
+  a: 'A. The 56px bar as built: solid white, hairline below, the controls are secondary buttons inside it. Scrolled: the meter runs along the bar\'s bottom edge.',
+  b: 'B. No bar. A white fade with a 12px progressive blur (both masked, so there is no edge), and everything in it is a floating pill: identity, back, counter, menu. The meter becomes a hairline inside the identity pill. On the landing the ground is off at the top (white on white) and fades in on scroll.',
+};
+
+function seg(id, onPick) {
+  const el = document.getElementById(id);
+  el.addEventListener('click', (e) => {
+    const b = e.target.closest('button'); if (!b) return;
+    for (const x of el.querySelectorAll('button')) x.setAttribute('aria-pressed', String(x === b));
+    onPick(b.dataset.v);
+  });
+}
+function render() {
+  barA.hidden = opt !== 'a';
+  barB.hidden = opt !== 'b';
+  screen.dataset.state = state;
+  cap.textContent = CAPS[opt];
+  if (state === 'letter') { scroller.scrollTop = 0; scroller.style.scrollBehavior = 'auto'; }
+  if (state === 'top') scroller.scrollTop = 0;
+  if (state === 'scrolled') scroller.scrollTop = 420;
+  ground();
+}
+function ground() {
+  // B's ground appears once anything but the white hero is under the controls.
+  const on = state === 'letter' || scroller.scrollTop > 24;
+  barB.dataset.ground = on ? 'on' : 'off';
+}
+scroller.addEventListener('scroll', () => {
+  ground();
+  if (state !== 'letter') {
+    const next = scroller.scrollTop > 300 ? 'scrolled' : 'top';
+    if (next !== state) {
+      state = next; screen.dataset.state = state;
+      for (const x of document.querySelectorAll('#state button')) x.setAttribute('aria-pressed', String(x.dataset.v === state));
+    }
+  }
+}, { passive: true });
+seg('opt', (v) => { opt = v; render(); });
+seg('state', (v) => { state = v; render(); });
+render();
+</script>
+</body>
+</html>
