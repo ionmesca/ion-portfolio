@@ -176,3 +176,23 @@ Screenshots from http://localhost:3000 at desktop 16:10 and mobile 4:5 to
 `equity-timeline-scrub.png`. Check: hover rewrites the subline and row
 values, dots hide on hover, clicking the emerald segment switches to Vested
 and back, On hold tab present, reduced motion skips the reveal.
+
+## Revision 2 (Ion, 22 Aug, after the first build)
+
+1. Headline follows the lens. All equity shows the total; Vested, On hold
+   and Unvested show that lens's value as the 24px figure. On hover the
+   figure is the lens value as of the hovered month; future months render
+   the figure in muted-foreground.
+2. Tabs carry the percent, always, on every tab except All equity:
+   `Vested 70%`, `On hold 7%`, `Unvested 30%` (percent 400 weight, muted,
+   4px after the label). The subline never repeats a percent.
+3. Subline is one date fact per lens: All equity `Fully vested Sept 2029`,
+   Vested `As of today`, On hold `Until 12 Mar 2027`, Unvested
+   `Vests by Sept 2029`. On hover: past `As of Jun 2024`, future
+   `Projected · Jun 2028`.
+4. Axis footer (Feb 2020 / Sept 2029) removed. The hovered month label
+   rides the guide line in the axis header row, same style as Today; Today
+   stays. When the guide is within 40px of Today, the Today label hides.
+5. Event dots stay visible on hover; only their date labels hide. Date
+   labels are left-aligned starting 6px right of the dot, so they never sit
+   on the Today line.
