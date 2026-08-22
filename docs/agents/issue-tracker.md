@@ -1,9 +1,8 @@
 # Issue tracker: Paperclip (local)
 
-Issues, PRDs, and wayfinder maps for ion-portfolio live in a self-hosted
-**Paperclip** instance on the owner's Mac — company **Portfolio** (`POR-`
-identifiers). The server runs as a login service (launchd label
-`ing.paperclip.server`) at `http://localhost:42862`, loopback-only.
+Issues, PRDs, and wayfinder maps for ion-portfolio live in the self-hosted
+**Paperclip** instance on the Mesca Family Mac, company **Portfolio** (`POR-`
+identifiers). From this Mac, use `http://mesca-family.local:42863`.
 
 - Company id: `cdbb0c38-6166-40e2-a67a-b7978aa32f4e`
 - Projects:
@@ -18,13 +17,13 @@ identifiers). The server runs as a login service (launchd label
 - The same instance also hosts the **Buna** and **Jennifer** companies. Never
   file portfolio work under those — always company `Portfolio`.
 
-`jq` is available. If the server is down: `launchctl kickstart -k
-gui/$(id -u)/ing.paperclip.server`, then `curl http://localhost:42862/api/health`.
+`jq` is available. Paperclip is managed on the Mesca Family Mac. If it is down,
+restart it there before retrying `curl http://mesca-family.local:42863/api/health`.
 
 ## Conventions
 
-Base URL `http://localhost:42862/api`. The instance runs in trusted local mode —
-no auth header needed from this machine.
+Base URL `http://mesca-family.local:42863/api`. The instance runs in trusted
+local mode. No auth header is needed from this machine.
 
 - **Create an issue**:
   `curl -s -X POST $API/companies/<companyId>/issues -H 'Content-Type: application/json' -d '{"title":"...","description":"markdown...","projectId":"..."}'`

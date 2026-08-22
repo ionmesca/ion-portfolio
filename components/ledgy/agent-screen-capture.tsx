@@ -28,7 +28,7 @@ export function LedgyAgentScreenCapture({
       <div className="absolute inset-0 flex items-center justify-center">
         <div
           className={cn(
-            "relative aspect-[16/10] max-w-none overflow-hidden rounded-[clamp(6px,1cqw,12px)] border border-white/55 shadow-[0_18px_60px_rgb(54_36_140/0.16),0_2px_10px_rgb(54_36_140/0.1)]",
+            "relative aspect-[16/10] max-w-none overflow-hidden rounded-xl shadow-raised",
             mobileCrop ? "h-[76%] w-auto" : "w-[84%] @3xl:w-[72%]"
           )}
         >

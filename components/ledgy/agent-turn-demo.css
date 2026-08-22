@@ -1,5 +1,5 @@
 .ledgy-turn-item {
-  animation: ledgy-turn-fade-up 350ms cubic-bezier(0.23, 1, 0.32, 1) both;
+  animation: ledgy-turn-fade-up var(--duration-slow) var(--motion-glide) both;
 }
 
 .ledgy-turn-disclosure {
@@ -7,7 +7,7 @@
 }
 
 .ledgy-turn-tool {
-  animation: ledgy-turn-tool-fade 350ms cubic-bezier(0.23, 1, 0.32, 1) both;
+  animation: ledgy-turn-tool-fade var(--duration-slow) var(--motion-glide) both;
 }
 
 .ledgy-turn-tool:nth-child(2) {
@@ -19,7 +19,7 @@
 }
 
 .ledgy-turn-word {
-  animation: ledgy-turn-word-in 420ms cubic-bezier(0.23, 1, 0.32, 1) both;
+  animation: ledgy-turn-word-in var(--duration-slow) var(--motion-glide) both;
 }
 
 .ledgy-answer-fact {

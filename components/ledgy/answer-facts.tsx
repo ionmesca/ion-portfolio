@@ -74,7 +74,7 @@ function ChartTooltip({
       <span
         id={tooltipId}
         role="tooltip"
-        className="ledgy-answer-tooltip pointer-events-none absolute right-0 bottom-[calc(100%+6px)] z-30 min-w-44 rounded-md bg-card px-2.5 py-2 text-xs text-card-foreground shadow-overlay [transition:opacity_120ms_var(--motion-glide),translate_120ms_var(--motion-glide)]"
+        className="ledgy-answer-tooltip pointer-events-none absolute right-0 bottom-full z-30 mb-1.5 min-w-44 rounded-md bg-card px-3 py-2 text-xs text-card-foreground shadow-overlay [transition:opacity_150ms_var(--motion-glide),translate_150ms_var(--motion-glide)]"
         style={{ opacity: isOpen ? 1 : 0, translate: isOpen ? "0 0" : "0 4px" }}
       >
         <span className="flex flex-col gap-1.5">

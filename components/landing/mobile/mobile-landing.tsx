@@ -5,7 +5,7 @@ import Image from "next/image"
 
 import { buttonVariants } from "@/components/ui/button"
 import { ArrowUpRight } from "@/lib/icons"
-import type { Project } from "@/lib/projects"
+import { projectPanelIndices, type Project } from "@/lib/projects"
 import { cn } from "@/lib/utils"
 
 import { ProjectArt } from "../project-art"
@@ -62,18 +62,19 @@ import { useMobileScroll } from "./use-mobile-scroll"
  * frame to copy, and a light-ramp gradient on a near-black page is not it.
  */
 const CARD_ART: Record<string, string> = {
+  "equity-admin": "linear-gradient(135deg, #e7e5e4, #f5f5f4)",
   "ledgy-agent": "linear-gradient(135deg, #e7e5e4, #f5f5f4)",
-  "hey-buna-app": "linear-gradient(135deg, #d6d3d1, #e7e5e4)",
+  "buna-app": "linear-gradient(135deg, #d6d3d1, #e7e5e4)",
   "equity-dashboard": "linear-gradient(135deg, #f5f5f4, #d6d3d1)",
-  "ripple-agent": "linear-gradient(135deg, #e7e5e4, #fafaf9)",
   "vesting-builder": "linear-gradient(135deg, #d6d3d1, #f5f5f4)",
+  "ripple-agent": "linear-gradient(135deg, #e7e5e4, #fafaf9)",
 }
 
 export function MobileLanding({ projects }: { projects: Project[] }) {
   const listRef = React.useRef<HTMLDivElement>(null)
   const meterRef = React.useRef<HTMLSpanElement>(null)
   const mobileCards = projects.flatMap((project, projectIndex) =>
-    (project.media?.map((_, mediaIndex) => mediaIndex) ?? [0]).map((mediaIndex) => ({
+    projectPanelIndices(project).map((mediaIndex) => ({
       art: project.media?.[mediaIndex],
       mediaIndex,
       project,

@@ -4,8 +4,9 @@
 
 ### Issue tracker
 
-Issues, PRDs, and wayfinder maps live in the local Paperclip instance (company
-"Portfolio", `http://localhost:42862`). See `docs/agents/issue-tracker.md`.
+Issues, PRDs, and wayfinder maps live in the Mesca Family Paperclip instance
+(company "Portfolio", `http://mesca-family.local:42863`). See
+`docs/agents/issue-tracker.md`.
 
 ## Rebuild (rebuild/v2)
 
@@ -44,6 +45,11 @@ Core workflow:
 Notes:
 - Prefer element IDs from the latest snapshot.
 - Capture screenshots only when needed to verify visual state.
+
+### Ledgy portfolio captures
+- Use the authenticated Ledgy tab at `http://localhost:3100` and get Ion's approval before replacing the portfolio image.
+- With CDP, set device metrics to 1152 × 720 at DPR 1, blur the active element, and capture a clean true 16:10 PNG.
+- Clear the CDP device metrics after capture. Keep the source PNG; do not use upscaling or sharpening to compensate for a weak source.
 
 <!-- BEGIN:nextjs-agent-rules -->
 

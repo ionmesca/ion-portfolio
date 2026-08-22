@@ -27,7 +27,7 @@ const ANSWER =
 const ANSWER_WORDS = ANSWER.split(" ")
 const ANSWER_START_DELAY_MS = 120
 const ANSWER_WORD_DELAY_MS = 55
-const ANSWER_WORD_SETTLE_MS = 420
+const ANSWER_WORD_SETTLE_MS = 400
 
 export const ANSWER_SETTLE_MS =
   ANSWER_START_DELAY_MS +
@@ -143,8 +143,8 @@ function TurnWorkDisclosure({
       <span
         aria-hidden={!isWorking}
         className={cn(
-          "flex h-10 w-max max-w-full items-center gap-2.5 whitespace-nowrap text-sm font-normal",
-          "transition-transform duration-[480ms] ease-[cubic-bezier(0.25,1,0.5,1)] motion-reduce:transition-none",
+          "flex h-10 w-max max-w-full items-center gap-2 whitespace-nowrap text-sm font-normal",
+          "transition-transform duration-400 ease-glide motion-reduce:transition-none",
           isWorking ? "relative" : "pointer-events-none absolute top-0 left-0 -translate-y-full"
         )}
       >
@@ -153,8 +153,8 @@ function TurnWorkDisclosure({
       <span
         aria-hidden={isWorking}
         className={cn(
-          "flex h-10 w-max max-w-full items-center gap-2.5 whitespace-nowrap text-sm font-normal text-muted-foreground",
-          "transition-transform duration-[480ms] ease-[cubic-bezier(0.25,1,0.5,1)] motion-reduce:transition-none",
+          "flex h-10 w-max max-w-full items-center gap-2 whitespace-nowrap text-sm font-normal text-muted-foreground",
+          "transition-transform duration-400 ease-glide motion-reduce:transition-none",
           isWorking
             ? "pointer-events-none absolute top-0 left-0 translate-y-full"
             : "relative"
@@ -191,12 +191,12 @@ function TurnWorkDisclosure({
       {hasBody ? (
         <div
           className={cn(
-            "grid transition-[grid-template-rows,opacity] duration-300 ease-[cubic-bezier(0.25,1,0.5,1)] motion-reduce:transition-none",
+            "grid transition-[grid-template-rows,opacity] duration-200 ease-glide motion-reduce:transition-none",
             open ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
           )}
         >
           <div className="min-h-0 overflow-hidden">
-            <div className="ml-[9px] border-l border-border pl-2.5">
+            <div className="ml-2 border-l border-border pl-2">
               {TOOLS.map((tool) => (
                 <ToolRow
                   key={tool.label}
@@ -230,11 +230,11 @@ export function LedgyAgentTurnDemo({
 }) {
   return (
     <div className="mx-auto flex h-[17rem] w-[calc(100%-1.5rem)] max-w-[34rem] flex-col justify-center text-left font-sans @md:w-[88%]">
-      <div className="ledgy-turn-item w-full rounded-xl bg-border p-2.5 text-xs leading-5 text-secondary-foreground @md:p-3 @md:text-sm">
+      <div className="ledgy-turn-item w-full rounded-xl bg-border p-2 text-xs leading-5 text-secondary-foreground @md:p-3 @md:text-sm">
         {PROMPT}
       </div>
 
-      <div className="mt-2 min-h-[9rem] px-2.5 @md:mt-3 @md:min-h-[10rem] @md:px-3">
+      <div className="mt-2 min-h-[9rem] px-2 @md:mt-3 @md:min-h-[10rem] @md:px-3">
         <TurnWorkDisclosure
           answerSettled={answerSettled}
           scene={scene}

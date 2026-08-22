@@ -1,6 +1,6 @@
 "use client"
 
-import type { Project } from "@/lib/projects"
+import { projectPanelIndices, type Project } from "@/lib/projects"
 
 import { useActiveProject } from "./active-project"
 import { INTRO_DELAY, useIntroReveal } from "./intro-reveal"
@@ -9,9 +9,9 @@ import { ProjectArt } from "./project-art"
 /**
  * MediaColumn — the panel stack the whole desktop landing scrolls through.
  *
- * THIS COLUMN IS THE SCROLL. Every project contributes at least two panels,
- * so the column is long and the document is the input. A project can grow
- * past two when it has extra media (Ledgy Agent's thinking mark and loop).
+ * THIS COLUMN IS THE SCROLL. Every project contributes one panel per media
+ * entry, or one muted placeholder when it has no media. The column is long and
+ * the document is the input.
  * The rail beside it is sticky and never moves; the selection in its project
  * list is READ OFF this column's position, one project per its first panel.
  * The wheel measures those positions from the DOM (use-wheel.ts), so the
@@ -38,26 +38,18 @@ import { ProjectArt } from "./project-art"
  * the page would run out of scroll while its panels were still arriving.
  */
 
-const MIN_PANELS_PER_PROJECT = 2
-
-function panelCount(project: Project) {
-  return Math.max(MIN_PANELS_PER_PROJECT, project.media?.length ?? 0)
-}
-
 function Panel({
   project,
   index,
   count,
   anchor,
   priority,
-  lazy,
 }: {
   project: Project
   index: number
   count: number
   anchor?: (el: HTMLDivElement | null) => void
   priority?: boolean
-  lazy?: boolean
 }) {
   const art = project.media?.[index]
   return (
@@ -84,7 +76,6 @@ function Panel({
         <ProjectArt
           art={art}
           priority={priority}
-          lazy={lazy}
           sizes="(max-width: 1024px) 100vw, 60vw"
         />
       ) : null}
@@ -96,9 +87,14 @@ export function MediaColumn({ projects }: { projects: Project[] }) {
   const { anchorsRef } = useActiveProject()
   const intro = useIntroReveal()
 
-  const cells = projects.flatMap((project, k) => {
-    const count = panelCount(project)
-    return Array.from({ length: count }, (_, n) => ({ project, k, n, count }))
+  const cells = projects.flatMap((project, projectIndex) => {
+    const mediaIndices = projectPanelIndices(project)
+    return mediaIndices.map((mediaIndex) => ({
+      count: mediaIndices.length,
+      mediaIndex,
+      project,
+      projectIndex,
+    }))
   })
 
   return (
@@ -106,23 +102,24 @@ export function MediaColumn({ projects }: { projects: Project[] }) {
       className={intro.className("flex min-w-0 flex-1 flex-col gap-4")}
       style={intro.style(INTRO_DELAY.media)}
     >
-      {cells.map(({ project, k, n, count }, columnIndex) => (
-        <Panel
-          key={`${project.id}-${n}`}
-          project={project}
-          index={n}
-          count={count}
-          priority={columnIndex === 0}
-          lazy={columnIndex >= 2}
-          anchor={
-            n === 0
-              ? (el) => {
-                  anchorsRef.current[k] = el
-                }
-              : undefined
-          }
-        />
-      ))}
+      {cells.map(
+        ({ project, projectIndex, mediaIndex, count }, columnIndex) => (
+          <Panel
+            key={`${project.id}-${mediaIndex}`}
+            project={project}
+            index={mediaIndex}
+            count={count}
+            priority={columnIndex === 0}
+            anchor={
+              mediaIndex === 0
+                ? (el) => {
+                    anchorsRef.current[projectIndex] = el
+                  }
+                : undefined
+            }
+          />
+        )
+      )}
 
       {/* prototype line 401 — the last project needs somewhere to arrive. */}
       <div aria-hidden="true" className="h-[55vh] shrink-0" />

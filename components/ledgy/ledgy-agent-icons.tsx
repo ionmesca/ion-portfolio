@@ -1,7 +1,8 @@
 import type { SVGProps } from "react"
 
-// Exact Font Awesome Pro Regular paths used by Ledgy. Keeping the four paths
-// local avoids pulling Ledgy's private package graph into the portfolio.
+// Product-content exception to the portfolio's Lucide contract. These are the
+// exact Font Awesome Pro Regular paths used by Ledgy, so the recreated product
+// UI keeps its source silhouettes without importing Ledgy's private packages.
 type IconDefinition = {
   height: number
   path: string
