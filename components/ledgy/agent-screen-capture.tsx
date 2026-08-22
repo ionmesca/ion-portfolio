@@ -25,11 +25,21 @@ export function LedgyAgentScreenCapture({
         className="object-cover object-top"
       />
 
-      <div className="absolute inset-0 flex items-center justify-center">
+      {/*
+        Desktop centres the screen inside the glass. Mobile is a 4:5 crop, so
+        the screen anchors bottom-left instead: the top and right keep the
+        glass visible while the sidebar and composer stay in frame.
+      */}
+      <div
+        className={cn(
+          "absolute inset-0 flex",
+          mobileCrop ? "items-end justify-start" : "items-center justify-center"
+        )}
+      >
         <div
           className={cn(
             "relative aspect-[16/10] max-w-none overflow-hidden rounded-xl shadow-raised",
-            mobileCrop ? "h-[76%] w-auto" : "w-[84%] @3xl:w-[72%]"
+            mobileCrop ? "mb-[6%] ml-[5%] h-[66%] w-auto shrink-0" : "w-[84%] @3xl:w-[72%]"
           )}
         >
           <Image
